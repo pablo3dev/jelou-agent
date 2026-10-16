@@ -93,7 +93,7 @@
   - Spec: `reserva-pago-whatsapp-pay`
   - Depende de: 1.2, 2.10
   - Rutas: `apps/pay/src/`
-- [ ] **Task 2.12: Pay: notificación a `pago-notificacion` con cuerpo `{"transaccion_id", "estado": "APROBADA" | "RECHAZADA", "event_id": "<transaccion_id>:<estado>", "emitido_at"}` y cabecera `X-Webhook-Signature: sha256=<hex>`, donde `<hex>` es HMAC-SHA256 del cuerpo crudo con `PAY_WEBHOOK_SECRET`; sin EXPIRADA; tests con receptor simulado** `[REQ-07]` `[DRAFT §Estrategia de seguridad]`
+- [x] **Task 2.12: Pay: notificación a `pago-notificacion` con cuerpo `{"transaccion_id", "estado": "APROBADA" | "RECHAZADA", "event_id": "<transaccion_id>:<estado>", "emitido_at"}` y cabecera `X-Webhook-Signature: sha256=<hex>`, donde `<hex>` es HMAC-SHA256 del cuerpo crudo con `PAY_WEBHOOK_SECRET`; sin EXPIRADA; tests con receptor simulado** `[REQ-07]` `[DRAFT §Estrategia de seguridad]`
   - Unidad: `apps/pay`
   - Spec: `reserva-pago-whatsapp-pay`
   - Depende de: 2.11
@@ -179,7 +179,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 7 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 8 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **11** | **37%** |
+| **Total Global** | **30** | **12** | **40%** |
