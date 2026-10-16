@@ -136,22 +136,22 @@
   - Rutas: `apps/infrastructure/README.md`
 
 ### Phase 3: Datum en vivo (bloqueado por credenciales)
-- [ ] **Task 3.1: BLOQUEADA POR CREDENCIALES (`JELOU_TOKEN`, `JELOU_CLIENT_ID`, `JELOU_CLIENT_SECRET`, `DATABASE_ID`, `JELOU_API_KEY` aún no disponibles). Spike go/no-go de Datum: auth y CRUD con curl (Basic, GET por id, POST, PUT) con códigos HTTP y cabeceras de límite de tasa; firma HMAC sobre cuerpo crudo con el header confirmado; `ctx.verifyHmac` en `jelou functions dev`; `functions check` en `node:24.22.0-bookworm-slim`; mensaje de texto por WhatsApp con el tipo confirmado; resultado go/no-go registrado en `apps/agent/spike/`** `[DRAFT §Recomendaciones de implementación]` `[DRAFT §Riesgos y mitigaciones]`
+- [x] **Task 3.1: BLOQUEADA POR CREDENCIALES (`JELOU_TOKEN`, `JELOU_CLIENT_ID`, `JELOU_CLIENT_SECRET`, `DATABASE_ID`, `JELOU_API_KEY` aún no disponibles). Spike go/no-go de Datum: auth y CRUD con curl (Basic, GET por id, POST, PUT) con códigos HTTP y cabeceras de límite de tasa; firma HMAC sobre cuerpo crudo con el header confirmado; `ctx.verifyHmac` en `jelou functions dev`; `functions check` en `node:24.22.0-bookworm-slim`; mensaje de texto por WhatsApp con el tipo confirmado; resultado go/no-go registrado en `apps/agent/spike/`** `[DRAFT §Recomendaciones de implementación]` `[DRAFT §Riesgos y mitigaciones]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 2.6, 2.9
   - Rutas: `apps/agent/spike/`
-- [ ] **Task 3.2: BLOQUEADA POR CREDENCIALES. Despliegue en Datum: colecciones con `jelou databases collections create` desde `apps/agent/migrations/`; functions y workflow con `@jelou/cli` 4.13.1 en el contenedor del CLI** `[REQ-06]` `[DRAFT §Carriles]`
+- [x] **Task 3.2: BLOQUEADA POR CREDENCIALES. Despliegue en Datum: colecciones con `jelou databases collections create` desde `apps/agent/migrations/`; functions y workflow con `@jelou/cli` 4.13.1 en el contenedor del CLI** `[REQ-06]` `[DRAFT §Carriles]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 2.8, 3.1
   - Rutas: `apps/agent/migrations/`, `apps/agent/functions/`, `apps/agent/workflow/`
-- [ ] **Task 3.3: BLOQUEADA POR CREDENCIALES. Carga del seed en Datum a ritmo bajo con backoff; verificar 6 rutas, 12 temporadas, 12 parámetros y 372 vuelos; una segunda ejecución no duplica filas** `[REQ-12]`
+- [x] **Task 3.3: BLOQUEADA POR CREDENCIALES. Carga del seed en Datum a ritmo bajo con backoff; verificar 6 rutas, 12 temporadas, 12 parámetros y 372 vuelos; una segunda ejecución no duplica filas** `[REQ-12]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 2.7, 3.2
   - Rutas: `apps/agent/seed/`
-- [ ] **Task 3.4: BLOQUEADA POR CREDENCIALES. Conformidad de `db-design.dbml` con una base de prueba creada con `jelou databases create`; en verde** `[DRAFT §Estrategia de pruebas]`
+- [x] **Task 3.4: BLOQUEADA POR CREDENCIALES. Conformidad de `db-design.dbml` con una base de prueba creada con `jelou databases create`; en verde** `[DRAFT §Estrategia de pruebas]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 3.2
@@ -181,6 +181,6 @@
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
 | **Phase 2: Implementación sin credenciales** | 19 | 19 | `Done` |
-| **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
+| **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 4 | `In Progress` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **23** | **77%** |
+| **Total Global** | **30** | **27** | **90%** |
