@@ -53,7 +53,7 @@
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 1.1
   - Rutas: `apps/agent/functions/`
-- [ ] **Task 2.4: Functions de búsqueda y cotización: `rutas-listar`, `vuelos-buscar` (ida y vuelta dentro de la ventana), `cotizar` (pasaje, equipaje y mascotas) y `equipaje-calcular`; esquema zod de entrada con error 400 "Validation failed" antes del handler; `ctx.log` con el documento enmascarado; tests con cliente simulado** `[REQ-01]` `[REQ-02]` `[REQ-03]` `[DRAFT §Arquitectura y stack técnico]`
+- [x] **Task 2.4: Functions de búsqueda y cotización: `rutas-listar`, `vuelos-buscar` (ida y vuelta dentro de la ventana), `cotizar` (pasaje, equipaje y mascotas) y `equipaje-calcular`; esquema zod de entrada con error 400 "Validation failed" antes del handler; `ctx.log` con el documento enmascarado; tests con cliente simulado** `[REQ-01]` `[REQ-02]` `[REQ-03]` `[DRAFT §Arquitectura y stack técnico]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 2.1, 2.3
@@ -179,7 +179,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 8 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 9 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **12** | **40%** |
+| **Total Global** | **30** | **13** | **43%** |
