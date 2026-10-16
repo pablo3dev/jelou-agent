@@ -4,9 +4,10 @@ Fuente: `draft.md` (RN-01..RN-15, REQ-01..REQ-12, EC-01..EC-18, decisiones 31-38
 
 ## Convenciones
 
-- Cada function se define con `define({ name, description, input, output, handler })` de `@jelou/functions`. La entrada se valida con zod antes del handler; si falla: HTTP 400, "Validation failed" (el campo `details` o `error` del cuerpo 400 es SUPUESTO, se confirma en el spike 3.1/3.2).
+- Cada function se define con `define({ name, description, input, output, handler })` de `@jelou/functions`. La entrada se valida con zod antes del handler; si falla: HTTP 400, "Validation failed" (el campo `details` o `error` del cuerpo 400 es SUPUESTO, se confirma en 3.2).
 - Autenticación: solo `pago-notificacion` es pública (`config.public = true`), protegida por HMAC. El resto no es pública: solo la llama el agente de Brain Studio por MCP con la cabecera `Authorization: Bearer ${JELOU_FUNCTIONS_TOKEN}` (token `sk_...`; se configura en Brain Studio como `${VAR}`/placeholder, nunca con el valor en el repo).
-- Variables de entorno requeridas por las functions/agente: `PAY_WEBHOOK_SECRET` (HMAC de `pago-notificacion`) y `PAY_PUBLIC_URL` (base pública de apps/pay, ej. `http://localhost:3001`; se usa para construir `enlace_pago`).
+- Variables de entorno requeridas por las functions/agente: `PAY_WEBHOOK_SECRET` (HMAC de `pago-notificacion`), `PAY_PUBLIC_URL` (base pública de apps/pay, ej. `http://localhost:3001`; se usa para construir `enlace_pago`), `DATUM_URL` (base de datos de Datum v2: `https://<slug>.jelou.cloud/api`) y `DATUM_API_KEY` (API key `db_...`, se envía como cabecera `X-Api-Key`). `PAY_WEBHOOK_SECRET`, `DATUM_URL` y `DATUM_API_KEY` son secretos de las functions; nunca se escriben en el repo.
+- Acceso a Datum v2 (PocketBase): `GET|POST ${DATUM_URL}/collections/{coleccion}/records` y `GET|PATCH|DELETE .../records/{id}` (PATCH fusiona campos; PUT y `/batch` no están disponibles). Un `id` repetido en POST devuelve 400 `validation_not_unique`. Las fechas `date` llegan como `2026-12-01 00:00:00.000Z` (espacio en vez de `T`): el cliente las normaliza a ISO.
 - El LLM solo pasa texto: todo valor llega como `string` o `number` crudo y se valida en la function. Los precios y totales los calcula el servidor; ninguna entrada los trae.
 - Errores comunes de salida: 400 validación (o regla de negocio violada, con lista de motivos), 503 fallo de write-then-verify tras 3 intentos o fallo de reanudación (sin efecto parcial visible), 500 inesperado.
 - Logs con `ctx.log`; el documento se enmascara.
@@ -144,7 +145,7 @@ export const PasajeroEntrada = z.object({
 - Salida 200:
   ```typescript
   z.object({
-    transaccion_id: z.string(), // _id que devuelve el POST de la fila de transacciones
+    transaccion_id: z.string(), // campo id del registro de transacciones creado en Datum (autogenerado)
     reserva_id: z.string(),
     pnr: z.string().length(6),  // el agente lo retiene y lo confirma al recibir "paid"
     total_cop: z.number().int(),
@@ -160,7 +161,7 @@ export const PasajeroEntrada = z.object({
 ## pago-notificacion (REQ-07, REQ-08) — PÚBLICA
 
 - Configuración: `public: true`, método POST.
-- Autenticación: cabecera `X-Webhook-Signature: sha256=<hex>`, HMAC-SHA256 hex del cuerpo crudo con `PAY_WEBHOOK_SECRET`; se verifica con `ctx.verifyHmac(request, { secretEnv: "PAY_WEBHOOK_SECRET", header: "x-webhook-signature" })` antes de tocar datos. El cuerpo crudo frente a `JSON.stringify` y el nombre de la cabecera quedan como SUPUESTO por confirmar en el spike 3.1/3.2 (GAP-13; GAP-12 igual).
+- Autenticación: cabecera `X-Webhook-Signature: sha256=<hex>`, HMAC-SHA256 hex del cuerpo crudo con `PAY_WEBHOOK_SECRET`; se verifica con `ctx.verifyHmac(request, { secretEnv: "PAY_WEBHOOK_SECRET", header: "x-webhook-signature", prefix: "sha256=" })` antes de tocar datos (CONFIRMADO en el spike). `request` es el TERCER argumento del handler `(input, ctx, request)` (`ctx.request` no existe). La firma se calcula sobre el cuerpo CRUDO. Éxito = devuelve `undefined`; fallo = lanza `WebhookVerificationError` y se responde 401. Sin `prefix` el valor `sha256=<hex>` falla; la cabecera `X-Jelou-Signature` no se lee.
 - Entrada (cuerpo JSON):
   ```typescript
   z.object({
@@ -180,18 +181,21 @@ export const PasajeroEntrada = z.object({
 
 ## Lectura de la transacción por id (consumida por apps/pay)
 
-- No es una function: `apps/pay` lee Datum por REST con Basic (`JELOU_CLIENT_ID`:`JELOU_CLIENT_SECRET`): `GET https://api.jelou.ai/v2/databases/${DATABASE_ID}/rows/{rowId}`, con `rowId` = `transacciones.id` (el `_id` devuelto por `transaccion-crear`). SUPUESTO: el GET por id no está confirmado (GAP-09); se verifica en la tarea 3.1.
-- Campos que pay lee de `transacciones`: `estado`, `reserva_id`, `expira_at`. Para mostrar el monto lee `reservas.total_cop` por `reserva_id` (`GET .../rows/{reserva_id}`). SUPUESTO: la forma exacta del envoltorio de la respuesta (`fields` frente a campos planos) se confirma en el spike.
+- No es una function: `apps/pay` lee Datum v2 por REST con la cabecera `X-Api-Key: ${DATUM_API_KEY}`: `GET ${DATUM_URL}/collections/transacciones/records/{transaccion_id}`, con `transaccion_id` = `id` devuelto por `transaccion-crear`. Respuesta 200: registro plano `{ id, collectionId, collectionName, created, updated, ...campos }`; id inexistente: 404.
+- Campos que pay lee de `transacciones`: `id`, `estado`, `reserva_id`, `expira_at`. Para mostrar el monto lee `reservas.total_cop` con `GET ${DATUM_URL}/collections/reservas/records/{reserva_id}`.
+- Las fechas llegan con espacio (`2026-12-01 00:00:00.000Z`): pay las normaliza a ISO (`T`) antes de comparar con la hora actual.
 - Pay solo ofrece pagar si `estado = PENDIENTE` y `expira_at > ahora`; no escribe en Datum: el efecto lo aplica `pago-notificacion`.
 - Pay notifica a `pago-notificacion` (ver arriba) con cuerpo crudo firmado. Reintentos de pay: 3 intentos con backoff de 1 s y 2 s (decisión IDEA, GAP-14). Nunca envía EXPIRADA.
 
 ## Colecciones y campos que lee apps/crm (solo lectura)
 
+- Direccionamiento por colección: `GET ${DATUM_URL}/collections/{coleccion}/records` con `X-Api-Key: ${DATUM_API_KEY}`. Respuesta de listado: `{ items, page, perPage, totalItems, totalPages }`. Paginación con `page` y `perPage` (hasta 500); también hay `filter` (sintaxis PocketBase, p. ej. `ruta_id="BOG-MDE" && fecha>="2026-12-01"`), `sort` y `fields`.
+- El campo `id` es el id físico de Datum (p. ej. `vuelo_id` = `bogmde20261201`). `vuelos.ruta_id` conserva el id lógico `BOG-MDE`.
 - `vuelos`: `id`, `ruta_id`, `fecha`, `hora_salida`, `mapa_asientos` (por asiento: `estado`, `pnr`; nunca se expone `hold_token`), `version`.
-- `rutas`: `id`, `origen`, `destino`, `tarifa_base_cop`.
+- `rutas`: `origen`, `destino`, `tarifa_base_cop`. No tienen campo `id` lógico: el id lógico se deriva como `origen-destino` (el `id` físico es `bogmde`).
 - `reservas`: `id`, `pnr`, `estado`, `vuelo_ida_id`, `vuelo_regreso_id`, `total_cop`.
 - `pasajeros`: `reserva_id`, `asiento_ida`, `asiento_regreso` (no se muestran nombre ni documento: PII).
-- Derivados: asientos vendidos por vuelo y por destino = claves del mapa con `estado = VENDIDO`; un RETENIDO con `hold_expira <= ahora` cuenta como LIBRE (RN-08). Datum no filtra: crm lista las colecciones completas con `limit` y `page` y agrega en el servidor. Crm no escribe en Datum (REQ-11).
+- Derivados: asientos vendidos por vuelo y por destino = claves del mapa con `estado = VENDIDO`; un RETENIDO con `hold_expira <= ahora` cuenta como LIBRE (RN-08). Crm lista las colecciones con `page`/`perPage` (o con `filter`) y agrega en el servidor. Crm no escribe en Datum (REQ-11).
 
 ## Fuera de este contrato
 

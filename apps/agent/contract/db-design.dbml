@@ -1,7 +1,12 @@
 // db-design.dbml — aerolinea-reservas-whatsapp (idea)
 // Esquema relacional lógico de la aerolínea DEMO. Vive en Jelou Datum (colecciones de tablas).
-// Datum no ofrece transacciones, compare-and-set ni filtros en la API: las colecciones son
-// pequeñas o se acceden por id. Tipos lógicos: enum -> Select, json -> JSON, ref -> Relation.
+// Datum v2 es PocketBase: direccionamiento por colección (/collections/{colección}/records) y filtros
+// (filter, sort, fields, page/perPage) SÍ existen; sigue sin haber transacciones ni compare-and-set.
+// Tipos lógicos: enum -> select(maxSelect=1), ref -> text, int -> number(onlyInt), decimal -> number,
+// date/timestamp -> date, time/char/text -> text, json -> json.
+// Ids físicos: el id de fila admite solo [a-z0-9] (sin guiones ni mayúsculas) y la PK es única y atómica
+// (un id repetido en POST => 400 validation_not_unique). No se pueden crear otros índices únicos, por lo
+// que los `unique` declarados abajo se garantizan por id determinista o por código de aplicación.
 
 Enum estado_reserva {
   PENDIENTE_PAGO
@@ -51,7 +56,7 @@ Enum clave_parametro {
 }
 
 Table rutas {
-  id text [pk, note: 'Formato <origen>-<destino>, p. ej. BOG-MDE']
+  id text [pk, note: 'Id físico en Datum: <origen><destino> en minúsculas sin guion, p. ej. bogmde. Id lógico derivado (el que ve el agente): <origen>-<destino>, p. ej. BOG-MDE']
   origen char(3) [not null, note: 'Código IATA de 3 letras']
   destino char(3) [not null, note: 'Código IATA de 3 letras']
   tarifa_base_cop integer [not null, note: 'Tarifa plana por pasajero y trayecto, COP enteros, antes de temporada']
@@ -64,14 +69,14 @@ Table rutas {
   Invariantes:
   - Exactamente 6 filas: BOG-MDE, MDE-BOG, BOG-CLO, CLO-BOG, BOG-CTG, CTG-BOG.
   - origen != destino.
-  - id = origen || '-' || destino.
+  - id lógico = origen || '-' || destino (BOG-MDE); id físico = lower(origen || destino) (bogmde); unicidad de (origen, destino) por id determinista.
   - La bidireccionalidad se modela con una fila por sentido (cada par inverso existe como dos filas).
   - tarifa_base_cop es la tarifa base; el multiplicador de temporada se aplica en el cálculo, no se guarda aquí.
   '''
 }
 
 Table temporada {
-  mes integer [pk, note: 'Mes del año, 1 a 12']
+  mes integer [pk, note: 'Mes del año, 1 a 12. Id físico en Datum: mes01..mes12']
   multiplicador decimal(3,2) [not null, note: '1.30 o 1.00']
 
   Note: '''
@@ -83,7 +88,7 @@ Table temporada {
 }
 
 Table parametros {
-  clave clave_parametro [pk]
+  clave clave_parametro [pk, note: 'Id físico en Datum: la clave sin guiones bajos, p. ej. tarifakgbodegacop']
   valor integer [not null]
 
   Note: '''
@@ -104,8 +109,8 @@ Table parametros {
 }
 
 Table vuelos {
-  id text [pk]
-  ruta_id text [not null, note: 'Ref a rutas.id']
+  id text [pk, note: 'Id físico en Datum y vuelo_id que ve el agente: <ruta sin guion en minúsculas><fecha sin guiones>, p. ej. bogmde20261201']
+  ruta_id text [not null, note: 'Id lógico de ruta, p. ej. BOG-MDE (enum RutaId del contrato); id físico de la ruta = minúsculas sin guion']
   fecha date [not null, note: 'Fecha de salida del vuelo']
   hora_salida time [not null, note: 'Fija en 07:00']
   mapa_asientos json [not null, note: 'Inventario operativo del vuelo: clave = código de asiento, valor = {estado, pnr, hold_token, hold_expira}']
@@ -119,7 +124,7 @@ Table vuelos {
   Aeronave Boeing 737-8 MAX, 174 asientos por vuelo. Un vuelo por ruta y día.
   Ventana: fecha entre 2026-12-01 y 2027-01-31 inclusive (62 días x 6 rutas = 372 vuelos). hora_salida = 07:00.
 
-  mapa_asientos (JSON, único inventario de asientos; no existe tabla normalizada de asientos porque Datum no filtra):
+  mapa_asientos (JSON, único inventario de asientos; no existe tabla normalizada de asientos en la PoC):
   - Clave: código "<fila><letra>", p. ej. "12A". Solo estas 174 claves, ninguna adicional.
   - Filas 1–3 (Premium): letras A, C, D, F (12 asientos).
   - Filas 4–7 (Extended): letras A–F (24 asientos).
@@ -132,12 +137,13 @@ Table vuelos {
   - BLOQUEADO: sin pnr ni hold.
   - hold_token es un identificador operativo opaco; no se expone fuera del backend.
 
-  Concurrencia: Datum no ofrece transacciones ni compare-and-set. Cualquier cambio sobre mapa_asientos es lectura-modificación-escritura del JSON completo; la integridad frente a escrituras concurrentes no la garantiza el almacén.
+  Concurrencia: Datum no ofrece transacciones ni compare-and-set (la cabecera If-Match se ignora en el servidor). Cualquier cambio sobre mapa_asientos es lectura-modificación-escritura del JSON completo (PATCH fusiona campos); la integridad frente a escrituras concurrentes no la garantiza el almacén y la PoC usa write-then-verify con `version`. La unicidad de (ruta_id, fecha) se garantiza por el id determinista del vuelo (PK única y atómica).
+  Camino de producción: una fila por asiento con id determinista <vuelo><asiento> y POST como reclamo atómico (la PK única rechaza el segundo con 400 validation_not_unique).
   '''
 }
 
 Table reservas {
-  id text [pk]
+  id text [pk, note: 'Id autogenerado por Datum']
   pnr char(6) [not null, note: 'Código de reserva: 6 caracteres de [A-Z2-9], sin O, I, 0 ni 1']
   estado estado_reserva [not null]
   vuelo_ida_id text [not null, note: 'Ref a vuelos.id']
@@ -161,7 +167,7 @@ Table reservas {
 }
 
 Table pasajeros {
-  id text [pk]
+  id text [pk, note: 'Id autogenerado por Datum']
   reserva_id text [not null, note: 'Ref a reservas.id']
   nombre text [not null]
   documento text [not null, note: 'Dato personal. No se registra en logs ni se devuelve si no es necesario']
@@ -186,7 +192,7 @@ Table pasajeros {
 }
 
 Table equipaje {
-  id text [pk]
+  id text [pk, note: 'Id autogenerado por Datum']
   pasajero_id text [not null, note: 'Ref a pasajeros.id']
   reserva_id text [not null, note: 'Ref a reservas.id']
   tipo tipo_equipaje [not null]
@@ -212,7 +218,7 @@ Table equipaje {
 }
 
 Table mascotas {
-  id text [pk]
+  id text [pk, note: 'Id autogenerado por Datum']
   pasajero_id text [not null, note: 'Ref a pasajeros.id']
   reserva_id text [not null, note: 'Ref a reservas.id']
   especie text [not null, note: 'Catálogo de especies no definido en la especificación']
@@ -230,7 +236,7 @@ Table mascotas {
 }
 
 Table transacciones {
-  id text [pk, note: 'Id asignado por Datum al crear la fila (_id del POST de rows); transaccion-crear la crea en PENDIENTE']
+  id text [pk, note: 'Id autogenerado por Datum al crear el registro (campo id de la respuesta del POST); transaccion-crear la crea en PENDIENTE']
   reserva_id text [not null, note: 'Ref a reservas.id']
   estado estado_transaccion [not null, default: 'PENDIENTE']
   expira_at timestamp [not null, note: 'Igual a reservas.hold_expira: creación + parametros.hold_minutos']
@@ -248,9 +254,9 @@ Table transacciones {
 }
 
 Table eventos_pago {
-  id text [pk]
+  id text [pk, note: 'Id físico en Datum: <transaccion_id><estado en minúsculas>, p. ej. abc123def456ghiaprobada']
   transaccion_id text [not null, note: 'Ref a transacciones.id']
-  id_evento text [not null, note: 'Formato <transaccion_id>:<estado>']
+  id_evento text [not null, note: 'Formato <transaccion_id>:<ESTADO>; se conserva tal cual aunque el id físico sea distinto']
   estado estado_transaccion [not null, note: 'Estado al que llevó el evento']
 
   indexes {
@@ -262,7 +268,8 @@ Table eventos_pago {
   - id_evento = transaccion_id || ':' || estado. Único en la tabla.
   - estado coincide con el sufijo de id_evento.
   - Un evento solo se registra si transiciona la transacción desde PENDIENTE a estado.
-  - Procedimiento: registrar id_evento antes de aplicar el efecto; un id_evento ya existente es duplicado y no vuelve a aplicar el efecto.
+  - Idempotencia atómica por id determinista: el id físico es <transaccion_id><estado en minúsculas>, así que registrar el evento es un POST con ese id y la PK única rechaza el duplicado (400 validation_not_unique), además del campo id_evento.
+  - Procedimiento: registrar el evento antes de aplicar el efecto; un duplicado (id ya existente) no vuelve a aplicar el efecto.
   '''
 }
 
