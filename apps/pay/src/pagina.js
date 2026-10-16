@@ -13,6 +13,9 @@ const TEXTOS = {
     APROBADA: 'Aprobada',
     RECHAZADA: 'Rechazada',
     EXPIRADA: 'Expirada',
+    confirmada: 'Tu respuesta quedó registrada. Puedes volver a WhatsApp.',
+    fallo: 'No pudimos notificar el resultado. Intenta de nuevo en unos minutos.',
+    reintentar: 'Reintentar',
   },
   en: {
     titulo: 'Pay for your booking',
@@ -26,6 +29,9 @@ const TEXTOS = {
     APROBADA: 'Approved',
     RECHAZADA: 'Rejected',
     EXPIRADA: 'Expired',
+    confirmada: 'Your response was recorded. You can go back to WhatsApp.',
+    fallo: 'We could not notify the result. Please try again in a few minutes.',
+    reintentar: 'Try again',
   },
 };
 
@@ -92,6 +98,26 @@ ${cuerpo}
 <script>${SCRIPT}</script>
 </body>
 </html>`;
+}
+
+// Confirmación tras notificar con éxito (estado = APROBADA | RECHAZADA).
+export function renderConfirmacion({ estado, lang }) {
+  const t = TEXTOS[lang];
+  return documento(
+    lang,
+    `<p role="status">${esc(t.estado)}: <strong>${esc(t[estado] ?? estado)}</strong></p>
+<p>${esc(t.confirmada)}</p>`,
+  );
+}
+
+// Fallo al notificar: mensaje al usuario y enlace para volver al formulario.
+export function renderFallo({ id, lang }) {
+  const t = TEXTOS[lang];
+  return documento(
+    lang,
+    `<p role="alert">${esc(t.fallo)}</p>
+<p><a href="/pagar/${esc(encodeURIComponent(id))}">${esc(t.reintentar)}</a></p>`,
+  );
 }
 
 // Página de pago: con botones solo si `pagable` (PENDIENTE y no expirada).

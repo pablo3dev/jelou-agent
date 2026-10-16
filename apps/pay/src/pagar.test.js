@@ -87,10 +87,3 @@ test('escapa los valores renderizados (XSS)', async () => {
   assert.match(r.body, /&lt;img/);
 });
 
-test('POST aprobar y rechazar responden 501 pendiente de tarea 2.12', async () => {
-  for (const accion of ['aprobar', 'rechazar']) {
-    const r = await pedir(PENDIENTE, `/pagar/t1/${accion}`, { method: 'POST' });
-    assert.equal(r.status, 501);
-    assert.equal(r.body, 'pendiente de tarea 2.12');
-  }
-});

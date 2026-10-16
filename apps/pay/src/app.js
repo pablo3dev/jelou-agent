@@ -1,5 +1,6 @@
 import express from 'express';
-import { CSP, renderPago, resolveLang } from './pagina.js';
+import { CSP, renderConfirmacion, renderFallo, renderPago, resolveLang } from './pagina.js';
+import { createNotificador, NotificacionError } from './notificacion.js';
 
 export const DEFAULT_PORT = 3001;
 
@@ -12,7 +13,8 @@ export function resolvePort(env = process.env) {
 
 // `datum` (opcional) expone getRow(rowId); sin él no se publican las rutas de pago.
 // `now` es inyectable para las pruebas de expiración.
-export function createApp({ datum, now = () => new Date() } = {}) {
+// `notificador` expone notificar(transaccionId, estado); por defecto el real (env + fetch).
+export function createApp({ datum, now = () => new Date(), notificador = createNotificador() } = {}) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -67,10 +69,52 @@ export function createApp({ datum, now = () => new Date() } = {}) {
     }
   });
 
-  // Gancho de la tarea 2.12 (notificación a pago-notificacion). Por ahora no hay efecto.
-  for (const accion of ['aprobar', 'rechazar']) {
-    app.post(`/pagar/:id/${accion}`, validarId, (_req, res) => {
-      res.status(501).type('text/plain').send('pendiente de tarea 2.12');
+  function html(res, status, cuerpo) {
+    res
+      .status(status)
+      .set({
+        'Content-Security-Policy': CSP,
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff',
+      })
+      .type('html')
+      .send(cuerpo);
+  }
+
+  // Pay no escribe en Datum: notifica a pago-notificacion, que aplica el efecto.
+  // Idempotencia: solo se notifica una PENDIENTE vigente y el event_id es estable
+  // ("<id>:<estado>"), así que reintentar el POST es seguro (el receptor deduplica).
+  for (const [accion, estadoNuevo] of [['aprobar', 'APROBADA'], ['rechazar', 'RECHAZADA']]) {
+    app.post(`/pagar/:id/${accion}`, validarId, async (req, res) => {
+      const lang = resolveLang(req.get('accept-language'));
+      const id = req.params.id;
+      let tx;
+      try {
+        tx = await datum.getRow(id);
+      } catch {
+        res.status(502).type('text/plain').send('no se pudo consultar la transacción');
+        return;
+      }
+      if (!tx) {
+        res.status(404).type('text/plain').send('transacción no encontrada');
+        return;
+      }
+      if (!(tx.estado === 'PENDIENTE' && new Date(tx.expira_at) > now())) {
+        const estado = tx.estado === 'PENDIENTE' ? 'EXPIRADA' : tx.estado;
+        html(res, 200, renderPago({ id, estado, pagable: false, lang }));
+        return;
+      }
+      try {
+        await notificador.notificar(id, estadoNuevo);
+      } catch (err) {
+        if (err instanceof NotificacionError && err.configuracion) {
+          res.status(500).type('text/plain').send('error de configuración');
+        } else {
+          html(res, 502, renderFallo({ id, lang }));
+        }
+        return;
+      }
+      html(res, 200, renderConfirmacion({ estado: estadoNuevo, lang }));
     });
   }
 
