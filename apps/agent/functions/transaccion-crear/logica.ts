@@ -4,7 +4,7 @@
 //  1. Validaciones puras y búsqueda de una transacción PENDIENTE existente para los mismos vuelos y asientos.
 //  2. Cotización en servidor (reutiliza `cotizar`).
 //  3. Re-fijación del vencimiento de los holds a creación+15 min con write-then-verify. Si falla (503) no se ha creado ninguna fila.
-//  4. PNR único (se lee la lista de reservas justo antes de escribir, RN-13) y creación de filas; la transacción va al final.
+//  4. PNR único (se consulta por pnr en el servidor justo antes de escribir, RN-13) y creación de filas; la transacción va al final.
 //     Si la creación falla a medias, la reserva huérfana se marca CANCELADA (best-effort) y se responde 503.
 //
 // Idempotencia (EC-16): si ya existe una transacción PENDIENTE vigente de una reserva PENDIENTE_PAGO con los mismos vuelos y
@@ -21,7 +21,7 @@ import type { Datum, Sleep } from "../lib/datum.ts";
 import { ErrorNegocio } from "../lib/errores.ts";
 import { Mascota, PasajeroEntrada } from "../lib/esquemas.ts";
 import { expiraHold, refijar, tieneHold } from "../lib/hold.ts";
-import { cargarReservas } from "../lib/reservas.ts";
+import { leerReserva, pasajerosDeReserva, pnrEnUso, transaccionesPendientes } from "../lib/reservas.ts";
 import { ejecutar as cotizar } from "../cotizar/logica.ts";
 
 export const entrada = z.object({
@@ -87,12 +87,11 @@ export async function ejecutar(input: Entrada, dep: Dep): Promise<z.infer<typeof
   const asientos = validarAsientos(input, regreso !== undefined);
 
   // 1. Transacción PENDIENTE existente (EC-16).
-  const previo = await cargarReservas(dep.datum);
-  for (const t of previo.transacciones) {
-    if (t.estado !== "PENDIENTE" || !(Date.parse(t.expira_at) > ahora.getTime())) continue;
-    const r = previo.reservas.find((x) => x.rowId === t.reserva_id);
+  for (const t of await transaccionesPendientes(dep.datum)) {
+    if (!(Date.parse(t.expira_at) > ahora.getTime())) continue;
+    const r = await leerReserva(dep.datum, t.reserva_id);
     if (!r || r.estado !== "PENDIENTE_PAGO" || r.vuelo_ida_id !== ida.vuelo_id || r.vuelo_regreso_id !== (regreso?.vuelo_id ?? null)) continue;
-    const ps = previo.pasajeros.filter((p) => p.reserva_id === r.rowId);
+    const ps = await pasajerosDeReserva(dep.datum, r.rowId);
     if (!mismoConjunto(ps.map((p) => p.asiento_ida), asientos.ida)) continue;
     if (regreso && !mismoConjunto(ps.map((p) => p.asiento_regreso), asientos.regreso)) continue;
     return {
@@ -122,9 +121,8 @@ export async function ejecutar(input: Entrada, dep: Dep): Promise<z.infer<typeof
   if (regreso) await re(regreso, asientos.regreso);
 
   // 4. PNR único (RN-13): leer antes de escribir.
-  const usados = new Set((await cargarReservas(dep.datum)).reservas.map((r) => r.pnr));
   let pnr = generarPnr(dep.rng);
-  for (let i = 1; usados.has(pnr); i++) {
+  for (let i = 1; await pnrEnUso(dep.datum, pnr); i++) {
     if (i >= MAX_INTENTOS_PNR) throw new Error("No se pudo generar un PNR único");
     pnr = generarPnr(dep.rng);
   }
@@ -135,12 +133,12 @@ export async function ejecutar(input: Entrada, dep: Dep): Promise<z.infer<typeof
   };
   let reservaId: string | undefined;
   try {
-    reservaId = (await dep.datum.crear(camposReserva))._id;
+    reservaId = (await dep.datum.crear("reservas", camposReserva))._id;
     await crearDetalle(input, cot.lineas, cat, reservaId, dep.datum);
-    const t = await dep.datum.crear({
+    const t = await dep.datum.crear("transacciones", {
       reserva_id: reservaId, estado: "PENDIENTE", expira_at: expira, execution_id: input.execution_id, ultimo_evento: null,
     });
-    const leida = await dep.datum.leer(t._id); // verify
+    const leida = await dep.datum.leer("transacciones", t._id); // verify
     if (leida.fields.estado !== "PENDIENTE" || leida.fields.reserva_id !== reservaId) {
       throw new DatumNoDisponible("No se pudo verificar la transacción creada");
     }
@@ -151,7 +149,7 @@ export async function ejecutar(input: Entrada, dep: Dep): Promise<z.infer<typeof
   } catch (e) {
     if (reservaId !== undefined) {
       try { // best-effort: una reserva sin transacción no debe quedar como PENDIENTE_PAGO
-        await dep.datum.actualizar(reservaId, { ...camposReserva, estado: "CANCELADA" });
+        await dep.datum.actualizar("reservas", reservaId, { estado: "CANCELADA" });
       } catch { /* queda sin transacción y con hold que vence (RN-08) */ }
     }
     if (e instanceof DatumHttpError || e instanceof TypeError) throw new DatumNoDisponible("No se pudo crear la reserva y la transacción");
@@ -171,7 +169,7 @@ async function crearDetalle(input: Entrada, lineas: Lineas, cat: Awaited<ReturnT
   ];
   const ids: string[] = [];
   for (const [i, p] of input.pasajeros.entries()) {
-    const fila = await datum.crear({
+    const fila = await datum.crear("pasajeros", {
       reserva_id: reservaId, nombre: p.nombre, documento: p.documento, edad: p.edad,
       asiento_ida: p.asiento_ida.toUpperCase(), asiento_regreso: p.asiento_regreso?.toUpperCase() ?? null,
     });
@@ -179,7 +177,7 @@ async function crearDetalle(input: Entrada, lineas: Lineas, cat: Awaited<ReturnT
     for (const t of trayectos) {
       const b = t.bodega(p);
       if (b) {
-        await datum.crear({
+        await datum.crear("equipaje", {
           pasajero_id: fila._id, reserva_id: reservaId, tipo: "BODEGA", trayecto: t.nombre,
           largo_cm: b.largo_cm, ancho_cm: b.ancho_cm, alto_cm: b.alto_cm, peso_real_kg: b.peso_kg,
           peso_volumetrico_kg: Math.round((b.largo_cm * b.ancho_cm * b.alto_cm / divisor) * 100) / 100,
@@ -187,7 +185,7 @@ async function crearDetalle(input: Entrada, lineas: Lineas, cat: Awaited<ReturnT
         });
       }
       if (p.cabina) {
-        await datum.crear({
+        await datum.crear("equipaje", {
           pasajero_id: fila._id, reserva_id: reservaId, tipo: "CABINA", trayecto: t.nombre,
           largo_cm: null, ancho_cm: null, alto_cm: null, peso_real_kg: null, peso_volumetrico_kg: null, precio_cop: 0,
         });
@@ -196,7 +194,7 @@ async function crearDetalle(input: Entrada, lineas: Lineas, cat: Awaited<ReturnT
   }
   const m = input.mascota;
   if (m) {
-    await datum.crear({
+    await datum.crear("mascotas", {
       pasajero_id: ids[m.pasajero_indice], reserva_id: reservaId, especie: m.especie, peso_kg: m.peso_kg,
       precio_cop: lineas.find((l) => l.concepto === "MASCOTA")?.monto_cop ?? 0,
     });

@@ -3,7 +3,7 @@ import type { MapaAsientos } from "../lib/asientos.ts";
 import { DatumNoDisponible } from "../lib/datum.ts";
 import type { Fila } from "../lib/datum.ts";
 import { datumEscribible, filasCatalogo } from "../lib/datum_simulado.ts";
-import { ejecutar, entrada, FirmaInvalida, RESUME_URL } from "./logica.ts";
+import { adaptarVerificacion, ejecutar, entrada, FirmaInvalida, RESUME_URL } from "./logica.ts";
 
 const EXPIRA = "2026-11-20T10:15:00.000Z";
 const ANTES = new Date("2026-11-20T10:10:00.000Z");
@@ -51,9 +51,9 @@ function montar(opc: { firma?: boolean; ahora?: Date; resumeStatus?: number; fil
 }
 const evento = (estado: "APROBADA" | "RECHAZADA" = "APROBADA") =>
   entrada.parse({ transaccion_id: "tx1", estado, event_id: `tx1:${estado}`, emitido_at: "2026-11-20T10:05:00.000Z" });
-const campos = (sim: ReturnType<typeof datumEscribible>, id: string) => sim.almacen.find((f) => f._id === id)!.fields;
+const campos = (sim: ReturnType<typeof datumEscribible>, id: string) => sim.fila(id).fields;
 const mapa = (sim: ReturnType<typeof datumEscribible>, id: string) => campos(sim, id).mapa_asientos as MapaAsientos;
-const eventos = (sim: ReturnType<typeof datumEscribible>) => sim.almacen.filter((f) => f.fields.id_evento !== undefined);
+const eventos = (sim: ReturnType<typeof datumEscribible>) => sim.todas().filter((f) => f.fields.id_evento !== undefined);
 
 Deno.test("entrada: event_id debe ser <transaccion_id>:<estado> y EXPIRADA no se acepta", () => {
   assertEquals(entrada.safeParse({ transaccion_id: "tx1", estado: "APROBADA", event_id: "tx1:APROBADA", emitido_at: "2026-11-20T10:05:00Z" }).success, true);
@@ -228,4 +228,44 @@ Deno.test("CRITICA secreto no logueado: ni logs ni mensajes de error contienen e
   const todo = salidas.join("\n");
   assert(todo.length > 0);
   for (const prohibido of [SECRETO, API_KEY, "x-api-key", "sha256="]) assert(!todo.includes(prohibido), `se filtró ${prohibido}`);
+});
+
+Deno.test("el evento se registra con id determinista <transaccion_id><estado en minúsculas>", async () => {
+  const { sim, dep } = montar();
+  await ejecutar(evento("RECHAZADA"), dep);
+  assertEquals(eventos(sim).map((f) => f._id), ["tx1rechazada"]);
+});
+
+Deno.test("CRITICA idempotencia atómica: dos entregas simultáneas del mismo evento => una APLICADO y una DUPLICADO, un solo resume", async () => {
+  const { sim, dep, resumes } = montar();
+  const r = await Promise.all([ejecutar(evento(), dep), ejecutar(evento(), dep)]);
+  assertEquals(r.map((x) => x.resultado).sort(), ["APLICADO", "DUPLICADO"]);
+  assertEquals(eventos(sim).length, 1);
+  assertEquals(resumes.length, 1);
+  assertEquals(campos(sim, "tx1").estado, "APROBADA");
+});
+
+Deno.test("carrera: la verificación previa no ve el evento pero crear falla con esDuplicado => DUPLICADO sin efecto", async () => {
+  const filas = fixture();
+  filas.push({ _id: "tx1aprobada", fields: { transaccion_id: "tx1", id_evento: "tx1:APROBADA", estado: "APROBADA" } });
+  const { sim, dep, resumes } = montar({ filas });
+  const ciego = { ...dep, datum: { ...sim.datum, listar: (c: string, o?: { filter?: string }) => c === "eventos_pago" ? Promise.resolve([]) : sim.datum.listar(c, o) } };
+  assertEquals(await ejecutar(evento(), ciego), { resultado: "DUPLICADO" });
+  assertEquals(campos(sim, "tx1").estado, "PENDIENTE");
+  assertEquals(sim.llamadas.filter((l) => l.startsWith("actualizar:")), []);
+  assertEquals(resumes.length, 0);
+});
+
+Deno.test("un error de crear distinto de duplicado se propaga (no se confunde con DUPLICADO)", async () => {
+  const filas = fixture();
+  const sim = datumEscribible(filas, { fallaCrear: () => true });
+  const dep = { datum: sim.datum, ahora: () => ANTES, firmaValida: () => Promise.resolve(true), apiKey: API_KEY, sleep };
+  await assertRejects(() => ejecutar(evento(), dep));
+  assertEquals(sim.todas().find((f) => f._id === "tx1")!.fields.estado, "PENDIENTE");
+});
+
+Deno.test("adaptarVerificacion: verify que resuelve (undefined) => true; que lanza => false", async () => {
+  assertEquals(await adaptarVerificacion(() => Promise.resolve(undefined)), true);
+  assertEquals(await adaptarVerificacion(() => Promise.reject(new Error("WebhookVerificationError"))), false);
+  assertEquals(await adaptarVerificacion(() => { throw new Error("sync"); }), false);
 });

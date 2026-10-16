@@ -1,11 +1,8 @@
-// adapter: out — lectura de reservas, transacciones y pasajeros desde Datum.
+// adapter: out — lectura de reservas, transacciones y pasajeros desde Datum con filtros en servidor.
 //
-// SUPUESTO (igual que catalogo.ts): el cliente Datum está atado a una base; se listan todas las filas y cada
-// una se clasifica por su forma: reserva = {pnr, vuelo_ida_id}; transacción = {reserva_id, expira_at};
-// pasajero = {reserva_id, documento}. `reserva_id` / `transaccion_id` = `_id` de la fila (Datum lo asigna).
-// Lectura pura: sin efecto de lado.
-import type { Datum } from "./datum.ts";
-import { listarTodo } from "./catalogo.ts";
+// `reserva_id` / `transaccion_id` = `_id` del registro (Datum lo asigna). Lectura pura: sin efecto de lado.
+import { DatumHttpError, literalFiltro } from "./datum.ts";
+import type { Datum, Fila } from "./datum.ts";
 
 export interface ReservaFila {
   rowId: string;
@@ -31,26 +28,44 @@ export interface PasajeroFila {
 const texto = (v: unknown) => String(v ?? "");
 const textoONulo = (v: unknown) => (v === null || v === undefined || v === "" ? null : String(v));
 
-export async function cargarReservas(datum: Datum) {
-  const reservas: ReservaFila[] = [];
-  const transacciones: TransaccionFila[] = [];
-  const pasajeros: PasajeroFila[] = [];
-  for (const { _id, fields: f } of await listarTodo(datum)) {
-    if (f.pnr !== undefined && f.vuelo_ida_id !== undefined) {
-      reservas.push({
-        rowId: _id,
-        pnr: texto(f.pnr),
-        estado: texto(f.estado),
-        vuelo_ida_id: texto(f.vuelo_ida_id),
-        vuelo_regreso_id: textoONulo(f.vuelo_regreso_id),
-        hold_expira: texto(f.hold_expira),
-        total_cop: Number(f.total_cop),
-      });
-    } else if (f.reserva_id !== undefined && f.expira_at !== undefined) {
-      transacciones.push({ rowId: _id, reserva_id: texto(f.reserva_id), estado: texto(f.estado), expira_at: texto(f.expira_at) });
-    } else if (f.reserva_id !== undefined && f.documento !== undefined) {
-      pasajeros.push({ reserva_id: texto(f.reserva_id), asiento_ida: textoONulo(f.asiento_ida), asiento_regreso: textoONulo(f.asiento_regreso) });
-    }
+const aReserva = ({ _id, fields: f }: Fila): ReservaFila => ({
+  rowId: _id,
+  pnr: texto(f.pnr),
+  estado: texto(f.estado),
+  vuelo_ida_id: texto(f.vuelo_ida_id),
+  vuelo_regreso_id: textoONulo(f.vuelo_regreso_id),
+  hold_expira: texto(f.hold_expira),
+  total_cop: Number(f.total_cop),
+});
+
+export async function transaccionesPendientes(datum: Datum): Promise<TransaccionFila[]> {
+  const filas = await datum.listar("transacciones", { filter: `estado=${literalFiltro("PENDIENTE")}` });
+  return filas.map(({ _id, fields: f }) => ({
+    rowId: _id,
+    reserva_id: texto(f.reserva_id),
+    estado: texto(f.estado),
+    expira_at: texto(f.expira_at),
+  }));
+}
+
+export async function leerReserva(datum: Datum, id: string): Promise<ReservaFila | null> {
+  try {
+    return aReserva(await datum.leer("reservas", id));
+  } catch (e) {
+    if (e instanceof DatumHttpError && e.httpStatus === 404) return null;
+    throw e;
   }
-  return { reservas, transacciones, pasajeros };
+}
+
+export async function pasajerosDeReserva(datum: Datum, reservaId: string): Promise<PasajeroFila[]> {
+  const filas = await datum.listar("pasajeros", { filter: `reserva_id=${literalFiltro(reservaId)}` });
+  return filas.map(({ fields: f }) => ({
+    reserva_id: texto(f.reserva_id),
+    asiento_ida: textoONulo(f.asiento_ida),
+    asiento_regreso: textoONulo(f.asiento_regreso),
+  }));
+}
+
+export async function pnrEnUso(datum: Datum, pnr: string): Promise<boolean> {
+  return (await datum.listar("reservas", { filter: `pnr=${literalFiltro(pnr)}`, fields: "id" })).length > 0;
 }

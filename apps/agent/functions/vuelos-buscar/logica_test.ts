@@ -65,11 +65,9 @@ Deno.test("asientos_libres cuenta LIBRE y RETENIDO vencido, no RETENIDO vigente 
   assertEquals(r.ida[0].asientos_libres, 172);
 });
 
-Deno.test("pagina el listado hasta agotar filas", async () => {
-  const filas = filasCatalogo();
-  for (let i = 0; i < 150; i++) filas.push({ _id: `x${i}`, fields: { otro: i } });
-  const datum = datumSimulado(filas);
+Deno.test("el catálogo se lee por colección (rutas, temporada, parametros, vuelos)", async () => {
+  const datum = datumSimulado(filasCatalogo());
   const r = await ejecutar(entrada.parse(base), { datum, ahora: AHORA });
   assertEquals(r.ida.length, 1);
-  assertEquals(datum.llamadas.filter((l) => l.startsWith("listar")).length >= 2, true);
+  assertEquals([...datum.llamadas].sort(), ["listar:parametros", "listar:rutas", "listar:temporada", "listar:vuelos"]);
 });

@@ -15,7 +15,7 @@ const montar = (filas: Fila[] = filasCatalogo(), opc = {}) => {
   return { sim, dep: { datum: sim.datum, ahora: () => AHORA, nuevoToken: () => "tok-1", sleep } };
 };
 const mapaDe = (sim: ReturnType<typeof datumEscribible>, id: string) =>
-  sim.almacen.find((f) => f._id === id)!.fields.mapa_asientos as MapaAsientos;
+  sim.fila(id).fields.mapa_asientos as MapaAsientos;
 const fila = (filas: Fila[], id: string) => filas.find((f) => f._id === id)!;
 const marcar = (filas: Fila[], id: string, clave: string, a: Record<string, unknown>) => {
   (fila(filas, id).fields.mapa_asientos as MapaAsientos)[clave] = a as never;
@@ -38,7 +38,7 @@ Deno.test("hold completo ida y vuelta: RETENIDO con token y vencimiento ahora + 
   for (const c of ["12A", "12B"]) assertEquals(ida[c], { estado: "RETENIDO", pnr: null, hold_token: "tok-1", hold_expira: EXPIRA });
   for (const c of ["5C", "5D"]) assertEquals(reg[c].hold_token, "tok-1");
   assertEquals(ida["12C"].estado, "LIBRE");
-  assertEquals(sim.almacen.find((f) => f._id === "v-ida-dic")!.fields.version, 1);
+  assertEquals(sim.fila("v-ida-dic").fields.version, 1);
 });
 
 Deno.test("asiento ocupado: 400 con la lista y sin retención parcial", async () => {

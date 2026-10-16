@@ -1,14 +1,12 @@
-// adapter: out — lectura del catálogo (rutas, temporada, parametros, vuelos) desde Datum.
+// adapter: out — lectura del catálogo (rutas, temporada, parametros, vuelos) desde Datum, una consulta por colección.
 //
-// SUPUESTO (GAP de direccionamiento, ver datum.ts): el cliente Datum está atado a una base y learning.md no
-// muestra cómo se direcciona una colección. Se listan todas las filas de la base y cada una se clasifica por su
-// forma: vuelo = {ruta_id, mapa_asientos}; ruta = {origen, destino, tarifa_base_cop}; temporada = {mes, multiplicador};
-// parámetro = {clave, valor}. Se confirma en el spike 3.1.
-// `vuelo_id` = `fields.id` si existe; si no, el `_id` de la fila. Al buscar se acepta cualquiera de los dos.
+// `vuelo_id` = `_id` del registro de `vuelos` (p. ej. "bogmde20261201"); `rowId` es ese mismo valor.
+// La ruta lógica `BOG-MDE` se arma como `${origen}-${destino}` (la colección `rutas` no trae campo `id`);
+// `vuelos.ruta_id` ya guarda esa forma.
 // Lectura pura: sin efecto de lado, naturalmente idempotente.
 
 import type { MapaAsientos } from "./asientos.ts";
-import type { Datum, Fila } from "./datum.ts";
+import type { Datum } from "./datum.ts";
 import { ErrorNegocio } from "./errores.ts";
 import type { ParametrosPrecio } from "./precios.ts";
 
@@ -35,20 +33,6 @@ export interface Catalogo {
   vuelos: Vuelo[];
 }
 
-const PAGINA = 100;
-const MAX_PAGINAS = 20;
-
-export async function listarTodo(datum: Datum): Promise<Fila[]> {
-  const vistas = new Map<string, Fila>();
-  for (let pagina = 1; pagina <= MAX_PAGINAS; pagina++) {
-    const filas = await datum.listar(PAGINA, pagina);
-    const nuevas = filas.filter((f) => !vistas.has(f._id));
-    nuevas.forEach((f) => vistas.set(f._id, f));
-    if (filas.length < PAGINA || nuevas.length === 0) break; // última página, o la API ignora `page`
-  }
-  return [...vistas.values()];
-}
-
 const texto = (v: unknown) => String(v ?? "");
 
 function mapaDe(bruto: unknown): MapaAsientos {
@@ -56,35 +40,34 @@ function mapaDe(bruto: unknown): MapaAsientos {
 }
 
 export async function cargarCatalogo(datum: Datum): Promise<Catalogo> {
-  const cat: Catalogo = { rutas: [], temporada: {}, parametros: {}, vuelos: [] };
-  for (const { _id, fields: f } of await listarTodo(datum)) {
-    if (f.mapa_asientos !== undefined && f.ruta_id !== undefined) {
-      cat.vuelos.push({
-        vuelo_id: texto(f.id ?? _id),
-        rowId: _id,
-        ruta_id: texto(f.ruta_id),
-        fecha: texto(f.fecha).slice(0, 10),
-        hora_salida: texto(f.hora_salida),
-        mapa: mapaDe(f.mapa_asientos),
-      });
-    } else if (f.tarifa_base_cop !== undefined && f.origen !== undefined) {
-      cat.rutas.push({
-        id: texto(f.id ?? `${f.origen}-${f.destino}`),
-        origen: texto(f.origen),
-        destino: texto(f.destino),
-        tarifa_base_cop: Number(f.tarifa_base_cop),
-      });
-    } else if (f.mes !== undefined && f.multiplicador !== undefined) {
-      cat.temporada[Number(f.mes)] = Number(f.multiplicador);
-    } else if (f.clave !== undefined && f.valor !== undefined) {
-      cat.parametros[texto(f.clave)] = Number(f.valor);
-    }
-  }
-  return cat;
+  const [rutas, temporada, parametros, vuelos] = await Promise.all([
+    datum.listar("rutas"),
+    datum.listar("temporada"),
+    datum.listar("parametros"),
+    datum.listar("vuelos"),
+  ]);
+  return {
+    rutas: rutas.map(({ fields: f }) => ({
+      id: `${texto(f.origen)}-${texto(f.destino)}`,
+      origen: texto(f.origen),
+      destino: texto(f.destino),
+      tarifa_base_cop: Number(f.tarifa_base_cop),
+    })),
+    temporada: Object.fromEntries(temporada.map(({ fields: f }) => [Number(f.mes), Number(f.multiplicador)])),
+    parametros: Object.fromEntries(parametros.map(({ fields: f }) => [texto(f.clave), Number(f.valor)])),
+    vuelos: vuelos.map(({ _id, fields: f }) => ({
+      vuelo_id: _id,
+      rowId: _id,
+      ruta_id: texto(f.ruta_id),
+      fecha: texto(f.fecha).slice(0, 10),
+      hora_salida: texto(f.hora_salida),
+      mapa: mapaDe(f.mapa_asientos),
+    })),
+  };
 }
 
 export function buscarVuelo(cat: Catalogo, id: string): Vuelo {
-  const v = cat.vuelos.find((x) => x.vuelo_id === id || x.rowId === id);
+  const v = cat.vuelos.find((x) => x.vuelo_id === id);
   if (!v) throw new ErrorNegocio(`Vuelo no encontrado: ${id}`);
   return v;
 }

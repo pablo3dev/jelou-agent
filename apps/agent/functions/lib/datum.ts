@@ -1,22 +1,17 @@
-// adapter: out — Datum REST (api.jelou.ai/v2) + write-then-verify de vuelos.mapa_asientos.
+// adapter: out — Datum v2 (PocketBase) por colección + write-then-verify de vuelos.mapa_asientos.
 //
-// Fuente: learning.md §5.1 y draft.md §Acceso a Datum. La URL base es exactamente
-// `https://api.jelou.ai/v2/databases/{DATABASE_ID}/rows`; no incluye colección.
+// Contrato verificado contra Datum real:
+// - Base `DATUM_URL` = `https://<slug>.jelou.cloud/api`; autenticación con la cabecera `X-Api-Key`.
+// - `GET|POST {url}/collections/{coleccion}/records` y `GET|PATCH {url}/collections/{coleccion}/records/{id}`
+//   (PATCH fusiona campos; PUT no existe). Listado `?page=&perPage=&filter=&sort=&fields=` => `{items,page,perPage,totalItems,totalPages}`.
+// - Registro plano `{id, collectionId, collectionName, created, updated, ...campos}`; se normaliza a `Fila` sin esos metadatos.
+// - Las fechas `date` llegan como "2026-12-01 00:00:00.000Z" y se normalizan a ISO ("T").
+// - Inexistente => 404. POST con `id` repetido => 400 con `data.id.code = validation_not_unique` (escritura atómica).
+// - No hay compare-and-set: se mantiene write-then-verify con `version`.
 //
-// SUPUESTOS / GAPS (se confirman en el spike 3.1):
-// - GAP-09: `GET .../rows/{rowId}` no está confirmado en la documentación.
-// - GAP-02: el esquema `Basic` frente a `X-Api-Key` no está confirmado para la API v2.
-// - Colecciones: learning.md no muestra cómo se direcciona una colección en la URL. Este cliente
-//   queda atado a UN `databaseId`; quien necesite otra colección crea otro cliente con su id.
-// - Forma de la respuesta: se asume fila `{ _id, fields: {...} }` (o campos planos con `_id`/`id`)
-//   y, para listar, un arreglo o un objeto con arreglo en `data` o `rows`. Se normaliza a `Fila`.
-// - GAP-12: el formato de valor JSON de `mapa_asientos` se asume objeto (si llega como texto, se parsea).
-//
-// Este módulo nunca escribe logs: así ni la cabecera Authorization ni el secreto pueden filtrarse.
+// Este módulo nunca escribe logs ni incluye cabeceras, cuerpos ni claves en los mensajes de error.
 
 import type { MapaAsientos } from "./asientos.ts";
-
-export const DATUM_BASE = "https://api.jelou.ai/v2/databases";
 
 export type Fetch = typeof fetch;
 export type Sleep = (ms: number) => Promise<void>;
@@ -24,12 +19,18 @@ export type Sleep = (ms: number) => Promise<void>;
 export interface Fila {
   _id: string;
   fields: Record<string, unknown>;
+  updated?: string;
 }
 
 export interface ConfigDatum {
-  databaseId: string;
-  clientId: string;
-  clientSecret: string;
+  url: string;
+  apiKey: string;
+}
+
+export interface OpcionesListado {
+  filter?: string;
+  sort?: string;
+  fields?: string;
 }
 
 // Error de servicio: las functions lo responden como HTTP 503 (EC-17), sin efecto parcial visible.
@@ -41,12 +42,18 @@ export class DatumNoDisponible extends Error {
   }
 }
 
-// Respuesta no 2xx de Datum. El mensaje solo lleva método, ruta y código: nunca cabeceras ni cuerpo.
+// Respuesta no 2xx de Datum. El mensaje solo lleva método, ruta y código HTTP: nunca cabeceras ni cuerpo.
+// `codigo` es lo único que se conserva del cuerpo de error (`data.id.code`, p. ej. "validation_not_unique").
 export class DatumHttpError extends Error {
-  constructor(readonly httpStatus: number, mensaje: string) {
+  constructor(readonly httpStatus: number, mensaje: string, readonly codigo?: string) {
     super(mensaje);
     this.name = "DatumHttpError";
   }
+}
+
+// Clave `id` repetida en un POST (la creación atómica con id determinista fue ganada por otro).
+export function esDuplicado(e: unknown): boolean {
+  return e instanceof DatumHttpError && e.httpStatus === 400 && e.codigo === "validation_not_unique";
 }
 
 // `getEnv` es `ctx.env.get` en una function (o `Deno.env.get` en pruebas). Nunca hay valores en código.
@@ -56,39 +63,56 @@ export function configDesdeEntorno(getEnv: (nombre: string) => string | undefine
     if (v === undefined || v === "") throw new Error(`Falta la variable de entorno ${nombre}`);
     return v;
   };
-  return {
-    databaseId: leer("DATABASE_ID"),
-    clientId: leer("JELOU_CLIENT_ID"),
-    clientSecret: leer("JELOU_CLIENT_SECRET"),
-  };
+  return { url: leer("DATUM_URL"), apiKey: leer("DATUM_API_KEY") };
 }
 
-export function cabeceraBasic(clientId: string, clientSecret: string): string {
-  return `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
+// Literal de cadena para filtros PocketBase: comillas dobles, con `"` y `\` escapados (evita inyección de filtro).
+export function literalFiltro(valor: string): string {
+  return `"${valor.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`;
 }
+
+const FECHA_PB = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+const METADATOS = new Set(["id", "collectionId", "collectionName", "created", "updated", "expand"]);
+
+const aIso = (v: unknown) => (typeof v === "string" && FECHA_PB.test(v) ? v.replace(" ", "T") : v);
 
 function normalizar(crudo: unknown): Fila {
   const r = (crudo ?? {}) as Record<string, unknown>;
-  const _id = String(r._id ?? r.id ?? "");
-  if (_id === "") throw new DatumHttpError(502, "Respuesta de Datum sin id de fila");
-  if (typeof r.fields === "object" && r.fields !== null) return { _id, fields: r.fields as Record<string, unknown> };
-  const { _id: _a, id: _b, ...planos } = r;
-  return { _id, fields: planos };
+  const _id = String(r.id ?? "");
+  if (_id === "") throw new DatumHttpError(502, "Respuesta de Datum sin id de registro");
+  const fields: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(r)) if (!METADATOS.has(k)) fields[k] = aIso(v);
+  const fila: Fila = { _id, fields };
+  if (typeof r.updated === "string") fila.updated = aIso(r.updated) as string;
+  return fila;
 }
 
 export interface Datum {
-  listar(limit: number, page: number): Promise<Fila[]>;
-  crear(fields: Record<string, unknown>): Promise<Fila>;
-  actualizar(rowId: string, fields: Record<string, unknown>): Promise<Fila>;
-  leer(rowId: string): Promise<Fila>;
+  listar(coleccion: string, opc?: OpcionesListado): Promise<Fila[]>;
+  leer(coleccion: string, id: string): Promise<Fila>;
+  crear(coleccion: string, fields: Record<string, unknown>, id?: string): Promise<Fila>;
+  actualizar(coleccion: string, id: string, fields: Record<string, unknown>): Promise<Fila>;
+}
+
+const POR_PAGINA = 200;
+const MAX_PAGINAS = 100;
+
+// Código de validación del cuerpo de error de Datum (`data.id.code`); nada más del cuerpo se conserva.
+async function codigoDeError(resp: Response): Promise<string | undefined> {
+  try {
+    const cuerpo = await resp.json() as { data?: { id?: { code?: unknown } } };
+    const codigo = cuerpo?.data?.id?.code;
+    return typeof codigo === "string" ? codigo : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function crearDatum(config: ConfigDatum, fetchImpl: Fetch = fetch): Datum {
-  const base = `${DATUM_BASE}/${encodeURIComponent(config.databaseId)}/rows`;
-  const autorizacion = cabeceraBasic(config.clientId, config.clientSecret);
+  const base = config.url.replace(/\/+$/, "");
 
   async function pedir(metodo: string, ruta: string, cuerpo?: unknown): Promise<unknown> {
-    const headers: Record<string, string> = { Authorization: autorizacion, Accept: "application/json" };
+    const headers: Record<string, string> = { "X-Api-Key": config.apiKey, Accept: "application/json" };
     const init: RequestInit = { method: metodo, headers };
     if (cuerpo !== undefined) {
       headers["Content-Type"] = "application/json";
@@ -96,31 +120,41 @@ export function crearDatum(config: ConfigDatum, fetchImpl: Fetch = fetch): Datum
     }
     const resp = await fetchImpl(`${base}${ruta}`, init);
     if (!resp.ok) {
-      await resp.body?.cancel();
-      throw new DatumHttpError(resp.status, `Datum respondió ${resp.status} a ${metodo} /rows${ruta}`);
+      const codigo = await codigoDeError(resp);
+      throw new DatumHttpError(resp.status, `Datum respondió ${resp.status} a ${metodo} ${ruta.split("?")[0]}`, codigo);
     }
     return await resp.json();
   }
 
-  const idEnRuta = (rowId: string) => `/${encodeURIComponent(rowId)}`;
+  const rutaColeccion = (coleccion: string) => `/collections/${encodeURIComponent(coleccion)}/records`;
+  const rutaRegistro = (coleccion: string, id: string) => `${rutaColeccion(coleccion)}/${encodeURIComponent(id)}`;
 
   return {
-    async listar(limit, page) {
-      const cuerpo = await pedir("GET", `?limit=${limit}&page=${page}`) as unknown;
-      const filas = Array.isArray(cuerpo)
-        ? cuerpo
-        : ((cuerpo as Record<string, unknown>)?.data ?? (cuerpo as Record<string, unknown>)?.rows ?? []);
-      return (filas as unknown[]).map(normalizar);
+    async listar(coleccion, opc = {}) {
+      const filas: Fila[] = [];
+      for (let pagina = 1; pagina <= MAX_PAGINAS; pagina++) {
+        const q = new URLSearchParams({ page: String(pagina), perPage: String(POR_PAGINA) });
+        if (opc.filter) q.set("filter", opc.filter);
+        if (opc.sort) q.set("sort", opc.sort);
+        if (opc.fields) q.set("fields", opc.fields);
+        const cuerpo = await pedir("GET", `${rutaColeccion(coleccion)}?${q}`) as {
+          items?: unknown[];
+          totalPages?: number;
+        };
+        const items = cuerpo?.items ?? [];
+        filas.push(...items.map(normalizar));
+        if (items.length === 0 || pagina >= Number(cuerpo?.totalPages ?? 0)) return filas;
+      }
+      throw new DatumHttpError(502, `Datum: la colección ${coleccion} excede ${MAX_PAGINAS} páginas`);
     },
-    async crear(fields) {
-      return normalizar(await pedir("POST", "", { fields }));
+    async leer(coleccion, id) {
+      return normalizar(await pedir("GET", rutaRegistro(coleccion, id)));
     },
-    async actualizar(rowId, fields) {
-      await pedir("PUT", idEnRuta(rowId), { fields });
-      return { _id: rowId, fields }; // GAP-09: la forma de la respuesta del PUT no está confirmada; no se depende de ella
+    async crear(coleccion, fields, id) {
+      return normalizar(await pedir("POST", rutaColeccion(coleccion), id === undefined ? fields : { ...fields, id }));
     },
-    async leer(rowId) { // GAP-09
-      return normalizar(await pedir("GET", idEnRuta(rowId)));
+    async actualizar(coleccion, id, fields) {
+      return normalizar(await pedir("PATCH", rutaRegistro(coleccion, id), fields));
     },
   };
 }
@@ -129,15 +163,15 @@ export function crearDatum(config: ConfigDatum, fetchImpl: Fetch = fetch): Datum
 // Write-then-verify de vuelos.mapa_asientos (EC-17).
 //
 // Datum no ofrece transacciones ni compare-and-set (GAP-08): el mapa es un único JSON por vuelo y
-// cada cambio es leer-modificar-escribir. Por intento: leer fila -> `mutar(mapa)` -> PUT con
+// cada cambio es leer-modificar-escribir. Por intento: leer fila -> `mutar(mapa)` -> PATCH con
 // `version + 1` -> releer -> `verificar(mapa)` (los asientos llevan MI hold_token o MI pnr) y
 // `version` releída === la escrita. Si otro escritor pisó el mapa, la relectura no coincide y se
 // reintenta desde la lectura (mutar corre otra vez sobre el mapa fresco; si el asiento ya no está
 // libre, `mutar` lanza y el error se propaga como regla de negocio, no como 503).
 //
-// Sin efecto parcial: el PUT reemplaza el mapa completo en una sola escritura, así que no existe
+// Sin efecto parcial: el PATCH reemplaza el campo mapa_asientos completo en una sola escritura, así que no existe
 // un estado "a medias" dentro del vuelo. Si se agotan los intentos: (1) si el mapa releído aún
-// contiene mis marcas, se invoca `deshacer` (reversión best-effort, un PUT más con version + 1);
+// contiene mis marcas, se invoca `deshacer` (reversión best-effort, un PATCH más con version + 1);
 // (2) si no hay `deshacer` o falla, un hold queda con `hold_expira` y por RN-08 vale LIBRE al
 // vencer. Luego se lanza DatumNoDisponible (503) y el agente no recibe hold_token ni pnr.
 
@@ -165,17 +199,17 @@ function extraerMapa(fila: Fila): { mapa: MapaAsientos; version: number } {
 }
 
 async function escribirYReleer(datum: Datum, rowId: string, mapa: MapaAsientos, version: number) {
-  await datum.actualizar(rowId, { mapa_asientos: mapa, version });
-  return extraerMapa(await datum.leer(rowId));
+  await datum.actualizar("vuelos", rowId, { mapa_asientos: mapa, version });
+  return extraerMapa(await datum.leer("vuelos", rowId));
 }
 
 // Idempotencia: la verificación por hold_token/pnr propio hace seguro repetir el intento; un
-// reintento tras un PUT que sí se aplicó reescribe el mismo contenido lógico.
+// reintento tras un PATCH que sí se aplicó reescribe el mismo contenido lógico.
 export async function escribirMapaVerificado(datum: Datum, op: OpcionesEscritura): Promise<MapaAsientos> {
   const sleep = op.sleep ?? dormir;
   for (let intento = 1; intento <= INTENTOS; intento++) {
     try {
-      const actual = extraerMapa(await datum.leer(op.vueloRowId));
+      const actual = extraerMapa(await datum.leer("vuelos", op.vueloRowId));
       const nuevaVersion = actual.version + 1;
       const releido = await escribirYReleer(datum, op.vueloRowId, op.mutar(actual.mapa), nuevaVersion);
       if (releido.version === nuevaVersion && op.verificar(releido.mapa)) return releido.mapa;
@@ -192,9 +226,9 @@ export async function escribirMapaVerificado(datum: Datum, op: OpcionesEscritura
 async function revertirSiPosible(datum: Datum, op: OpcionesEscritura): Promise<void> {
   if (!op.deshacer) return;
   try {
-    const actual = extraerMapa(await datum.leer(op.vueloRowId));
+    const actual = extraerMapa(await datum.leer("vuelos", op.vueloRowId));
     if (!op.verificar(actual.mapa)) return; // mis marcas no están: nada que revertir
-    await datum.actualizar(op.vueloRowId, { mapa_asientos: op.deshacer(actual.mapa), version: actual.version + 1 });
+    await datum.actualizar("vuelos", op.vueloRowId, { mapa_asientos: op.deshacer(actual.mapa), version: actual.version + 1 });
   } catch {
     // Best-effort: si falla, el hold vence por hold_expira (RN-08).
   }

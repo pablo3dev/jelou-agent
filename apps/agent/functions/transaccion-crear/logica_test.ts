@@ -25,7 +25,7 @@ const montar = (filas: Fila[], opc = {}, rng?: () => number) => {
   return { sim, dep: { datum: sim.datum, ahora: () => AHORA, payPublicUrl: "http://pay.test/", sleep, rng } };
 };
 const mapaDe = (sim: ReturnType<typeof datumEscribible>, id: string) =>
-  sim.almacen.find((f) => f._id === id)!.fields.mapa_asientos as MapaAsientos;
+  sim.fila(id).fields.mapa_asientos as MapaAsientos;
 
 const p = (nombre: string, edad: number, ida: string, extra: Record<string, unknown> = {}) =>
   ({ nombre, documento: "1020304050", edad, asiento_ida: ida, ...extra });
@@ -52,11 +52,11 @@ Deno.test("crea reserva PENDIENTE_PAGO con PNR y total, transacción PENDIENTE y
   assertEquals(r.total_cop, 520000);
   assertEquals(r.expira_at, EXPIRA);
   assertEquals(r.enlace_pago, `http://pay.test/pay/${r.transaccion_id}`);
-  const reserva = sim.almacen.find((f) => f._id === r.reserva_id)!.fields;
+  const reserva = sim.fila(r.reserva_id).fields;
   assertEquals(reserva, {
     pnr: r.pnr, estado: "PENDIENTE_PAGO", vuelo_ida_id: "v-ida-dic", vuelo_regreso_id: null, hold_expira: EXPIRA, total_cop: 520000,
   });
-  const tx = sim.almacen.find((f) => f._id === r.transaccion_id)!.fields;
+  const tx = sim.fila(r.transaccion_id).fields;
   assertEquals(tx, { reserva_id: r.reserva_id, estado: "PENDIENTE", expira_at: EXPIRA, execution_id: "exec-1", ultimo_evento: null });
   assertEquals(sim.creadas.filter((f) => f.fields.documento !== undefined).length, 2);
 });
@@ -75,8 +75,8 @@ Deno.test("re-fija a creación+15 min reserva, transacción y hold de asientos c
       assertEquals(mapaDe(sim, v)[c].hold_token, "tok-1");
     }
   }
-  assertEquals(sim.almacen.find((f) => f._id === r.reserva_id)!.fields.hold_expira, EXPIRA);
-  assertEquals(sim.almacen.find((f) => f._id === r.transaccion_id)!.fields.expira_at, EXPIRA);
+  assertEquals(sim.fila(r.reserva_id).fields.hold_expira, EXPIRA);
+  assertEquals(sim.fila(r.transaccion_id).fields.expira_at, EXPIRA);
   assertEquals(r.expira_at, EXPIRA);
 });
 
@@ -119,7 +119,7 @@ Deno.test("idempotencia (EC-01/EC-16): repetir devuelve la PENDIENTE existente s
 Deno.test("una PENDIENTE vencida no se reutiliza: se crea una nueva si el hold es válido", async () => {
   const { sim, dep } = montar(conHold({ "v-ida-dic": ["12A", "12B"] }));
   const a = await ejecutar(entrada.parse(base()), dep);
-  sim.almacen.find((f) => f._id === a.transaccion_id)!.fields.expira_at = "2026-11-20T09:00:00.000Z";
+  sim.fila(a.transaccion_id).fields.expira_at = "2026-11-20T09:00:00.000Z";
   const b = await ejecutar(entrada.parse(base()), dep);
   assertEquals(b.existente, false);
   assert(b.transaccion_id !== a.transaccion_id);
@@ -172,7 +172,7 @@ Deno.test("fallo de verify de la re-fijación (EC-16): 503 sin crear ninguna fil
 Deno.test("falla la creación de la transacción: 503 y la reserva queda CANCELADA, no PENDIENTE_PAGO", async () => {
   const { sim, dep } = montar(conHold({ "v-ida-dic": ["12A", "12B"] }), { fallaCrear: (f: Record<string, unknown>) => f.estado === "PENDIENTE" });
   await assertRejects(() => ejecutar(entrada.parse(base()), dep), DatumNoDisponible);
-  const reservas = sim.almacen.filter((f) => f.fields.pnr !== undefined && f.fields.total_cop === 520000);
+  const reservas = sim.todas().filter((f) => f.fields.pnr !== undefined && f.fields.total_cop === 520000);
   assertEquals(reservas.map((f) => f.fields.estado), ["CANCELADA"]);
-  assertEquals(sim.almacen.some((f) => f.fields.expira_at !== undefined), false);
+  assertEquals(sim.todas().some((f) => f.fields.expira_at !== undefined), false);
 });

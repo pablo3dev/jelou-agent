@@ -3,21 +3,22 @@
 // Orden (cada paso solo corre si el anterior pasó):
 //  0. Firma: `dep.firmaValida()` (en la function: `ctx.verifyHmac` sobre el cuerpo crudo). Inválida => FirmaInvalida (401)
 //     y CERO lecturas o escrituras en Datum, CERO llamadas de red (EC-05).
-//  1. Se listan las filas y se lee la transacción. Inexistente o no PENDIENTE => SIN_EFECTO (EC-07): una APROBADA
+//  1. Se lee la transacción. Inexistente o no PENDIENTE => SIN_EFECTO (EC-07): una APROBADA
 //     posterior a una RECHAZADA (o al revés) nunca reabre la transacción.
 //  2. Idempotencia (EC-04): `eventos_pago.id_evento` = `<transaccion_id>:<estado>`. Si ya existe y la transacción ya salió
-//     de PENDIENTE => DUPLICADO (200, sin efecto, sin reanudar). Si no existe, se registra ANTES de aplicar el efecto.
+//     de PENDIENTE => DUPLICADO (200, sin efecto, sin reanudar). Si no existe, se registra ANTES de aplicar el efecto con
+//     id determinista `<transaccion_id><estado en minúsculas>`: la creación es atómica en Datum y, si otra entrega
+//     simultánea ya la ganó (`esDuplicado`), esta responde DUPLICADO sin aplicar nada.
 //  3. Efecto según RN-12 / RN-10 / RN-11: asientos (write-then-verify) -> reserva -> reanudación -> transacción.
 //
 // Idempotencia / reintentos: la transacción es el marcador de "efecto terminado": se actualiza al FINAL. Si algo falla antes
 // (503), la transacción sigue PENDIENTE; el evento ya registrado NO cuenta como duplicado y el reintento de la pasarela
 // reaplica los pasos, que son idempotentes (asientos con verificación por pnr/vencimiento propio, reserva con estado fijo).
 // Se prefiere que una caída entre la reanudación y el cierre de la transacción reanude dos veces a que la reanudación se pierda.
-// Límite: dos entregas simultáneas del mismo evento no se serializan (Datum no tiene compare-and-set, GAP-08).
+// Dos entregas simultáneas del mismo evento se serializan por la creación atómica del evento (id determinista).
 import { z } from "zod";
 import type { MapaAsientos } from "../lib/asientos.ts";
-import { listarTodo } from "../lib/catalogo.ts";
-import { DatumHttpError, DatumNoDisponible, escribirMapaVerificado } from "../lib/datum.ts";
+import { DatumHttpError, DatumNoDisponible, escribirMapaVerificado, esDuplicado, literalFiltro } from "../lib/datum.ts";
 import type { Datum, Fetch, Fila, Sleep } from "../lib/datum.ts";
 
 export const RESUME_URL = "https://gateway.jelou.ai/workflows/v1/skills/resume";
@@ -73,18 +74,33 @@ function decidir(estado: Entrada["estado"], expiraAt: string, ahora: Date): Dest
     : { estadoTx: "RECHAZADA", estadoReserva: "PAGO_RECHAZADO", mensaje: "rejected", resultado: "APLICADO" };
 }
 
-async function leerONulo(datum: Datum, rowId: string): Promise<Fila | null> {
+async function leerONulo(datum: Datum, coleccion: string, id: string): Promise<Fila | null> {
   try {
-    return await datum.leer(rowId);
+    return await datum.leer(coleccion, id);
   } catch (e) {
     if (e instanceof DatumHttpError && e.httpStatus === 404) return null;
     throw e;
   }
 }
 
-// Asientos de la reserva por vuelo (vuelo_id -> fila de vuelo + claves).
-function asientosPorVuelo(filas: Fila[], reserva: Fila) {
-  const pasajeros = filas.filter((f) => f.fields.reserva_id === reserva._id && f.fields.documento !== undefined);
+async function existeEvento(datum: Datum, idEvento: string): Promise<boolean> {
+  return (await datum.listar("eventos_pago", { filter: `id_evento=${literalFiltro(idEvento)}`, fields: "id" })).length > 0;
+}
+
+// Adapta la verificación del SDK (`ctx.verifyHmac`: no devuelve nada si la firma es válida y lanza si no) a booleano.
+// Cualquier excepción cuenta como firma inválida: ante la duda, 401.
+export async function adaptarVerificacion(verify: () => Promise<unknown>): Promise<boolean> {
+  try {
+    await verify();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Asientos de la reserva por vuelo (vuelo_id = _id del registro de `vuelos`).
+async function asientosPorVuelo(datum: Datum, reserva: Fila) {
+  const pasajeros = await datum.listar("pasajeros", { filter: `reserva_id=${literalFiltro(reserva._id)}` });
   const grupos: { vueloId: string; claves: string[] }[] = [
     { vueloId: texto(reserva.fields.vuelo_ida_id), claves: pasajeros.map((p) => texto(p.fields.asiento_ida)).filter(Boolean) },
   ];
@@ -92,12 +108,13 @@ function asientosPorVuelo(filas: Fila[], reserva: Fila) {
   if (regreso !== null && regreso !== undefined && regreso !== "") {
     grupos.push({ vueloId: texto(regreso), claves: pasajeros.map((p) => texto(p.fields.asiento_regreso)).filter(Boolean) });
   }
-  return grupos.map((g) => {
-    const vuelo = filas.find((f) => f.fields.mapa_asientos !== undefined && f.fields.ruta_id !== undefined &&
-      (texto(f.fields.id) === g.vueloId || f._id === g.vueloId));
+  const resultado: { vueloRowId: string; claves: string[] }[] = [];
+  for (const g of grupos) {
+    const vuelo = await leerONulo(datum, "vuelos", g.vueloId);
     if (!vuelo) throw new Error(`No se encontró el vuelo ${g.vueloId} de la reserva`);
-    return { vueloRowId: vuelo._id, claves: g.claves };
-  });
+    resultado.push({ vueloRowId: vuelo._id, claves: g.claves });
+  }
+  return resultado;
 }
 
 // Mis asientos: RETENIDO con mi vencimiento exacto (refijado en transaccion-crear) o, ya aplicado, VENDIDO con mi pnr.
@@ -153,30 +170,39 @@ export async function ejecutar(input: Entrada, dep: Dep): Promise<z.infer<typeof
   const log = (m: string) => dep.log?.(m, { transaccion_id: input.transaccion_id, estado: input.estado });
 
   // 1. Transacción.
-  const tx = await leerONulo(dep.datum, input.transaccion_id);
+  const tx = await leerONulo(dep.datum, "transacciones", input.transaccion_id);
   if (!tx || tx.fields.estado !== "PENDIENTE") {
     // Idempotencia por estado terminal: repetir el mismo evento o un evento contrario no cambia nada.
-    const filas = await listarTodo(dep.datum);
-    const repetido = filas.some((f) => f.fields.id_evento === input.event_id);
+    const repetido = await existeEvento(dep.datum, input.event_id);
     log(repetido ? "Evento duplicado: sin efecto" : "Transacción inexistente o no pendiente: sin efecto");
     return { resultado: repetido ? "DUPLICADO" : "SIN_EFECTO" };
   }
 
-  const filas = await listarTodo(dep.datum);
   const destino = decidir(input.estado, texto(tx.fields.expira_at), dep.ahora());
 
   // 2. Registrar el evento antes del efecto (si un intento previo ya lo registró y no terminó, se reaplica).
-  if (!filas.some((f) => f.fields.id_evento === input.event_id)) {
-    await dep.datum.crear({ transaccion_id: input.transaccion_id, id_evento: input.event_id, estado: input.estado });
+  // Idempotencia: id determinista => la creación es atómica; si otra entrega simultánea la ganó, esta es DUPLICADO.
+  if (!(await existeEvento(dep.datum, input.event_id))) {
+    try {
+      await dep.datum.crear(
+        "eventos_pago",
+        { transaccion_id: input.transaccion_id, id_evento: input.event_id, estado: input.estado },
+        `${input.transaccion_id}${input.estado.toLowerCase()}`,
+      );
+    } catch (e) {
+      if (!esDuplicado(e)) throw e;
+      log("Evento duplicado (entrega simultánea): sin efecto");
+      return { resultado: "DUPLICADO" };
+    }
   }
 
   // 3. Efecto.
-  const reserva = await leerONulo(dep.datum, texto(tx.fields.reserva_id));
+  const reserva = await leerONulo(dep.datum, "reservas", texto(tx.fields.reserva_id));
   if (!reserva) throw new Error("La transacción apunta a una reserva inexistente");
   const expira = texto(tx.fields.expira_at);
   const pnr = texto(reserva.fields.pnr);
   const vender = destino.estadoTx === "APROBADA";
-  for (const g of asientosPorVuelo(filas, reserva)) {
+  for (const g of await asientosPorVuelo(dep.datum, reserva)) {
     const mutar = vender ? mutarVenta(g.claves, pnr, expira) : mutarLiberacion(g.claves, expira);
     await escribirMapaVerificado(dep.datum, {
       vueloRowId: g.vueloRowId,
@@ -185,14 +211,14 @@ export async function ejecutar(input: Entrada, dep: Dep): Promise<z.infer<typeof
       verificar: (m) => g.claves.every((c) => vender ? m[c]?.estado === "VENDIDO" && m[c].pnr === pnr : !esMioRetenido(m[c], expira)),
     });
   }
-  await dep.datum.actualizar(reserva._id, { ...reserva.fields, estado: destino.estadoReserva });
+  await dep.datum.actualizar("reservas", reserva._id, { estado: destino.estadoReserva });
 
   const executionId = tx.fields.execution_id;
   if (typeof executionId === "string" && executionId !== "") await reanudar(dep, executionId, destino.mensaje);
   else log("Transacción sin execution_id: no hay ejecución que reanudar");
 
   // Cierre: la transacción sale de PENDIENTE al final (marcador de efecto completo).
-  await dep.datum.actualizar(tx._id, { ...tx.fields, estado: destino.estadoTx, ultimo_evento: input.event_id });
+  await dep.datum.actualizar("transacciones", tx._id, { estado: destino.estadoTx, ultimo_evento: input.event_id });
   log(`Evento aplicado: ${destino.resultado}`);
   return { resultado: destino.resultado };
 }
