@@ -18,7 +18,8 @@
 | Chart.js | 4.5.1 | CDN: `https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js` |
 | @jelou/cli | 4.13.1 | Investigación LEARN. |
 | Docker Compose | v5.6.0 | Investigación LEARN. VERIFICAR: `docker compose version`. |
-| @jelou/functions | NO FIJADA | GAP-03. Se fija con `jelou functions init` (su `package.json`/`deno.json` generado). |
+| @jelou/functions | 1.6.1 (JSR: jsr:@jelou/functions; no está en npm) | Verificado por LEARN 2026-10-16 en JSR; su tarea test es `deno test --allow-read --allow-env --allow-net`. Sin versión mínima de Deno declarada (GAP-03 cerrado en versión; compatibilidad con 2.9.7 se confirma al correr los tests). |
+| Deno (pruebas) | 2.9.7, imagen `denoland/deno:2.9.7` (digest sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432) | Verificado 2026-10-16: `docker manifest inspect` OK y `docker run --rm denoland/deno:2.9.7 deno --version` => `deno 2.9.7 (stable, release, x86_64-unknown-linux-gnu)`, typescript 6.0.3. |
 
 Riesgo de ciclo de vida: según la tabla de nodejs.org (consulta de LEARN, fecha 2026-10-14), Node 24 entra en mantenimiento. Decisión IDEA: se fija 24.22.0 para la PoC. Subir de versión es decisión del USUARIO (GAP-01).
 
@@ -166,6 +167,7 @@ jelou functions dev --port 3002
 ```
 
 - GAP-04: `jelou functions check` puede requerir Deno local. VERIFICAR en el primer build. Si requiere Deno, escalar (no instalar Deno sin aprobación del LANZADOR).
+- Comando de pruebas en Docker (Git Bash): `MSYS_NO_PATHCONV=1 docker run --rm -v "C:/repos/jelou-agent/apps/agent/functions:/app" -w /app denoland/deno:2.9.7 deno test --allow-read --allow-env --allow-net`. GAP-04 sigue abierto: si `jelou functions check` requiere Deno se corre en una imagen con Deno, no local.
 - `jelou functions dev --port 3002` dentro del contenedor requiere publicar el puerto 3002; no está previsto en el compose de 2.3. GAP-05.
 
 ## 4. Jelou Functions
