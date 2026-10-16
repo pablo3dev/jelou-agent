@@ -124,7 +124,7 @@
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: —
   - Rutas: `apps/crm/Dockerfile`
-- [ ] **Task 2.18: compose.yaml: `name: aerolinea-reservas-whatsapp`; servicios `crm` y `pay` con healthcheck CMD de Node contra `/health`; `agent-cli` con build context `../agent` y profile `tools`; red `reservas-net`; puertos publicados en `127.0.0.1` desde `.env`; verificar con `docker compose config --services` con el profile `tools`** `[DRAFT §Stack técnico]`
+- [x] **Task 2.18: compose.yaml: `name: aerolinea-reservas-whatsapp`; servicios `crm` y `pay` con healthcheck CMD de Node contra `/health`; `agent-cli` con build context `../agent` y profile `tools`; red `reservas-net`; puertos publicados en `127.0.0.1` desde `.env`; verificar con `docker compose config --services` con el profile `tools`** `[DRAFT §Stack técnico]`
   - Unidad: `apps/infrastructure`
   - Spec: `entorno-local-infrastructure`
   - Depende de: 1.4, 2.9, 2.13, 2.17
@@ -180,7 +180,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 17 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 18 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **21** | **70%** |
+| **Total Global** | **30** | **22** | **73%** |
