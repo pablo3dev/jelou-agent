@@ -79,7 +79,7 @@
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 2.4, 2.5, 2.6
   - Rutas: `apps/agent/workflow/`
-- [ ] **Task 2.9: Dockerfile del CLI: base `node:24.22.0-bookworm-slim`, `@jelou/cli` 4.13.1 instalado globalmente, usuario no root, healthcheck; sin `.env` en la imagen** `[DRAFT §Carriles]` `[DRAFT §Stack técnico]`
+- [x] **Task 2.9: Dockerfile del CLI: base `node:24.22.0-bookworm-slim`, `@jelou/cli` 4.13.1 instalado globalmente, usuario no root, healthcheck; sin `.env` en la imagen** `[DRAFT §Carriles]` `[DRAFT §Stack técnico]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: —
@@ -180,7 +180,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 15 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 16 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **19** | **63%** |
+| **Total Global** | **30** | **20** | **67%** |
