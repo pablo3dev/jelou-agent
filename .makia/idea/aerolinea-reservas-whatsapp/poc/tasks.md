@@ -114,7 +114,7 @@
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: 1.3
   - Rutas: `apps/crm/src/`
-- [ ] **Task 2.16: Crm: frontend estático con vistas de vuelos, asientos vendidos por vuelo y destino, mapa de asientos y estadísticas; Chart.js 4.5.1 cargado por CDN con versión fija** `[REQ-11]` `[DRAFT §Stack técnico]`
+- [x] **Task 2.16: Crm: frontend estático con vistas de vuelos, asientos vendidos por vuelo y destino, mapa de asientos y estadísticas; Chart.js 4.5.1 cargado por CDN con versión fija** `[REQ-11]` `[DRAFT §Stack técnico]`
   - Unidad: `apps/crm`
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: 2.15
@@ -180,7 +180,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 16 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 17 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **20** | **67%** |
+| **Total Global** | **30** | **21** | **70%** |
