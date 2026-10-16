@@ -12,6 +12,7 @@ workflows:
     hash: "sha256:b9095b009b57d1333f60394a97c351736df346b1e714a6985ccd527d29400007"
     lastPulledAt: "2026-10-16T21:45:15.266Z"
     name: "Mi primer workflow"
+    publishedHash: "sha256:b9095b009b57d1333f60394a97c351736df346b1e714a6985ccd527d29400007"
     skillId: 52773
     workflowId: 72673
 tools:

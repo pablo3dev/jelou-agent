@@ -136,45 +136,46 @@
   - Rutas: `apps/infrastructure/README.md`
 
 ### Phase 3: Datum en vivo (bloqueado por credenciales)
-- [x] **Task 3.1: BLOQUEADA POR CREDENCIALES (`JELOU_TOKEN`, `JELOU_CLIENT_ID`, `JELOU_CLIENT_SECRET`, `DATABASE_ID`, `JELOU_API_KEY` aún no disponibles). Spike go/no-go de Datum: auth y CRUD con curl (Basic, GET por id, POST, PUT) con códigos HTTP y cabeceras de límite de tasa; firma HMAC sobre cuerpo crudo con el header confirmado; `ctx.verifyHmac` en `jelou functions dev`; `functions check` en `node:24.22.0-bookworm-slim`; mensaje de texto por WhatsApp con el tipo confirmado; resultado go/no-go registrado en `apps/agent/spike/`** `[DRAFT §Recomendaciones de implementación]` `[DRAFT §Riesgos y mitigaciones]`
+- [x] **Task 3.1: Spike go/no-go de Datum: auth y CRUD con curl (Basic, GET por id, POST, PUT) con códigos HTTP y cabeceras de límite de tasa; firma HMAC sobre cuerpo crudo con el header confirmado; `ctx.verifyHmac` en `jelou functions dev`; `functions check` en `node:24.22.0-bookworm-slim`; mensaje de texto por WhatsApp con el tipo confirmado; resultado go/no-go registrado en `apps/agent/spike/`** `[DRAFT §Recomendaciones de implementación]` `[DRAFT §Riesgos y mitigaciones]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 2.6, 2.9
   - Rutas: `apps/agent/spike/`
-- [x] **Task 3.2: BLOQUEADA POR CREDENCIALES. Despliegue en Datum: colecciones con `jelou databases collections create` desde `apps/agent/migrations/`; functions y workflow con `@jelou/cli` 4.13.1 en el contenedor del CLI** `[REQ-06]` `[DRAFT §Carriles]`
+- [x] **Task 3.2: Despliegue en Datum: colecciones con `jelou databases collections create` desde `apps/agent/migrations/`; functions y workflow con `@jelou/cli` 4.13.1 en el contenedor del CLI** `[REQ-06]` `[DRAFT §Carriles]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 2.8, 3.1
   - Rutas: `apps/agent/migrations/`, `apps/agent/functions/`, `apps/agent/workflow/`
-- [x] **Task 3.3: BLOQUEADA POR CREDENCIALES. Carga del seed en Datum a ritmo bajo con backoff; verificar 6 rutas, 12 temporadas, 12 parámetros y 372 vuelos; una segunda ejecución no duplica filas** `[REQ-12]`
+- [x] **Task 3.3: Carga del seed en Datum a ritmo bajo con backoff; verificar 6 rutas, 12 temporadas, 12 parámetros y 372 vuelos; una segunda ejecución no duplica filas** `[REQ-12]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 2.7, 3.2
   - Rutas: `apps/agent/seed/`
-- [x] **Task 3.4: BLOQUEADA POR CREDENCIALES. Conformidad de `db-design.dbml` con una base de prueba creada con `jelou databases create`; en verde** `[DRAFT §Estrategia de pruebas]`
+- [x] **Task 3.4: Conformidad de `db-design.dbml` con una base de prueba creada con `jelou databases create`; en verde** `[DRAFT §Estrategia de pruebas]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 3.2
   - Rutas: `apps/agent/contract/`
-- [x] **Task 3.5: BLOQUEADA POR CREDENCIALES. Pay en vivo: transacción real leída por id desde Datum; notificación a `pago-notificacion` con HMAC aceptada, reanudación del agente verificada y evento duplicado respondido con 200 sin efecto** `[REQ-07]` `[REQ-08]`
+- [x] **Task 3.5: Pay en vivo: transacción real leída por id desde Datum; notificación a `pago-notificacion` con HMAC aceptada, reanudación del agente verificada y evento duplicado respondido con 200 sin efecto** `[REQ-07]` `[REQ-08]`
   - Unidad: `apps/pay`
   - Spec: `reserva-pago-whatsapp-pay`
   - Depende de: 2.12, 2.13, 3.2
   - Rutas: `apps/pay/src/`
   - Evidencia (2026-10-16, Docker node:24.22.0, cliente de pay migrado a Datum v2 con `X-Api-Key`): `getRecord("transacciones", id)` leyó la transacción real (PENDIENTE, `expira_at` normalizada a ISO); id inexistente -> null; `POST /pagar/:id/aprobar` de pay -> notificación HMAC a `https://aerolinea-reservas.fn.jelou.ai/pago-notificacion` aceptada (transacción APROBADA, reserva EMITIDA, `ultimo_evento` fijado); mismo evento firmado -> 200 `{"resultado":"DUPLICADO"}` sin efecto; firma inválida -> 401. Datos de prueba eliminados; base 6/12/12/372. Reanudación del agente NO verificada: la transacción de prueba no tenía `execution_id` (requiere ejecución pausada de Brain Studio; carril agent/4.1).
-- [x] **Task 3.6: BLOQUEADA POR CREDENCIALES. Dashboard en vivo con el seed cargado: muestra vuelos, asientos vendidos por vuelo y destino, mapa de asientos y estadísticas** `[REQ-11]`
+- [x] **Task 3.6: Dashboard en vivo con el seed cargado: muestra vuelos, asientos vendidos por vuelo y destino, mapa de asientos y estadísticas** `[REQ-11]`
   - Unidad: `apps/crm`
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: 2.17, 3.3
   - Rutas: `apps/crm/src/`
 
 ### Phase 4: Arranque e integración
-- [x] **Task 4.1: BLOQUEADA POR CREDENCIALES. E2E único con `docker compose up` (proyecto `aerolinea-reservas-whatsapp`, healthchecks de `crm`, `pay` y `agent-cli` en verde): reserva de ida y vuelta con asientos, equipaje y mascota aprobada → PNR; rechazada → asientos libres; expiración → asientos libres; notificación duplicada ignorada; `git ls-files --eol` sin `i/crlf` en `.sh`, `.yaml`, `.js` y `Dockerfile`; hash del contrato de apps/agent igual en las copias de apps/pay y apps/crm** `[DRAFT §Estrategia de pruebas]` `[DRAFT §Criterios de aceptación / Definition of Done]`
+- [x] **Task 4.1: E2E único con `docker compose up` (proyecto `aerolinea-reservas-whatsapp`, healthchecks de `crm`, `pay` y `agent-cli` en verde): reserva de ida y vuelta con asientos, equipaje y mascota aprobada → PNR; rechazada → asientos libres; expiración → asientos libres; notificación duplicada ignorada; `git ls-files --eol` sin `i/crlf` en `.sh`, `.yaml`, `.js` y `Dockerfile`; hash del contrato de apps/agent igual en las copias de apps/pay y apps/crm** `[DRAFT §Estrategia de pruebas]` `[DRAFT §Criterios de aceptación / Definition of Done]`
   - Unidad: `apps/infrastructure`
   - Spec: `entorno-local-infrastructure`
   - Depende de: 2.18, 3.4, 3.5, 3.6
   - Rutas: `apps/infrastructure/`
   - Evidencia (2026-10-16, `docker compose up --build -d` en apps/infrastructure, proyecto aerolinea-reservas-whatsapp; agente por `jelou test send text -t mi-primer-workflow-whatsapp` desde agent-cli; canal WhatsApp real NO conectado): crm y pay `healthy`. Ida y vuelta BOG-MDE 2026-12-10/14, 2 pasajeros, asientos 12A/12B en ambos vuelos, 1 maleta de bodega y 1 perro: total 2.639.000, asientos RETENIDO -> pago aprobado en pay -> VENDIDO con PNR, reserva EMITIDA, transaccion APROBADA. Rechazada: reanudación `rejected`, agente avisa, asiento 14A LIBRE, reserva PAGO_RECHAZADO. Expiración (15 min reales): asientos LIBRES, reserva EXPIRADA, agente avisa `expired`. Aprobada limpia (15A): reanudación `paid` -> el agente entrega el PNR (tras corregir el prompt, paso 10, commit d257860). Duplicada: mismo evento -> 200 DUPLICADO, RECHAZADA tras APROBADA -> SIN_EFECTO, sin cambios en asientos ni eventos_pago. Dashboard crm: 6 vendidos, ingresos 3.549.000 = suma de las 3 EMITIDA, reservas_por_estado coherente. `git ls-files --eol`: 53 archivos .sh/.yaml/.js/Dockerfile, todos i/lf w/lf; CONTRACT.sha256 idéntico (e1bc1863…, c52a9775…) y `sha256sum -c` OK en agent, pay y crm. Datos de prueba propios eliminados; seed 6/12/12/372. NO verificado: envío real por WhatsApp (GAP-11); la mascota solo se cotiza en la ida (cotizar no admite mascota en vuelta); `pago-notificacion` devolvió 503 (reanudación HTTP 422) una vez al notificar tarde (~15 min) una ejecución de test inactiva (efectos aplicados, transacción quedó PENDIENTE, se pudo reanudar después); `paid`/`rejected`/`expired` son texto que cualquier cliente podría escribir mientras el agente está en pausa (riesgo residual: entregar PNR sin pago).
+  - Evidencia adicional (2026-10-16, reverificación independiente): canal sandbox WhatsApp 01M52R2BBT46WR2FM7Q7MR2RPE (Whatsapp, sandbox, +13239183195, estado active, conectado al bot del proyecto, rama master; lista de testers vacía). Con `jelou test send text` (borrador): ida y vuelta BOG-MDE 2 pasajeros, bodega, mascota, total 2.483.000, asientos 20A/20B y 21A/21B RETENIDO -> aprobar en pay -> VENDIDO con PNR y el agente entrega el PNR; rechazar -> 22A/22B/23A/23B LIBRES; expiración real a los 15 min + notificación firmada -> EXPIRADO, 24A/24B/25A/25B LIBRES; notificación duplicada -> DUPLICADO y RECHAZADA tras APROBADA -> SIN_EFECTO; crm /api/estadisticas reflejó vendidos, ingresos y reservas_por_estado. `jelou test project start --channel ... --ref published` responde con el agente publicado. Datos de prueba eliminados; 6/12/12/372. Pendiente: mensaje real desde un teléfono (agregar el teléfono como tester del sandbox).
 
 ---
 
