@@ -103,7 +103,7 @@
   - Spec: `reserva-pago-whatsapp-pay`
   - Depende de: —
   - Rutas: `apps/pay/Dockerfile`
-- [ ] **Task 2.14: Servidor base de apps/crm: Express 5.3.0 sobre Node 24.22.0, puerto `PORT_CRM` (default 3000) desde `.env`, `GET /health`, sirve HTML y JS estáticos** `[DRAFT §Carriles]` `[DRAFT §Stack técnico]`
+- [x] **Task 2.14: Servidor base de apps/crm: Express 5.3.0 sobre Node 24.22.0, puerto `PORT_CRM` (default 3000) desde `.env`, `GET /health`, sirve HTML y JS estáticos** `[DRAFT §Carriles]` `[DRAFT §Stack técnico]`
   - Unidad: `apps/crm`
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: 1.3
@@ -179,7 +179,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 5 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 6 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **9** | **30%** |
+| **Total Global** | **30** | **10** | **33%** |
