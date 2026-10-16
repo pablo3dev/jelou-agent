@@ -16,9 +16,8 @@ services:
         required: false
     environment:
       PORT_CRM: ${PORT_CRM:-3000}
-      JELOU_CLIENT_ID: ${JELOU_CLIENT_ID}
-      JELOU_CLIENT_SECRET: ${JELOU_CLIENT_SECRET}
-      DATABASE_ID: ${DATABASE_ID}
+      DATUM_URL: ${DATUM_URL}
+      DATUM_API_KEY: ${DATUM_API_KEY}
       DATUM_BASE_URL: ${DATUM_BASE_URL:-}
       CRM_CACHE_TTL_MS: ${CRM_CACHE_TTL_MS:-}
     ports:
@@ -41,9 +40,8 @@ services:
         required: false
     environment:
       PORT_PAY: ${PORT_PAY:-3001}
-      JELOU_CLIENT_ID: ${JELOU_CLIENT_ID}
-      JELOU_CLIENT_SECRET: ${JELOU_CLIENT_SECRET}
-      DATABASE_ID: ${DATABASE_ID}
+      DATUM_URL: ${DATUM_URL}
+      DATUM_API_KEY: ${DATUM_API_KEY}
       PAY_WEBHOOK_SECRET: ${PAY_WEBHOOK_SECRET}
       PAGO_NOTIFICACION_URL: ${PAGO_NOTIFICACION_URL}
       PAY_PUBLIC_URL: ${PAY_PUBLIC_URL}
@@ -71,6 +69,9 @@ services:
         required: false
     environment:
       JELOU_TOKEN: ${JELOU_TOKEN}
+      JELOU_PROJECT_ID: ${JELOU_PROJECT_ID:-}
+      DATABASE_ID: ${DATABASE_ID:-}
+      DATABASE_SLUG: ${DATABASE_SLUG:-}
     volumes:
       - ../agent:/workspace
     networks: [reservas-net]

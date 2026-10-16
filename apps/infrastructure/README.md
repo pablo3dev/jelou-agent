@@ -27,16 +27,15 @@ Completa `.env` (sin valores reales en este documento):
 | `PORT_CRM` | Puerto de `crm` (default 3000) | crm |
 | `PORT_PAY` | Puerto de `pay` (default 3001) | pay |
 | `JELOU_TOKEN` | Token del CLI de Jelou | agent-cli |
-| `JELOU_CLIENT_ID` | Client ID de Jelou | crm, pay |
-| `JELOU_CLIENT_SECRET` | Client secret de Jelou | crm, pay |
-| `DATABASE_ID` | ID de la base de datos en Datum | crm, pay |
+| `DATUM_URL` | URL base de Datum (PocketBase) | crm, pay |
+| `DATUM_API_KEY` | API key de Datum | crm, pay |
+| `DATABASE_ID` / `DATABASE_SLUG` | Base de datos en Datum para migraciones/seed | agent-cli |
 | `PAY_WEBHOOK_SECRET` | Secreto para validar el webhook de pagos | pay |
 | `PAY_PUBLIC_URL` | URL pública de `pay` | pay |
 | `PAGO_NOTIFICACION_URL` | URL a la que se notifica el pago | pay |
 | `JELOU_API_KEY` | API key de Jelou | solo en `.env.example`; no la inyecta el compose |
 | `JELOU_FUNCTIONS_TOKEN` | Token de Jelou Functions | solo en `.env.example`; no la inyecta el compose |
-| `JELOU_PROJECT_ID` | ID del proyecto Jelou | solo en `.env.example`; no la inyecta el compose |
-| `DATUM_API_KEY` | API key de Datum | solo en `.env.example`; no la inyecta el compose |
+| `JELOU_PROJECT_ID` | ID del proyecto Jelou | agent-cli |
 | `DATUM_BASE_URL` (opcional) | Sobrescribe la URL base de Datum | crm, pay |
 | `CRM_CACHE_TTL_MS` (opcional) | TTL de caché del CRM en ms | crm |
 
