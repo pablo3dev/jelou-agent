@@ -38,7 +38,7 @@ export interface Catalogo {
 const PAGINA = 100;
 const MAX_PAGINAS = 20;
 
-async function listarTodo(datum: Datum): Promise<Fila[]> {
+export async function listarTodo(datum: Datum): Promise<Fila[]> {
   const vistas = new Map<string, Fila>();
   for (let pagina = 1; pagina <= MAX_PAGINAS; pagina++) {
     const filas = await datum.listar(PAGINA, pagina);
@@ -100,6 +100,14 @@ export function rutaInversa(cat: Catalogo, ruta: Ruta): Ruta {
   const r = cat.rutas.find((x) => x.origen === ruta.destino && x.destino === ruta.origen);
   if (!r) throw new ErrorNegocio(`No existe la ruta inversa de ${ruta.id}`);
   return r;
+}
+
+// RN-09/RN-14: el regreso es de la ruta inversa y no es anterior a la ida.
+export function validarRegreso(cat: Catalogo, ida: Vuelo, regreso: Vuelo): void {
+  if (regreso.ruta_id !== rutaInversa(cat, buscarRuta(cat, ida.ruta_id)).id) {
+    throw new ErrorNegocio("El vuelo de regreso debe ser de la ruta inversa a la de ida");
+  }
+  if (regreso.fecha < ida.fecha) throw new ErrorNegocio("El vuelo de regreso no puede ser anterior al de ida");
 }
 
 const CLAVES_PRECIO: (keyof ParametrosPrecio)[] = [

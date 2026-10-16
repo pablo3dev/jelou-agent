@@ -21,3 +21,12 @@ export const Mascota = z.object({ // RN-05
   especie: z.string().min(1).max(50),
   peso_kg: z.number().positive().max(8),
 });
+
+export const PasajeroEntrada = z.object({
+  nombre: z.string().min(1).max(120),
+  documento: z.string().min(1).max(30),
+  edad: z.number().int().min(0).max(120),
+  cabina: z.boolean().default(true), // cabina: sin costo y sin medidas (RN-03)
+  bodega_ida: Bodega.optional(),
+  bodega_regreso: Bodega.optional(),
+});

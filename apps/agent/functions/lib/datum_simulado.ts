@@ -1,4 +1,5 @@
 // Solo para pruebas: Datum en memoria que cumple la interfaz `Datum` y registra llamadas.
+import { DatumHttpError } from "./datum.ts";
 import type { Datum, Fila } from "./datum.ts";
 import { clavesMapa } from "./asientos.ts";
 import type { Asiento, MapaAsientos } from "./asientos.ts";
@@ -19,6 +20,46 @@ export function datumSimulado(filas: Fila[]): Datum & { llamadas: string[] } {
       return f ? Promise.resolve(f) : Promise.reject(new Error("no existe"));
     },
   };
+}
+
+export interface OpcionesEscribible {
+  perderEscritura?: (rowId: string) => boolean; // el PUT responde bien pero no se aplica (falla el verify)
+  fallaCrear?: (fields: Record<string, unknown>) => boolean; // el POST responde 500
+}
+
+// Datum en memoria con escritura: crear (asigna _id n1, n2...), actualizar (fusiona campos) y leer/listar con copias.
+export function datumEscribible(filas: Fila[], opc: OpcionesEscribible = {}) {
+  const almacen: Fila[] = structuredClone(filas);
+  const llamadas: string[] = [];
+  const creadas: Fila[] = [];
+  let n = 0;
+  const datum: Datum = {
+    listar(limit, page) {
+      llamadas.push(`listar:${page}`);
+      return Promise.resolve(structuredClone(almacen.slice((page - 1) * limit, page * limit)));
+    },
+    crear(fields) {
+      llamadas.push("crear");
+      if (opc.fallaCrear?.(fields)) return Promise.reject(new DatumHttpError(500, "Datum respondió 500 a POST /rows"));
+      const fila = { _id: `n${++n}`, fields: structuredClone(fields) };
+      almacen.push(fila);
+      creadas.push(fila);
+      return Promise.resolve(structuredClone(fila));
+    },
+    actualizar(rowId, fields) {
+      llamadas.push(`actualizar:${rowId}`);
+      const fila = almacen.find((x) => x._id === rowId);
+      if (!fila) return Promise.reject(new DatumHttpError(404, "no existe"));
+      if (!opc.perderEscritura?.(rowId)) fila.fields = { ...fila.fields, ...structuredClone(fields) };
+      return Promise.resolve({ _id: rowId, fields });
+    },
+    leer(rowId) {
+      llamadas.push(`leer:${rowId}`);
+      const fila = almacen.find((x) => x._id === rowId);
+      return fila ? Promise.resolve(structuredClone(fila)) : Promise.reject(new DatumHttpError(404, "no existe"));
+    },
+  };
+  return { datum, almacen, llamadas, creadas };
 }
 
 export const LIBRE: Asiento = { estado: "LIBRE", pnr: null, hold_token: null, hold_expira: null };

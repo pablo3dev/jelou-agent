@@ -1,7 +1,7 @@
 // REQ-02 / RN-01, RN-02, RN-04, RN-05, RN-07: cotización de pasajes, equipaje de bodega y mascota.
 // Lectura pura; sin efecto. Precios y totales los calcula el servidor (ninguna entrada los trae).
 import { z } from "zod";
-import { buscarRuta, buscarVuelo, cargarCatalogo, parametrosPrecio, rutaInversa } from "../lib/catalogo.ts";
+import { buscarRuta, buscarVuelo, cargarCatalogo, parametrosPrecio, validarRegreso } from "../lib/catalogo.ts";
 import type { Datum } from "../lib/datum.ts";
 import { ErrorNegocio } from "../lib/errores.ts";
 import { Bodega, Mascota } from "../lib/esquemas.ts";
@@ -36,12 +36,7 @@ export async function ejecutar(input: z.infer<typeof entrada>, dep: { datum: Dat
   const ida = buscarVuelo(cat, input.vuelo_ida_id);
   const regreso = input.vuelo_regreso_id === undefined ? undefined : buscarVuelo(cat, input.vuelo_regreso_id);
 
-  if (regreso) {
-    if (regreso.ruta_id !== rutaInversa(cat, buscarRuta(cat, ida.ruta_id)).id) {
-      throw new ErrorNegocio("El vuelo de regreso debe ser de la ruta inversa a la de ida");
-    }
-    if (regreso.fecha < ida.fecha) throw new ErrorNegocio("El vuelo de regreso no puede ser anterior al de ida");
-  }
+  if (regreso) validarRegreso(cat, ida, regreso);
   const sinRegreso = !regreso && input.pasajeros.some((p) => p.bodega_regreso !== undefined);
   if (sinRegreso) throw new ErrorNegocio("Hay equipaje de regreso pero no hay vuelo de regreso");
   const m = input.mascota;
