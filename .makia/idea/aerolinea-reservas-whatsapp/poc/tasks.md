@@ -88,7 +88,7 @@
   - Spec: `reserva-pago-whatsapp-pay`
   - Depende de: 1.2
   - Rutas: `apps/pay/src/`
-- [ ] **Task 2.11: Pay: lectura de la transacción por id desde Datum con la copia del contrato; página con el monto a pagar y botones aprobar y rechazar (mock); tests con cliente simulado** `[REQ-07]` `[DRAFT §Carriles]`
+- [x] **Task 2.11: Pay: lectura de la transacción por id desde Datum con la copia del contrato; página con el monto a pagar y botones aprobar y rechazar (mock); tests con cliente simulado** `[REQ-07]` `[DRAFT §Carriles]`
   - Unidad: `apps/pay`
   - Spec: `reserva-pago-whatsapp-pay`
   - Depende de: 1.2, 2.10
@@ -179,7 +179,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 6 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 7 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **10** | **33%** |
+| **Total Global** | **30** | **11** | **37%** |
