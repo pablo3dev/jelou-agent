@@ -1,0 +1,76 @@
+{
+  "$comment": "Declaracion versionable del agente de Brain Studio (se carga a mano por UI; no es un formato de importacion confirmado de Brain Studio, ver README.md GAP-W1). Sin credenciales: solo placeholders ${VAR}.",
+  "schemaVersion": 1,
+  "name": "aerolinea-reservas-whatsapp",
+  "channel": "whatsapp",
+  "usesHsmTemplates": false,
+  "nodes": [
+    {
+      "id": "agente-reservas",
+      "type": "ai_agent",
+      "tabs": {
+        "general": {
+          "promptFile": "agent.prompt.md",
+          "variables": ["{{$message.text}}", "{{$context.executionId}}"]
+        },
+        "tools": {
+          "source": "mcp",
+          "$comment": "Jelou Functions expuestas por MCP. La URL del servidor MCP es un valor del entorno de Jelou (GAP-W2).",
+          "server": {
+            "url": "${JELOU_FUNCTIONS_MCP_URL}",
+            "headers": { "Authorization": "Bearer ${JELOU_FUNCTIONS_TOKEN}" }
+          },
+          "tools": [
+            { "name": "rutas-listar", "public": false },
+            { "name": "vuelos-buscar", "public": false },
+            { "name": "equipaje-calcular", "public": false },
+            { "name": "cotizar", "public": false },
+            { "name": "asientos-validar-retener", "public": false },
+            { "name": "transaccion-crear", "public": false }
+          ],
+          "excluded": [
+            { "name": "pago-notificacion", "reason": "Publica con HMAC; la llama la pasarela (apps/pay), no el agente." }
+          ]
+        },
+        "pauseInteraction": {
+          "enabled": true,
+          "$comment": "El agente se pausa tras enviar el enlace de pago. Semantica exacta de pauseInteraction: GAP-15 (learning.md).",
+          "pauseAfter": "transaccion-crear",
+          "resume": {
+            "endpoint": "https://gateway.jelou.ai/workflows/v1/skills/resume",
+            "method": "POST",
+            "headers": { "x-api-key": "${JELOU_API_KEY}" },
+            "body": { "executionId": "<transacciones.execution_id>", "message": "paid | rejected | expired", "pauseInteraction": false },
+            "caller": "pago-notificacion",
+            "messages": ["paid", "rejected", "expired"]
+          }
+        }
+      },
+      "toolBindings": {
+        "transaccion-crear": {
+          "execution_id": "{{$context.executionId}}"
+        }
+      }
+    }
+  ],
+  "flow": [
+    "trayecto",
+    "pasajeros",
+    "fechas",
+    "vuelos",
+    "pasajero-equipaje-mascotas",
+    "asientos",
+    "resumen-total",
+    "transaccion",
+    "pago",
+    "resultado"
+  ],
+  "resultados": {
+    "paid": "Confirma el PNR devuelto por transaccion-crear",
+    "rejected": "Informa rechazo; asientos liberados; sin reintento",
+    "expired": "Informa vencimiento; asientos liberados; sin reintento"
+  },
+  "mensajes": {
+    "pagoEnlace": { "tipo": "texto plano", "hsm": false }
+  }
+}
