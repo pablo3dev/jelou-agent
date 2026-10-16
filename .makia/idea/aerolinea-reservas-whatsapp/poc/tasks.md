@@ -16,7 +16,7 @@
 ## 3. Phase Breakdown & Actionable Tasks
 
 ### Phase 1: Contratos y datos
-- [ ] **Task 1.1: Dominio y contrato de datos del dueño: `domain-model.md` en `.makia/docs/specs/apps/agent/`, `db-design.dbml` copiado sin cambios a `apps/agent/contract/`, migraciones de las 10 colecciones de Datum en `apps/agent/migrations/` (rutas, temporada, parametros, vuelos, reservas, pasajeros, equipaje, mascotas, transacciones, eventos_pago) y contrato de endpoints de functions (entrada zod, salida; solo `pago-notificacion` pública con HMAC); `.gitignore` con `.env`** `[DRAFT §Modelo de dominio]` `[DRAFT §Diseño de datos]`
+- [x] **Task 1.1: Dominio y contrato de datos del dueño: `domain-model.md` en `.makia/docs/specs/apps/agent/`, `db-design.dbml` copiado sin cambios a `apps/agent/contract/`, migraciones de las 10 colecciones de Datum en `apps/agent/migrations/` (rutas, temporada, parametros, vuelos, reservas, pasajeros, equipaje, mascotas, transacciones, eventos_pago) y contrato de endpoints de functions (entrada zod, salida; solo `pago-notificacion` pública con HMAC); `.gitignore` con `.env`** `[DRAFT §Modelo de dominio]` `[DRAFT §Diseño de datos]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: —
@@ -178,8 +178,8 @@
 ## 4. Execution Progress Tracker
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
-| **Phase 1: Contratos y datos** | 4 | 1 | `In Progress` |
+| **Phase 1: Contratos y datos** | 4 | 2 | `In Progress` |
 | **Phase 2: Implementación sin credenciales** | 19 | 1 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **2** | **7%** |
+| **Total Global** | **30** | **3** | **10%** |
