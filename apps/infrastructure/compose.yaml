@@ -1,0 +1,77 @@
+name: aerolinea-reservas-whatsapp
+
+# Sin contenedor de base de datos: la DB es Datum (remota).
+# pay NO depende de crm (no se llaman entre si; cada uno habla con Jelou/Datum),
+# por eso no hay depends_on. agent-cli es una herramienta bajo demanda.
+
+networks:
+  reservas-net: {}
+
+services:
+  crm:
+    build:
+      context: ../crm
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT_CRM: ${PORT_CRM:-3000}
+      JELOU_CLIENT_ID: ${JELOU_CLIENT_ID}
+      JELOU_CLIENT_SECRET: ${JELOU_CLIENT_SECRET}
+      DATABASE_ID: ${DATABASE_ID}
+      DATUM_BASE_URL: ${DATUM_BASE_URL:-}
+      CRM_CACHE_TTL_MS: ${CRM_CACHE_TTL_MS:-}
+    ports:
+      - "127.0.0.1:${PORT_CRM:-3000}:${PORT_CRM:-3000}"
+    networks: [reservas-net]
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT_CRM||3000)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  pay:
+    build:
+      context: ../pay
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT_PAY: ${PORT_PAY:-3001}
+      JELOU_CLIENT_ID: ${JELOU_CLIENT_ID}
+      JELOU_CLIENT_SECRET: ${JELOU_CLIENT_SECRET}
+      DATABASE_ID: ${DATABASE_ID}
+      PAY_WEBHOOK_SECRET: ${PAY_WEBHOOK_SECRET}
+      PAGO_NOTIFICACION_URL: ${PAGO_NOTIFICACION_URL}
+      PAY_PUBLIC_URL: ${PAY_PUBLIC_URL}
+      DATUM_BASE_URL: ${DATUM_BASE_URL:-}
+    ports:
+      - "127.0.0.1:${PORT_PAY:-3001}:${PORT_PAY:-3001}"
+    networks: [reservas-net]
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT_PAY||3001)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+  # CLI de Jelou bajo demanda:
+  #   docker compose --profile tools run --rm agent-cli <comando>
+  agent-cli:
+    build:
+      context: ../agent
+    profiles: [tools]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      JELOU_TOKEN: ${JELOU_TOKEN}
+    volumes:
+      - ../agent:/workspace
+    networks: [reservas-net]
+    init: true
