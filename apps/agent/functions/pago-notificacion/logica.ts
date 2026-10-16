@@ -18,6 +18,7 @@
 // Dos entregas simultáneas del mismo evento se serializan por la creación atómica del evento (id determinista).
 import { z } from "zod";
 import type { MapaAsientos } from "../lib/asientos.ts";
+import { FirmaInvalida } from "../lib/errores.ts";
 import { DatumHttpError, DatumNoDisponible, escribirMapaVerificado, esDuplicado, literalFiltro } from "../lib/datum.ts";
 import type { Datum, Fetch, Fila, Sleep } from "../lib/datum.ts";
 
@@ -34,13 +35,8 @@ export const salida = z.object({
   resultado: z.enum(["APLICADO", "EXPIRADO", "DUPLICADO", "SIN_EFECTO"]),
 });
 
-export class FirmaInvalida extends Error {
-  readonly status = 401;
-  constructor() {
-    super("Firma inválida");
-    this.name = "FirmaInvalida";
-  }
-}
+// FirmaInvalida vive en lib/errores.ts (lo mapea lib/http.ts a 401); se re-exporta para los consumidores de esta function.
+export { FirmaInvalida };
 
 export interface Dep {
   datum: Datum;

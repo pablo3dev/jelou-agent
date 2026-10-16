@@ -1,6 +1,7 @@
 import { define } from "@jelou/functions";
 import { configDesdeEntorno, crearDatum } from "../lib/datum.ts";
 import { sanitizarParaLog } from "../lib/enmascarar.ts";
+import { conErroresHttp } from "../lib/http.ts";
 import { ejecutar, entrada, salida } from "./logica.ts";
 
 export default define({
@@ -13,6 +14,6 @@ export default define({
     const payPublicUrl = ctx.env.get("PAY_PUBLIC_URL");
     if (!payPublicUrl) throw new Error("Falta la variable de entorno PAY_PUBLIC_URL");
     const datum = crearDatum(configDesdeEntorno((n) => ctx.env.get(n)));
-    return await ejecutar(input, { datum, ahora: () => new Date(), payPublicUrl });
+    return await conErroresHttp(() => ejecutar(input, { datum, ahora: () => new Date(), payPublicUrl }));
   },
 });

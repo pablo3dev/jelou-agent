@@ -1,6 +1,7 @@
 import { define } from "@jelou/functions";
 import { configDesdeEntorno, crearDatum } from "../lib/datum.ts";
 import { sanitizarParaLog } from "../lib/enmascarar.ts";
+import { conErroresHttp } from "../lib/http.ts";
 import { ejecutar, entrada, salida } from "./logica.ts";
 
 export default define({
@@ -11,6 +12,6 @@ export default define({
   handler: async (input, ctx) => {
     ctx.log("Buscando vuelos", sanitizarParaLog(input));
     const datum = crearDatum(configDesdeEntorno((n) => ctx.env.get(n)));
-    return await ejecutar(input, { datum, ahora: new Date() });
+    return await conErroresHttp(() => ejecutar(input, { datum, ahora: new Date() }));
   },
 });

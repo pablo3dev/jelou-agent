@@ -17,3 +17,12 @@ export class ErrorNegocio extends Error {
     this.name = "ErrorNegocio";
   }
 }
+
+// Firma HMAC inválida en pago-notificacion: la function lo responde como HTTP 401 (lib/http.ts).
+export class FirmaInvalida extends Error {
+  readonly status = 401;
+  constructor() {
+    super("Firma inválida");
+    this.name = "FirmaInvalida";
+  }
+}

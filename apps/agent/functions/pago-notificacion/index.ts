@@ -1,5 +1,6 @@
 import { define } from "@jelou/functions";
 import { configDesdeEntorno, crearDatum } from "../lib/datum.ts";
+import { conErroresHttp } from "../lib/http.ts";
 import { adaptarVerificacion, ejecutar, entrada, salida } from "./logica.ts";
 
 // CONFIRMADO (spike, @jelou/functions 1.5.0): el handler recibe `(input, ctx, request)`; `ctx.request` NO existe.
@@ -22,6 +23,6 @@ export default define({
       adaptarVerificacion(() =>
         ctx.verifyHmac(request, { secretEnv: "PAY_WEBHOOK_SECRET", header: "x-webhook-signature", prefix: "sha256=" })
       );
-    return await ejecutar(input, { datum, ahora: () => new Date(), firmaValida, apiKey, log: ctx.log });
+    return await conErroresHttp(() => ejecutar(input, { datum, ahora: () => new Date(), firmaValida, apiKey, log: ctx.log }));
   },
 });
