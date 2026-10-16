@@ -1,0 +1,179 @@
+{
+  "toolId": 8885,
+  "workflowId": 72714,
+  "toolName": "cotizar",
+  "toolDescription": "Cotiza pasajes, equipaje y mascota; devuelve lineas y total en COP",
+  "triggerType": "DEFAULT",
+  "ownership": "OWNED",
+  "inputs": [
+    {
+      "name": "payload",
+      "displayName": "payload",
+      "description": "Cuerpo JSON (texto) para cotizar. JSON: {\"vuelo_ida_id\":\"..\",\"vuelo_regreso_id\":\"..\" (opcional),\"pasajeros\":[{\"edad\":30,\"bodega_ida\":{..},\"bodega_regreso\":{..}}],\"mascota\":{\"pasajero_indice\":0,\"especie\":\"perro\",\"peso_kg\":5} (opcional)}",
+      "type": "STRING",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "respuesta",
+      "id": "k7Em_ajuXlce3of3IwSCx",
+      "displayName": "respuesta",
+      "description": "JSON {ok,status,data} con la respuesta de la function (errores de negocio incluidos en data)",
+      "type": "SUCCESS"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "-a2KDCioAlmkU1VvcH1mu",
+      "title": "Start",
+      "type": "START",
+      "position": [
+        818,
+        338
+      ]
+    },
+    {
+      "id": "GG8aSV4GSS3sf-k-OCTwQ",
+      "type": "END",
+      "title": "Fin",
+      "position": [
+        1780,
+        50
+      ],
+      "configuration": {
+        "outputId": "k7Em_ajuXlce3of3IwSCx"
+      }
+    },
+    {
+      "id": "iiMtzMfTGm8DVQixhA8Nb",
+      "type": "CODE",
+      "title": "Leer entrada",
+      "position": [
+        520,
+        50
+      ],
+      "configuration": {
+        "title": "Leer entrada",
+        "content": "var raw = \"{}\"; try { raw = $input.get(\"payload\"); } catch (e) { raw = \"{}\"; }\n$context.set(\"cuerpo\", typeof raw === \"string\" ? raw : JSON.stringify(raw));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "jLFUhGOzaxTMTERtsjVsn",
+      "type": "HTTP",
+      "title": "POST cotizar",
+      "position": [
+        940,
+        50
+      ],
+      "configuration": {
+        "title": "POST cotizar",
+        "method": "POST",
+        "url": "https://aerolinea-reservas.fn.jelou.ai/cotizar",
+        "output": "resp",
+        "headers": [
+          {
+            "id": "h1",
+            "key": "Authorization",
+            "value": "Bearer {{$secret.JELOU_FN_INVOKE_KEY}}",
+            "enabled": true
+          },
+          {
+            "id": "h2",
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "body": {
+          "type": "application/json",
+          "content": "{{$context.cuerpo}}",
+          "enabled": true
+        },
+        "settings": {
+          "sslCertificate": true,
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "n5CLn5zufSanyiR49WWQM",
+      "type": "CODE",
+      "title": "Respuesta con error",
+      "position": [
+        1360,
+        50
+      ],
+      "configuration": {
+        "title": "Respuesta con error",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "OERNNvxty4uF7fnzjS7IY",
+      "type": "CODE",
+      "title": "Respuesta",
+      "position": [
+        1360,
+        410
+      ],
+      "configuration": {
+        "title": "Respuesta",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "SRC2X5kDETU0bkyZTUvwu",
+      "type": "END",
+      "title": "Fin con error",
+      "position": [
+        1780,
+        410
+      ],
+      "configuration": {
+        "outputId": "k7Em_ajuXlce3of3IwSCx"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "6pK6Y-7bmz_28dnqZFP5L",
+      "sourceId": "n5CLn5zufSanyiR49WWQM",
+      "targetId": "SRC2X5kDETU0bkyZTUvwu",
+      "branch": "success"
+    },
+    {
+      "id": "G6wwPzk_MG0k830FSNcR-",
+      "sourceId": "OERNNvxty4uF7fnzjS7IY",
+      "targetId": "GG8aSV4GSS3sf-k-OCTwQ",
+      "branch": "success"
+    },
+    {
+      "id": "Gh7OG6jSRT55LrjlxElW0",
+      "sourceId": "iiMtzMfTGm8DVQixhA8Nb",
+      "targetId": "jLFUhGOzaxTMTERtsjVsn",
+      "branch": "success"
+    },
+    {
+      "id": "htbyVITKNzSPGKhPnkSjL",
+      "sourceId": "jLFUhGOzaxTMTERtsjVsn",
+      "targetId": "n5CLn5zufSanyiR49WWQM",
+      "branch": "failed"
+    },
+    {
+      "id": "JHwKB0ZwGnlE855Q7iim3",
+      "sourceId": "jLFUhGOzaxTMTERtsjVsn",
+      "targetId": "OERNNvxty4uF7fnzjS7IY",
+      "branch": "success"
+    },
+    {
+      "id": "uhgSbsWBm9Z1C62yAgKgd",
+      "sourceId": "-a2KDCioAlmkU1VvcH1mu",
+      "targetId": "iiMtzMfTGm8DVQixhA8Nb",
+      "branch": "default"
+    }
+  ]
+}

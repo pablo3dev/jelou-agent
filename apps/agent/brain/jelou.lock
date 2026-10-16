@@ -1,0 +1,89 @@
+lockfileVersion: 7
+brain: 01M52R2AZCJGWP3WNHTHGG98BG
+engine:
+  name: workflow-core
+  resolvedAt: "2026-10-16T20:37:47.527Z"
+  selectedBy: default
+workflows:
+  workflows/mi-primer-workflow.whatsapp.json:
+    channel: WHATSAPP
+    default: true
+    description: "Mi primer workflow"
+    hash: "sha256:cc22680669ac14864b0e6fa385603c5a131bc7c9ff7f1d7c2def8bd9f4f76564"
+    lastPulledAt: "2026-10-16T20:51:40.287Z"
+    name: "Mi primer workflow"
+    skillId: 52773
+    workflowId: 72673
+tools:
+  asientos-validar-retener:
+    contractHash: "sha256:ab9cdea3288a9d6d664392598e6ef35b7f5437e8dc1297369fd1fb8482e9d27f"
+    envelopeHash: "sha256:e4fddb34a3565f322a37d84a9206d524aad8b4601e73d0e3e30f7d8b8398305a"
+    hash: "sha256:78ad84edc29b886fc82d0b8285594f89489ffcdbef75a4cfa412bbe6318184fa"
+    lastPulledAt: "2026-10-16T20:50:06.097Z"
+    latestVersion: 1.0.0
+    metaHash: "sha256:6fc8c0428134baf0fc08c5aff1a80e6fb9cf644270d915fcb1d15e7bbb3f3ae0"
+    name: asientos-validar-retener
+    ownership: OWNED
+    toolId: 8883
+    versionIndex: 1
+    workflowId: 72712
+  cotizar:
+    contractHash: "sha256:734be45bbf4b82778da39bfb89beac624fb670278dba312f9a4182e2e01af939"
+    envelopeHash: "sha256:678ff1a7bd4dd08b1de286a4be9b347af9b29dea10d684dd3eb7cb9af75c93da"
+    hash: "sha256:d990a95f2aa81beb36902fb5061eb21de36b76b42bf5ac8297fa3165bee7375b"
+    lastPulledAt: "2026-10-16T20:49:59.440Z"
+    latestVersion: 1.0.0
+    metaHash: "sha256:fab283c97c0185090d8a8c8b91d52414bef6570e9ae6e19ee55f522ed33e9ea0"
+    name: cotizar
+    ownership: OWNED
+    toolId: 8885
+    versionIndex: 1
+    workflowId: 72714
+  equipaje-calcular:
+    contractHash: "sha256:7c0673a6e3fc6f191e93f8477221739f9f0c8a0b475cf9a56abb184c8940f71c"
+    envelopeHash: "sha256:68da4b8670c2ae6c36103e84c8db826f74c3a2ca42e158d3ec273b2150ca8482"
+    hash: "sha256:96585dd13e038850946ed4122b5c6544cbe535989e0cf561ceebbe179ac99ebe"
+    lastPulledAt: "2026-10-16T20:49:53.269Z"
+    latestVersion: 1.0.0
+    metaHash: "sha256:3736fcb4939b615546d0f9a269e30d7953a4d08474f408e6f8c6226ba4b026b1"
+    name: equipaje-calcular
+    ownership: OWNED
+    toolId: 8887
+    versionIndex: 1
+    workflowId: 72716
+  rutas-listar:
+    contractHash: "sha256:175825edab270f60633e011dc1610f40361e583778101fc7facc0e9d8348c079"
+    envelopeHash: "sha256:ea2994ec4d58c829fe11797875145813c3fde6bc2547398be51312554f22f063"
+    hash: "sha256:b432bd9340f9bc9037532f9f9efa3b8ed08054c41b5365769763e79ead2e89ff"
+    lastPulledAt: "2026-10-16T20:49:40.452Z"
+    latestVersion: 1.0.0
+    metaHash: "sha256:36d82806b959b1414768044521e97fd03beab53130f57929f3e193905884a311"
+    name: rutas-listar
+    ownership: OWNED
+    toolId: 8884
+    versionIndex: 1
+    workflowId: 72713
+  transaccion-crear:
+    contractHash: "sha256:d9edeb6b3fdca55bebde0de93c12ba56cfd3e4b8b0e8842d2aefd3e3506f0369"
+    envelopeHash: "sha256:4db07ba075c1e3e65968ea3d51265729f6b1a1de3119223b2c9115d1b3a24c2c"
+    hash: "sha256:4af445d53a1c566655c8b6e3107a6bf793c9e8c559962eda90cf868acee6a46d"
+    lastPulledAt: "2026-10-16T20:50:12.445Z"
+    latestVersion: 1.0.0
+    metaHash: "sha256:62abc601037fe2ff6edac9a855412fb1767765f5c6834438c957b301e1e2b6e2"
+    name: transaccion-crear
+    ownership: OWNED
+    toolId: 8886
+    versionIndex: 1
+    workflowId: 72715
+  vuelos-buscar:
+    contractHash: "sha256:e13da94ac9fbfc945c24851c374e4923989483bf1565f1a7037aebdc0133d28a"
+    envelopeHash: "sha256:d9abc60c464e92453bee647d4499a3a00d71bc8a00fbe855d84919d93d9e5ff0"
+    hash: "sha256:b3ffa6880bef655e56c0d6aa4f4e2ecb1407fbf8b5b8508a035c9a5d2fd573ba"
+    lastPulledAt: "2026-10-16T20:49:46.891Z"
+    latestVersion: 1.0.0
+    metaHash: "sha256:f1a584bfaa8e1e2a759d05d4319f567bae4ab686dd727dd4135d8162496ba432"
+    name: vuelos-buscar
+    ownership: OWNED
+    toolId: 8882
+    versionIndex: 1
+    workflowId: 72711

@@ -1,0 +1,171 @@
+{
+  "toolId": 8884,
+  "workflowId": 72713,
+  "toolName": "rutas-listar",
+  "toolDescription": "Lista las rutas disponibles con origen, destino y tarifa base",
+  "triggerType": "DEFAULT",
+  "ownership": "OWNED",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "respuesta",
+      "id": "6eb1xJt924w1MwaRifHCA",
+      "displayName": "respuesta",
+      "description": "JSON {ok,status,data} con la respuesta de la function (errores de negocio incluidos en data)",
+      "type": "SUCCESS"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "61Y2JMOHTPPQyXooq9ri7",
+      "type": "CODE",
+      "title": "Leer entrada",
+      "position": [
+        520,
+        50
+      ],
+      "configuration": {
+        "title": "Leer entrada",
+        "content": "$context.set(\"cuerpo\", \"{}\");",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "BcHdq7TGm2NntCoVBhSzd",
+      "type": "CODE",
+      "title": "Respuesta",
+      "position": [
+        1360,
+        410
+      ],
+      "configuration": {
+        "title": "Respuesta",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "DNvwh6B03ErETA6hyu2mO",
+      "type": "END",
+      "title": "Fin con error",
+      "position": [
+        1780,
+        410
+      ],
+      "configuration": {
+        "outputId": "6eb1xJt924w1MwaRifHCA"
+      }
+    },
+    {
+      "id": "GHFue03C_Brm_PyKMx7zj",
+      "title": "Start",
+      "type": "START",
+      "position": [
+        818,
+        338
+      ]
+    },
+    {
+      "id": "TxSM9Bk0yixjLDDYRHyR-",
+      "type": "END",
+      "title": "Fin",
+      "position": [
+        1780,
+        50
+      ],
+      "configuration": {
+        "outputId": "6eb1xJt924w1MwaRifHCA"
+      }
+    },
+    {
+      "id": "uai70NbdIngKxdJ77xZ5e",
+      "type": "HTTP",
+      "title": "POST rutas-listar",
+      "position": [
+        940,
+        50
+      ],
+      "configuration": {
+        "title": "POST rutas-listar",
+        "method": "POST",
+        "url": "https://aerolinea-reservas.fn.jelou.ai/rutas-listar",
+        "output": "resp",
+        "headers": [
+          {
+            "id": "h1",
+            "key": "Authorization",
+            "value": "Bearer {{$secret.JELOU_FN_INVOKE_KEY}}",
+            "enabled": true
+          },
+          {
+            "id": "h2",
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "body": {
+          "type": "application/json",
+          "content": "{{$context.cuerpo}}",
+          "enabled": true
+        },
+        "settings": {
+          "sslCertificate": true,
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "yuCG5-8kzZrSfAb5iM5Z8",
+      "type": "CODE",
+      "title": "Respuesta con error",
+      "position": [
+        1360,
+        50
+      ],
+      "configuration": {
+        "title": "Respuesta con error",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "EsrjEfT7RmbiYvbWSnhdJ",
+      "sourceId": "uai70NbdIngKxdJ77xZ5e",
+      "targetId": "yuCG5-8kzZrSfAb5iM5Z8",
+      "branch": "failed"
+    },
+    {
+      "id": "Kp_HiWvI0osIl1JVZBUet",
+      "sourceId": "uai70NbdIngKxdJ77xZ5e",
+      "targetId": "BcHdq7TGm2NntCoVBhSzd",
+      "branch": "success"
+    },
+    {
+      "id": "lbHCHDdd_PMIvEkMWImZB",
+      "sourceId": "GHFue03C_Brm_PyKMx7zj",
+      "targetId": "61Y2JMOHTPPQyXooq9ri7",
+      "branch": "default"
+    },
+    {
+      "id": "LNzOr7RCfauQw0TBZzYI3",
+      "sourceId": "BcHdq7TGm2NntCoVBhSzd",
+      "targetId": "TxSM9Bk0yixjLDDYRHyR-",
+      "branch": "success"
+    },
+    {
+      "id": "RZPnKvMDf28B9ql9eBgTz",
+      "sourceId": "61Y2JMOHTPPQyXooq9ri7",
+      "targetId": "uai70NbdIngKxdJ77xZ5e",
+      "branch": "success"
+    },
+    {
+      "id": "ThD-YyRb02LNTz1bJ9pX1",
+      "sourceId": "yuCG5-8kzZrSfAb5iM5Z8",
+      "targetId": "DNvwh6B03ErETA6hyu2mO",
+      "branch": "success"
+    }
+  ]
+}

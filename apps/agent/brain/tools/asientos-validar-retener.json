@@ -1,0 +1,182 @@
+{
+  "toolId": 8883,
+  "workflowId": 72712,
+  "toolName": "asientos-validar-retener",
+  "toolDescription": "Valida y retiene 15 minutos los asientos elegidos; devuelve hold_token",
+  "triggerType": "DEFAULT",
+  "ownership": "OWNED",
+  "inputs": [
+    {
+      "name": "payload",
+      "displayName": "payload",
+      "description": "Cuerpo JSON (texto) para asientos-validar-retener. JSON: {\"vuelo_ida_id\":\"..\",\"vuelo_regreso_id\":\"..\" (opcional),\"edades\":[30,12],\"asientos_ida\":\"12A 12B\",\"asientos_regreso\":\"14A 14B\" (opcional)}",
+      "type": "STRING",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "respuesta",
+      "id": "CcE65hN2qT3vP8qIrH7tm",
+      "displayName": "respuesta",
+      "description": "JSON {ok,status,data} con la respuesta de la function (errores de negocio incluidos en data)",
+      "type": "SUCCESS",
+      "required": false,
+      "schema": null,
+      "position": 0
+    }
+  ],
+  "nodes": [
+    {
+      "id": "416bcmC6k8ScnQdTzv0cH",
+      "type": "END",
+      "title": "Fin",
+      "position": [
+        1780,
+        50
+      ],
+      "configuration": {
+        "outputId": "CcE65hN2qT3vP8qIrH7tm"
+      }
+    },
+    {
+      "id": "lJaVJayKoMsiBAAMijos1",
+      "type": "CODE",
+      "title": "Leer entrada",
+      "position": [
+        520,
+        50
+      ],
+      "configuration": {
+        "title": "Leer entrada",
+        "content": "var raw = \"{}\"; try { raw = $input.get(\"payload\"); } catch (e) { raw = \"{}\"; }\n$context.set(\"cuerpo\", typeof raw === \"string\" ? raw : JSON.stringify(raw));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "M2ArMEKVX-jilr4OBgsMo",
+      "type": "HTTP",
+      "title": "POST asientos-validar-retener",
+      "position": [
+        940,
+        50
+      ],
+      "configuration": {
+        "title": "POST asientos-validar-retener",
+        "method": "POST",
+        "url": "https://aerolinea-reservas.fn.jelou.ai/asientos-validar-retener",
+        "output": "resp",
+        "headers": [
+          {
+            "id": "h1",
+            "key": "Authorization",
+            "value": "Bearer {{$secret.JELOU_FN_INVOKE_KEY}}",
+            "enabled": true
+          },
+          {
+            "id": "h2",
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "body": {
+          "type": "application/json",
+          "content": "{{$context.cuerpo}}",
+          "enabled": true
+        },
+        "settings": {
+          "sslCertificate": true,
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "q8Qbw3eMyVnZNFQIJwW5D",
+      "type": "END",
+      "title": "Fin con error",
+      "position": [
+        1780,
+        410
+      ],
+      "configuration": {
+        "outputId": "CcE65hN2qT3vP8qIrH7tm"
+      }
+    },
+    {
+      "id": "U7PjXsYsri1Jvbv3MzpL2",
+      "type": "CODE",
+      "title": "Respuesta",
+      "position": [
+        1360,
+        410
+      ],
+      "configuration": {
+        "title": "Respuesta",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "XzwNebw7QYpMh6A8QsFzm",
+      "type": "CODE",
+      "title": "Respuesta con error",
+      "position": [
+        1360,
+        50
+      ],
+      "configuration": {
+        "title": "Respuesta con error",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "ZAJ8xFjWKcsPIzjW5_5GR",
+      "title": "Start",
+      "type": "START",
+      "position": [
+        818,
+        338
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "0VRApskwwx3g2tIn1Ym57",
+      "sourceId": "M2ArMEKVX-jilr4OBgsMo",
+      "targetId": "U7PjXsYsri1Jvbv3MzpL2",
+      "branch": "success"
+    },
+    {
+      "id": "D-PnB7ZswLyPQqTtDTr5r",
+      "sourceId": "lJaVJayKoMsiBAAMijos1",
+      "targetId": "M2ArMEKVX-jilr4OBgsMo",
+      "branch": "success"
+    },
+    {
+      "id": "Gjq8UwOaEUsPWmD29EYsM",
+      "sourceId": "M2ArMEKVX-jilr4OBgsMo",
+      "targetId": "XzwNebw7QYpMh6A8QsFzm",
+      "branch": "failed"
+    },
+    {
+      "id": "NAdlE_DZF6ln8kPbAuyqz",
+      "sourceId": "ZAJ8xFjWKcsPIzjW5_5GR",
+      "targetId": "lJaVJayKoMsiBAAMijos1",
+      "branch": "default"
+    },
+    {
+      "id": "NkDc9ClBBtuOws-HgilKb",
+      "sourceId": "XzwNebw7QYpMh6A8QsFzm",
+      "targetId": "q8Qbw3eMyVnZNFQIJwW5D",
+      "branch": "success"
+    },
+    {
+      "id": "zqwvdTecgB2fJvOCebtfp",
+      "sourceId": "U7PjXsYsri1Jvbv3MzpL2",
+      "targetId": "416bcmC6k8ScnQdTzv0cH",
+      "branch": "success"
+    }
+  ]
+}
