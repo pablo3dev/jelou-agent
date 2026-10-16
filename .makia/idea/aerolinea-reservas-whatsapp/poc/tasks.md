@@ -108,7 +108,7 @@
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: 1.3
   - Rutas: `apps/crm/src/`
-- [ ] **Task 2.15: Crm: endpoints JSON de solo lectura que leen Datum desde el servidor (vuelos, asientos vendidos por vuelo y destino, mapa de asientos de un vuelo, estadísticas); ninguna escritura a Datum; tests con cliente simulado** `[REQ-11]` `[DRAFT §Carriles]`
+- [x] **Task 2.15: Crm: endpoints JSON de solo lectura que leen Datum desde el servidor (vuelos, asientos vendidos por vuelo y destino, mapa de asientos de un vuelo, estadísticas); ninguna escritura a Datum; tests con cliente simulado** `[REQ-11]` `[DRAFT §Carriles]`
   - Unidad: `apps/crm`
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: 1.3
@@ -179,7 +179,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 10 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 11 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **14** | **47%** |
+| **Total Global** | **30** | **15** | **50%** |
