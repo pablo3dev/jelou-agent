@@ -83,7 +83,7 @@
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: —
   - Rutas: `apps/agent/Dockerfile`
-- [ ] **Task 2.10: Servidor base de apps/pay: Express 5.3.0 sobre Node 24.22.0, puerto `PORT_PAY` (default 3001) desde `.env`, `GET /health`** `[DRAFT §Carriles]` `[DRAFT §Stack técnico]`
+- [x] **Task 2.10: Servidor base de apps/pay: Express 5.3.0 sobre Node 24.22.0, puerto `PORT_PAY` (default 3001) desde `.env`, `GET /health`** `[DRAFT §Carriles]` `[DRAFT §Stack técnico]`
   - Unidad: `apps/pay`
   - Spec: `reserva-pago-whatsapp-pay`
   - Depende de: 1.2
@@ -179,7 +179,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 3 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 4 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **7** | **23%** |
+| **Total Global** | **30** | **8** | **27%** |
