@@ -129,7 +129,7 @@
   - Spec: `entorno-local-infrastructure`
   - Depende de: 1.4, 2.9, 2.13, 2.17
   - Rutas: `apps/infrastructure/compose.yaml`
-- [ ] **Task 2.19: README de arranque de apps/infrastructure: `docker compose up`, variables de `.env` a partir de `.env.example`, perfil `tools` y puertos** `[DRAFT §Stack técnico]`
+- [x] **Task 2.19: README de arranque de apps/infrastructure: `docker compose up`, variables de `.env` a partir de `.env.example`, perfil `tools` y puertos** `[DRAFT §Stack técnico]`
   - Unidad: `apps/infrastructure`
   - Spec: `entorno-local-infrastructure`
   - Depende de: 2.18
@@ -180,7 +180,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 18 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 19 | `Done` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **22** | **73%** |
+| **Total Global** | **30** | **23** | **77%** |
