@@ -169,11 +169,12 @@
   - Rutas: `apps/crm/src/`
 
 ### Phase 4: Arranque e integración
-- [ ] **Task 4.1: BLOQUEADA POR CREDENCIALES. E2E único con `docker compose up` (proyecto `aerolinea-reservas-whatsapp`, healthchecks de `crm`, `pay` y `agent-cli` en verde): reserva de ida y vuelta con asientos, equipaje y mascota aprobada → PNR; rechazada → asientos libres; expiración → asientos libres; notificación duplicada ignorada; `git ls-files --eol` sin `i/crlf` en `.sh`, `.yaml`, `.js` y `Dockerfile`; hash del contrato de apps/agent igual en las copias de apps/pay y apps/crm** `[DRAFT §Estrategia de pruebas]` `[DRAFT §Criterios de aceptación / Definition of Done]`
+- [x] **Task 4.1: BLOQUEADA POR CREDENCIALES. E2E único con `docker compose up` (proyecto `aerolinea-reservas-whatsapp`, healthchecks de `crm`, `pay` y `agent-cli` en verde): reserva de ida y vuelta con asientos, equipaje y mascota aprobada → PNR; rechazada → asientos libres; expiración → asientos libres; notificación duplicada ignorada; `git ls-files --eol` sin `i/crlf` en `.sh`, `.yaml`, `.js` y `Dockerfile`; hash del contrato de apps/agent igual en las copias de apps/pay y apps/crm** `[DRAFT §Estrategia de pruebas]` `[DRAFT §Criterios de aceptación / Definition of Done]`
   - Unidad: `apps/infrastructure`
   - Spec: `entorno-local-infrastructure`
   - Depende de: 2.18, 3.4, 3.5, 3.6
   - Rutas: `apps/infrastructure/`
+  - Evidencia (2026-10-16, `docker compose up --build -d` en apps/infrastructure, proyecto aerolinea-reservas-whatsapp; agente por `jelou test send text -t mi-primer-workflow-whatsapp` desde agent-cli; canal WhatsApp real NO conectado): crm y pay `healthy`. Ida y vuelta BOG-MDE 2026-12-10/14, 2 pasajeros, asientos 12A/12B en ambos vuelos, 1 maleta de bodega y 1 perro: total 2.639.000, asientos RETENIDO -> pago aprobado en pay -> VENDIDO con PNR, reserva EMITIDA, transaccion APROBADA. Rechazada: reanudación `rejected`, agente avisa, asiento 14A LIBRE, reserva PAGO_RECHAZADO. Expiración (15 min reales): asientos LIBRES, reserva EXPIRADA, agente avisa `expired`. Aprobada limpia (15A): reanudación `paid` -> el agente entrega el PNR (tras corregir el prompt, paso 10, commit d257860). Duplicada: mismo evento -> 200 DUPLICADO, RECHAZADA tras APROBADA -> SIN_EFECTO, sin cambios en asientos ni eventos_pago. Dashboard crm: 6 vendidos, ingresos 3.549.000 = suma de las 3 EMITIDA, reservas_por_estado coherente. `git ls-files --eol`: 53 archivos .sh/.yaml/.js/Dockerfile, todos i/lf w/lf; CONTRACT.sha256 idéntico (e1bc1863…, c52a9775…) y `sha256sum -c` OK en agent, pay y crm. Datos de prueba propios eliminados; seed 6/12/12/372. NO verificado: envío real por WhatsApp (GAP-11); la mascota solo se cotiza en la ida (cotizar no admite mascota en vuelta); `pago-notificacion` devolvió 503 (reanudación HTTP 422) una vez al notificar tarde (~15 min) una ejecución de test inactiva (efectos aplicados, transacción quedó PENDIENTE, se pudo reanudar después); `paid`/`rejected`/`expired` son texto que cualquier cliente podría escribir mientras el agente está en pausa (riesgo residual: entregar PNR sin pago).
 
 ---
 
@@ -183,5 +184,5 @@
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
 | **Phase 2: Implementación sin credenciales** | 19 | 19 | `Done` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 6 | `Done` |
-| **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **29** | **97%** |
+| **Phase 4: Arranque e integración** | 1 | 1 | `Done` |
+| **Total Global** | **30** | **30** | **100%** |
