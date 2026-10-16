@@ -38,12 +38,12 @@
   - Rutas: `apps/infrastructure/`
 
 ### Phase 2: Implementación sin credenciales
-- [ ] **Task 2.1: Lógica pura de precios: tarifa por pasajero y trayecto desde `rutas.tarifa_base_cop` × temporada de `vuelos.fecha`; equipaje de bodega `ceil(max(peso, L·A·H/6000))` con mínimo 40000 y 12000 COP por kg, límites 158 cm, 32 kg y 1 pieza; mascota 150000 × temporada, ≤ 8 kg, 1 por reserva; redondeo por línea con `Math.round` y total como suma de líneas; tests `deno test`** `[REQ-02]` `[REQ-03]` `[REQ-04]` `[DRAFT §Reglas de negocio RN-01, RN-02, RN-04, RN-05, RN-07]`
+- [x] **Task 2.1: Lógica pura de precios: tarifa por pasajero y trayecto desde `rutas.tarifa_base_cop` × temporada de `vuelos.fecha`; equipaje de bodega `ceil(max(peso, L·A·H/6000))` con mínimo 40000 y 12000 COP por kg, límites 158 cm, 32 kg y 1 pieza; mascota 150000 × temporada, ≤ 8 kg, 1 por reserva; redondeo por línea con `Math.round` y total como suma de líneas; tests `deno test`** `[REQ-02]` `[REQ-03]` `[REQ-04]` `[DRAFT §Reglas de negocio RN-01, RN-02, RN-04, RN-05, RN-07]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 1.1
   - Rutas: `apps/agent/functions/`
-- [ ] **Task 2.2: Lógica pura de asientos, exit row, PNR, hold y ventana: parseo `12A 12B` o `12A,12B`, validación contra las 174 claves del mapa, exit row solo con edad ≥ 15; PNR de 6 caracteres de `[A-Z2-9]` sin O, I, 0 ni 1; hold válido solo si RETENIDO y `hold_expira > ahora`; fechas entre 2026-12-01 y 2027-01-31; 1 a 9 pasajeros; tests `deno test`** `[REQ-01]` `[REQ-05]` `[DRAFT §Reglas de negocio RN-06, RN-08, RN-13, RN-14, RN-15]`
+- [x] **Task 2.2: Lógica pura de asientos, exit row, PNR, hold y ventana: parseo `12A 12B` o `12A,12B`, validación contra las 174 claves del mapa, exit row solo con edad ≥ 15; PNR de 6 caracteres de `[A-Z2-9]` sin O, I, 0 ni 1; hold válido solo si RETENIDO y `hold_expira > ahora`; fechas entre 2026-12-01 y 2027-01-31; 1 a 9 pasajeros; tests `deno test`** `[REQ-01]` `[REQ-05]` `[DRAFT §Reglas de negocio RN-06, RN-08, RN-13, RN-14, RN-15]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 1.1
@@ -179,7 +179,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 1 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 3 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **5** | **17%** |
+| **Total Global** | **30** | **7** | **23%** |
