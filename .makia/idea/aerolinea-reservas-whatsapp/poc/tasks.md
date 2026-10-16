@@ -69,7 +69,7 @@
   - Depende de: 2.3, 2.5
   - Rutas: `apps/agent/functions/`
   - Evidencia (2026-10-16): `makia verify --run "docker run --rm -v C:/repos/jelou-agent/apps/agent/functions:/app -w /app denoland/deno:2.9.7 deno test --allow-read --allow-env --allow-net"` => PASS, 92 passed / 0 failed; pruebas CRITICA ok: firma invalida => 401 y cero lecturas/escrituras (con simulado), evento duplicado => 200 sin efecto y un solo resume, APROBADA tras expira_at => EXPIRADA, APROBADA tras RECHAZADA no reabre. Pendiente de confirmar en vivo: ctx.verifyHmac real (spike 3.1).
-- [ ] **Task 2.7: Seed de datos base en `apps/agent/seed/`: script Node 24 contra la REST de Datum que carga 6 rutas, 12 filas de temporada, 12 parámetros y 372 vuelos (salida 07:00, 174 asientos en LIBRE), idempotente por clave natural (ruta; número de vuelo), carga a ritmo bajo con backoff; tests con cliente simulado** `[REQ-12]` `[DRAFT §Diseño de datos]`
+- [x] **Task 2.7: Seed de datos base en `apps/agent/seed/`: script Node 24 contra la REST de Datum que carga 6 rutas, 12 filas de temporada, 12 parámetros y 372 vuelos (salida 07:00, 174 asientos en LIBRE), idempotente por clave natural (ruta; número de vuelo), carga a ritmo bajo con backoff; tests con cliente simulado** `[REQ-12]` `[DRAFT §Diseño de datos]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 1.1, 2.3
@@ -180,7 +180,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 13 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 14 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **17** | **57%** |
+| **Total Global** | **30** | **18** | **60%** |
