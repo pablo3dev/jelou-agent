@@ -1,28 +1,26 @@
-// application: carga idempotente. Lista antes, omite filas con clave natural existente, crea el resto.
-import { clasificar, generarColecciones } from "./datos.mjs";
+// application: carga idempotente y reanudable. Lista los ids existentes por coleccion, omite los presentes
+// y crea el resto; el id fisico determinista hace atomica la unicidad (duplicado => omitida).
+import { generarColecciones } from "./datos.mjs";
 
 export function contar(colecciones = generarColecciones()) {
   return Object.fromEntries(colecciones.map((c) => [c.nombre, c.filas.length]));
 }
 
-// Idempotencia: la clave natural (rutas.id, temporada.mes, parametros.clave, vuelos.id = ruta+fecha)
-// se consulta en Datum antes de escribir; una segunda ejecucion no crea nada.
-// `cliente` = { listarTodo(), crear(fields) }. `log` recibe solo conteos, nunca credenciales.
+// `cliente` = { listarIds(coleccion), crear(coleccion, campos, id) }. `log` recibe solo conteos.
 export async function cargar(cliente, { colecciones = generarColecciones(), log = () => {} } = {}) {
-  const existentes = new Set((await cliente.listarTodo()).map((f) => clasificar(f.fields)).filter(Boolean).map((c) => `${c.nombre}:${c.clave}`));
   const resumen = {};
   for (const col of colecciones) {
+    const existentes = await cliente.listarIds(col.nombre);
     let creadas = 0;
     let omitidas = 0;
-    for (const fila of col.filas) {
-      const clave = `${col.nombre}:${col.clave(fila)}`;
-      if (existentes.has(clave)) {
+    for (const { id, campos } of col.filas) {
+      if (existentes.has(id)) {
         omitidas++;
         continue;
       }
-      await cliente.crear(fila);
-      existentes.add(clave);
-      creadas++;
+      const r = await cliente.crear(col.nombre, campos, id);
+      if (r?.duplicado) omitidas++; // carrera: otra ejecucion lo creo entre el listado y el POST
+      else creadas++;
     }
     resumen[col.nombre] = { creadas, omitidas };
     log(`${col.nombre}: ${creadas} creadas, ${omitidas} omitidas`);

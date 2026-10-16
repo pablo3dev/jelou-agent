@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --test",
     "seed": "node seed.mjs",
-    "dry-run": "node seed.mjs --dry-run"
+    "dry-run": "node seed.mjs --dry-run",
+    "verificar": "node seed.mjs --verificar"
   }
 }
