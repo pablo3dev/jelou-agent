@@ -26,7 +26,7 @@
   - Spec: `reserva-pago-whatsapp-pay`
   - Depende de: 1.1
   - Rutas: `apps/pay/contract/`, `apps/pay/.gitignore`
-- [ ] **Task 1.3: Copia del contrato de apps/agent en `apps/crm/contract/` con hash verificable frente al original; `.gitignore` con `.env`** `[DRAFT §Carriles]` `[DRAFT §Arquitectura y stack técnico]`
+- [x] **Task 1.3: Copia del contrato de apps/agent en `apps/crm/contract/` con hash verificable frente al original; `.gitignore` con `.env`** `[DRAFT §Carriles]` `[DRAFT §Arquitectura y stack técnico]`
   - Unidad: `apps/crm`
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: 1.1
@@ -178,8 +178,8 @@
 ## 4. Execution Progress Tracker
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
-| **Phase 1: Contratos y datos** | 4 | 3 | `In Progress` |
+| **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
 | **Phase 2: Implementación sin credenciales** | 19 | 1 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **4** | **13%** |
+| **Total Global** | **30** | **5** | **17%** |
