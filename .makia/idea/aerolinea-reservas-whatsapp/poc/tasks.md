@@ -98,7 +98,7 @@
   - Spec: `reserva-pago-whatsapp-pay`
   - Depende de: 2.11
   - Rutas: `apps/pay/src/`
-- [ ] **Task 2.13: Dockerfile de apps/pay: base `node:24.22.0-bookworm-slim`, usuario no root, healthcheck con CMD de Node contra `/health`** `[DRAFT §Carriles]`
+- [x] **Task 2.13: Dockerfile de apps/pay: base `node:24.22.0-bookworm-slim`, usuario no root, healthcheck con CMD de Node contra `/health`** `[DRAFT §Carriles]`
   - Unidad: `apps/pay`
   - Spec: `reserva-pago-whatsapp-pay`
   - Depende de: —
@@ -179,7 +179,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 9 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 10 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **13** | **43%** |
+| **Total Global** | **30** | **14** | **47%** |
