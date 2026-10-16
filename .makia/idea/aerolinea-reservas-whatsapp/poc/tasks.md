@@ -48,7 +48,7 @@
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 1.1
   - Rutas: `apps/agent/functions/`
-- [ ] **Task 2.3: Cliente REST de Datum y write-then-verify: `Authorization: Basic` con `JELOU_CLIENT_ID:JELOU_CLIENT_SECRET` en base64; listar, crear, actualizar y leer por id sobre `/v2/databases/{DATABASE_ID}/rows`; escritura de `vuelos.mapa_asientos` con `version + 1`, releer y verificar `hold_token` o `pnr` propios, 3 intentos con backoff, si falla 503 sin efecto parcial; tests con HTTP simulado** `[REQ-05]` `[EC-17]` `[DRAFT §Diseño de datos]`
+- [x] **Task 2.3: Cliente REST de Datum y write-then-verify: `Authorization: Basic` con `JELOU_CLIENT_ID:JELOU_CLIENT_SECRET` en base64; listar, crear, actualizar y leer por id sobre `/v2/databases/{DATABASE_ID}/rows`; escritura de `vuelos.mapa_asientos` con `version + 1`, releer y verificar `hold_token` o `pnr` propios, 3 intentos con backoff, si falla 503 sin efecto parcial; tests con HTTP simulado** `[REQ-05]` `[EC-17]` `[DRAFT §Diseño de datos]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 1.1
@@ -179,7 +179,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 4 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 5 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **8** | **27%** |
+| **Total Global** | **30** | **9** | **30%** |
