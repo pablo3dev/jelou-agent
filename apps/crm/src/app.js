@@ -1,5 +1,7 @@
 import path from 'node:path';
 import express from 'express';
+import { createApi } from './api.js';
+import { createDatumClient } from './datum.js';
 
 const PUBLIC_DIR = path.resolve(import.meta.dirname, '../public');
 
@@ -24,8 +26,8 @@ function securityHeaders(_req, res, next) {
 }
 
 // Sin escuchar: server.js llama a listen; las pruebas lo hacen en puerto efimero.
-// `deps` queda reservado para los endpoints JSON de tareas posteriores.
-export function createApp(_deps = {}) {
+// `deps.datum` (cliente de solo lectura) y `deps.now` son inyectables para las pruebas.
+export function createApp({ datum = createDatumClient(), now } = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.use(securityHeaders);
@@ -33,6 +35,8 @@ export function createApp(_deps = {}) {
   app.get('/health', (_req, res) => {
     res.status(200).json({ status: 'ok' });
   });
+
+  app.use('/api', createApi({ datum, now }));
 
   app.use(express.static(PUBLIC_DIR));
   return app;
