@@ -398,3 +398,16 @@ Canal WhatsApp conectado en Brain Studio (número, cuenta Business).
 2. Conectar el canal WhatsApp en Brain Studio (número, cuenta Business).
 3. Confirmar la versión de Node.js (decisión de subir de 24.22.0 o no; GAP-01).
 4. Proveer los valores de `clientId`, `clientSecret`, `JELOU_API_KEY` y `JELOU_BOT_ID` en los `.env` correspondientes (nunca en este documento).
+
+## 11. Hallazgos del spike en vivo (2026-10-16)
+
+1. **Datum v2 es PocketBase.** Ruta: `https://<slug>.jelou.cloud/api/collections/{c}/records`, cabecera `X-Api-Key`. Basic, `api.jelou.ai/v2/.../rows` y `gateway.jelou.ai/datum-db` dan 401. Resueltos GAP-02 y GAP-09: GET por id 200/404; actualizar con PATCH (no PUT); `/batch` da 403. Hay filtros, orden y selección de campos en servidor.
+2. **Ids.** Id custom: solo `[a-z0-9]`. Con `--field id:text` la longitud es libre; sin él, mínimo 15 caracteres. Id repetido: 400 `validation_not_unique` (la PK es única y atómica; GAP-18). No se pueden crear otros índices únicos.
+3. **Tipos CLI.** `text`, `number`, `bool`, `email`, `url`, `date`, `select`, `relation`, `file`, `json`, `editor`, `geoPoint`. En `number`, `required` significa distinto de 0 (GAP-12). Las fechas se devuelven como `YYYY-MM-DD HH:MM:SS.sssZ`.
+4. **Sin CAS en servidor.** `If-Match` se ignora. Se mantiene write-then-verify.
+5. **HMAC (GAP-13).** `ctx.verifyHmac(request, {secretEnv, header: "x-webhook-signature", prefix: "sha256="})` sobre el cuerpo crudo. Éxito: retorna `undefined`. Fallo: lanza. La request es el 3.er argumento del handler; `ctx.request` no existe.
+6. **Errores.** La plataforma convierte excepciones en HTTP 500. Para responder 400/401/503 hay que devolver `new Response(...)` con el status.
+7. **Versiones y entorno.** `@jelou/functions` 1.6.1 (publicada hace menos de 24 h) la bloquea la política `minimumDependencyAge` de Deno 2.9.7; se fija 1.5.0 (GAP-03). `jelou functions dev` requiere `unzip` en la imagen; `jelou test` del CLI requiere `ps` (paquete procps).
+8. **Despliegue.** Un proyecto de functions = un slug: `aerolinea-reservas` (`https://aerolinea-reservas.fn.jelou.ai`), con `app({tools})`. Autenticación: `Authorization: Bearer` con la API key de plataforma. `jelou functions invoke-key ensure` crea el secreto de organización `JELOU_FN_INVOKE_KEY`.
+9. **Brain Studio.** `connections.mcp` exige una app de marketplace; `connections.function` no expone tools. Lo que funciona: una Tool de Jelou por function (`jelou tool create/push/publish`: nodos HTTP + CODE + END; los nodos CODE ramifican por `success`), referenciada en `connections.tools` como tool de registro (inputs con `id`, `name`, `description`, `type`, `displayName`, `required`, `toolId`, `state`). En transaccion-crear: `action:"pause"` y `allowExternalResume:true`. Flujo verificado con `jelou test send text`: búsqueda, retención, cotización, transacción, pausa, pago-notificación con HMAC (primero APLICADO, luego DUPLICADO) y reanudación con el PNR. `JELOU_TOKEN` sirve como `x-api-key` de la reanudación (GAP-15 resuelto).
+10. **Abiertos.** GAP-11 (texto por WhatsApp sin canal). Publicar el proyecto y conectar el canal: USUARIO.
