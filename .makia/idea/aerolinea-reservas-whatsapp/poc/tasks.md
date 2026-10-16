@@ -58,7 +58,7 @@
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 2.1, 2.3
   - Rutas: `apps/agent/functions/`
-- [ ] **Task 2.5: Functions de asientos y transacción: `asientos-validar-retener` (validación completa, sin retención parcial, `hold_token` y `hold_expira` = ahora + 15 min) y `transaccion-crear` (reserva PENDIENTE_PAGO con PNR y `total_cop`; transacción PENDIENTE con `expira_at` = `hold_expira` y `execution_id` = `{{$context.executionId}}`; devuelve la PENDIENTE existente si la hay; responde `_id` y enlace de pago); tests con cliente simulado** `[REQ-05]` `[REQ-06]` `[EC-01]` `[EC-16]`
+- [x] **Task 2.5: Functions de asientos y transacción: `asientos-validar-retener` (validación completa, sin retención parcial, `hold_token` y `hold_expira` = ahora + 15 min) y `transaccion-crear` (reserva PENDIENTE_PAGO con PNR y `total_cop`; transacción PENDIENTE con `expira_at` = `hold_expira` y `execution_id` = `{{$context.executionId}}`; devuelve la PENDIENTE existente si la hay; responde `_id` y enlace de pago); tests con cliente simulado** `[REQ-05]` `[REQ-06]` `[EC-01]` `[EC-16]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 2.2, 2.3
@@ -179,7 +179,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 11 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 12 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **15** | **50%** |
+| **Total Global** | **30** | **16** | **53%** |
