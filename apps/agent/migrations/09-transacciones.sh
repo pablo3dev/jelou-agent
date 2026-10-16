@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Coleccion Datum: transacciones (fuente: ../contract/db-design.dbml). Get-or-create; schema distinto => exit 2.
-# Tipos: Text, Number, Date, JSON. Enums y refs van como Text (GAP-12: sintaxis de Select/Relation sin confirmar); el valor valido se documenta en el DBML.
+# Coleccion Datum: transacciones (fuente: ../contract/db-design.dbml). Get-or-create; esquema distinto => exit 2.
+# Tipos reales de Datum v2 (PocketBase), verificados con --describe (GAP-12): text, number, date, select, json.
+# Mapeo: enum -> select (maxSelect=1); ref -> text; int -> number onlyInt; decimal -> number; timestamp/date -> date;
+# time/char -> text. La PK es el id de Datum ([a-z0-9]): id autogenerado por Datum (15 caracteres).
 set -euo pipefail
 : "${DATABASE_ID:?DATABASE_ID es obligatorio}"
-jelou databases collections create "${DATABASE_ID}" --name transacciones \
-  --field "reserva_id:Text" \
-  --field "estado:Text" \
-  --field "expira_at:Date" \
-  --field "execution_id:Text" \
-  --field "ultimo_evento:Text"
+jelou databases collections create "${DATABASE_ID}" --name transacciones --json \
+  --field 'reserva_id!:text' \
+  --field 'estado!:select:maxSelect=1,values=PENDIENTE|APROBADA|RECHAZADA|EXPIRADA' \
+  --field 'expira_at!:date' \
+  --field 'execution_id:text' \
+  --field 'ultimo_evento:text'
