@@ -1,4 +1,5 @@
 import { createApp, resolvePort } from './app.js';
+import { createDatumClient } from './datum.js';
 
 // El .env lo inyecta compose; en ejecución local es opcional.
 try {
@@ -8,7 +9,7 @@ try {
 }
 
 const port = resolvePort();
-const server = createApp().listen(port, () => {
+const server = createApp({ datum: createDatumClient() }).listen(port, () => {
   console.log(`pay escuchando en el puerto ${port}`);
 });
 
