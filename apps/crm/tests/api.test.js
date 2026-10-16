@@ -161,9 +161,8 @@ test('sin configuracion de Datum responde 503 datum_no_configurado', async () =>
 
 test('createApp sin deps usa el cliente real y, sin variables, responde 503', async () => {
   const previo = { ...process.env };
-  delete process.env.JELOU_CLIENT_ID;
-  delete process.env.JELOU_CLIENT_SECRET;
-  delete process.env.DATABASE_ID;
+  delete process.env.DATUM_URL;
+  delete process.env.DATUM_API_KEY;
   try {
     const server = createApp().listen(0, '127.0.0.1');
     await new Promise((resolve) => server.once('listening', resolve));

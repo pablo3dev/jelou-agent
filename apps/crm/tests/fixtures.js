@@ -70,7 +70,7 @@ export function mockDatum(data = fixtures(), { fallo = false } = {}) {
       if (fallo) throw new Error('boom: token=supersecreto');
       return (data[coleccion] ?? []).map((f) => ({ id: f._id, ...f }));
     },
-    async getById(id) {
+    async getById(_coleccion, id) {
       calls.push(['getById', id]);
       return null;
     },

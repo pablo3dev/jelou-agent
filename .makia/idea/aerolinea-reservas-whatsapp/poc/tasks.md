@@ -162,7 +162,7 @@
   - Depende de: 2.12, 2.13, 3.2
   - Rutas: `apps/pay/src/`
   - Evidencia (2026-10-16, Docker node:24.22.0, cliente de pay migrado a Datum v2 con `X-Api-Key`): `getRecord("transacciones", id)` leyó la transacción real (PENDIENTE, `expira_at` normalizada a ISO); id inexistente -> null; `POST /pagar/:id/aprobar` de pay -> notificación HMAC a `https://aerolinea-reservas.fn.jelou.ai/pago-notificacion` aceptada (transacción APROBADA, reserva EMITIDA, `ultimo_evento` fijado); mismo evento firmado -> 200 `{"resultado":"DUPLICADO"}` sin efecto; firma inválida -> 401. Datos de prueba eliminados; base 6/12/12/372. Reanudación del agente NO verificada: la transacción de prueba no tenía `execution_id` (requiere ejecución pausada de Brain Studio; carril agent/4.1).
-- [ ] **Task 3.6: BLOQUEADA POR CREDENCIALES. Dashboard en vivo con el seed cargado: muestra vuelos, asientos vendidos por vuelo y destino, mapa de asientos y estadísticas** `[REQ-11]`
+- [x] **Task 3.6: BLOQUEADA POR CREDENCIALES. Dashboard en vivo con el seed cargado: muestra vuelos, asientos vendidos por vuelo y destino, mapa de asientos y estadísticas** `[REQ-11]`
   - Unidad: `apps/crm`
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: 2.17, 3.3
@@ -182,6 +182,6 @@
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
 | **Phase 2: Implementación sin credenciales** | 19 | 19 | `Done` |
-| **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 5 | `In Progress` |
+| **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 6 | `Done` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **28** | **93%** |
+| **Total Global** | **30** | **29** | **97%** |

@@ -8,7 +8,7 @@ const TOP_RUTAS = 5;
 const fechaDe = (v) => String(v.fecha ?? '').slice(0, 10);
 
 function rutaDe(vuelo, rutas) {
-  const ruta = rutas.find((r) => r.id === vuelo.ruta_id || r._id === vuelo.ruta_id);
+  const ruta = rutas.find((r) => `${r.origen}-${r.destino}` === vuelo.ruta_id || r.id === vuelo.ruta_id);
   const [o, d] = String(vuelo.ruta_id ?? '').split('-');
   return { origen: ruta?.origen ?? o ?? null, destino: ruta?.destino ?? d ?? null };
 }
