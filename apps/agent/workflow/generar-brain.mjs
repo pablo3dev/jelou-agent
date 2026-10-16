@@ -7,7 +7,8 @@ const destino = process.argv[2] ?? "brain/workflows/mi-primer-workflow.whatsapp.
 const FN_URL = process.env.FUNCTIONS_URL ?? "https://aerolinea-reservas.fn.jelou.ai";
 const previo = JSON.parse(readFileSync(destino, "utf8"));
 const instructions = readFileSync("workflow/agent.prompt.md", "utf8");
-const pausa = new Set(["transaccion-crear"]);
+// Sin pausa por tool: con action "pause" la plataforma pausa justo tras la tool y el mensaje con el enlace de pago nunca se entrega.
+const pausa = new Set([]);
 const tools = ["rutas-listar", "vuelos-buscar", "equipaje-calcular", "cotizar", "asientos-validar-retener", "transaccion-crear"];
 
 const agente = {

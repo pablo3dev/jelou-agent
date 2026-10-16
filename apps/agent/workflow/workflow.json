@@ -34,7 +34,7 @@
         },
         "pauseInteraction": {
           "enabled": true,
-          "$comment": "El agente se pausa tras enviar el enlace de pago. Semantica exacta de pauseInteraction: GAP-15 (learning.md).",
+          "$comment": "El agente espera (sin action pause en la tool, que descartaba el mensaje del enlace) tras enviar el enlace de pago. Semantica exacta de pauseInteraction: GAP-15 (learning.md).",
           "pauseAfter": "transaccion-crear",
           "resume": {
             "endpoint": "https://gateway.jelou.ai/workflows/v1/skills/resume",
