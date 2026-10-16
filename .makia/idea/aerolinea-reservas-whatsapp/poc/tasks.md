@@ -31,7 +31,7 @@
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: 1.1
   - Rutas: `apps/crm/contract/`, `apps/crm/.gitignore`
-- [ ] **Task 1.4: Habilitación de arranque: `.gitattributes` con `eol=lf` para `.sh`, `.yaml`, `.js` y `Dockerfile`; `.env.example` con `PORT_CRM=3000`, `PORT_PAY=3001` y las variables `JELOU_TOKEN`, `JELOU_CLIENT_ID`, `JELOU_CLIENT_SECRET`, `JELOU_API_KEY`, `PAY_WEBHOOK_SECRET` y `DATABASE_ID` vacías, sin valores; `.gitignore` con `.env`** `[DRAFT §Stack técnico]` `[DRAFT §Estrategia de seguridad]`
+- [x] **Task 1.4: Habilitación de arranque: `.gitattributes` con `eol=lf` para `.sh`, `.yaml`, `.js` y `Dockerfile`; `.env.example` con `PORT_CRM=3000`, `PORT_PAY=3001` y las variables `JELOU_TOKEN`, `JELOU_CLIENT_ID`, `JELOU_CLIENT_SECRET`, `JELOU_API_KEY`, `PAY_WEBHOOK_SECRET` y `DATABASE_ID` vacías, sin valores; `.gitignore` con `.env`** `[DRAFT §Stack técnico]` `[DRAFT §Estrategia de seguridad]`
   - Unidad: `apps/infrastructure`
   - Spec: `entorno-local-infrastructure`
   - Depende de: —
@@ -178,8 +178,8 @@
 ## 4. Execution Progress Tracker
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
-| **Phase 1: Contratos y datos** | 4 | 0 | `Pending` |
+| **Phase 1: Contratos y datos** | 4 | 1 | `In Progress` |
 | **Phase 2: Implementación sin credenciales** | 19 | 0 | `Pending` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **0** | **0%** |
+| **Total Global** | **30** | **1** | **3%** |
