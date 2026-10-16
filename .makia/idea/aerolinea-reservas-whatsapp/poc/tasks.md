@@ -118,7 +118,7 @@
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: 2.15
   - Rutas: `apps/crm/public/`
-- [ ] **Task 2.17: Dockerfile de apps/crm: base `node:24.22.0-bookworm-slim`, usuario no root, healthcheck con CMD de Node contra `/health`** `[DRAFT §Carriles]`
+- [x] **Task 2.17: Dockerfile de apps/crm: base `node:24.22.0-bookworm-slim`, usuario no root, healthcheck con CMD de Node contra `/health`** `[DRAFT §Carriles]`
   - Unidad: `apps/crm`
   - Spec: `dashboard-aerolinea-crm`
   - Depende de: —
@@ -179,7 +179,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 1 | `In Progress` |
-| **Phase 2: Implementación sin credenciales** | 19 | 0 | `Pending` |
+| **Phase 2: Implementación sin credenciales** | 19 | 1 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **1** | **3%** |
+| **Total Global** | **30** | **2** | **7%** |
