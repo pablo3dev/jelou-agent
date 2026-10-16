@@ -74,7 +74,7 @@
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 1.1, 2.3
   - Rutas: `apps/agent/seed/`
-- [ ] **Task 2.8: Agente de Brain Studio en `apps/agent/workflow/`: nodo AI Agent con prompt, pestaña Tools con las functions de 2.4 a 2.6 y pestaña Pause interaction; workflow trayecto → pasajeros (1–9) → fechas de ida y vuelta → vuelos → por pasajero: equipaje → mascotas → asientos de ida y de vuelta → resumen y total → transacción → pago → PNR, fallo o expiración; el LLM solo pasa texto; enlace de pago en texto plano; sin plantillas HSM** `[REQ-01]` `[REQ-09]` `[REQ-10]` `[DRAFT §Solución propuesta]`
+- [x] **Task 2.8: Agente de Brain Studio en `apps/agent/workflow/`: nodo AI Agent con prompt, pestaña Tools con las functions de 2.4 a 2.6 y pestaña Pause interaction; workflow trayecto → pasajeros (1–9) → fechas de ida y vuelta → vuelos → por pasajero: equipaje → mascotas → asientos de ida y de vuelta → resumen y total → transacción → pago → PNR, fallo o expiración; el LLM solo pasa texto; enlace de pago en texto plano; sin plantillas HSM** `[REQ-01]` `[REQ-09]` `[REQ-10]` `[DRAFT §Solución propuesta]`
   - Unidad: `apps/agent`
   - Spec: `reserva-pago-whatsapp-agent`
   - Depende de: 2.4, 2.5, 2.6
@@ -180,7 +180,7 @@
 | Fase | Total Tareas | Completadas | Estado |
 |:---|:---:|:---:|:---|
 | **Phase 1: Contratos y datos** | 4 | 4 | `Done` |
-| **Phase 2: Implementación sin credenciales** | 19 | 14 | `In Progress` |
+| **Phase 2: Implementación sin credenciales** | 19 | 15 | `In Progress` |
 | **Phase 3: Datum en vivo (bloqueado por credenciales)** | 6 | 0 | `Pending` |
 | **Phase 4: Arranque e integración** | 1 | 0 | `Pending` |
-| **Total Global** | **30** | **18** | **60%** |
+| **Total Global** | **30** | **19** | **63%** |
