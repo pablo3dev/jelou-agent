@@ -7,7 +7,7 @@ const AHORA = new Date('2026-12-01T10:00:00Z');
 
 function datumFalso(filas) {
   return {
-    async getRow(id) {
+    async getRecord(_c, id) {
       const v = filas[id];
       if (v instanceof Error) throw v;
       return v ?? null;

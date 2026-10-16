@@ -11,7 +11,7 @@ export function resolvePort(env = process.env) {
   return Number.isInteger(port) && port > 0 && port < 65536 ? port : DEFAULT_PORT;
 }
 
-// `datum` (opcional) expone getRow(rowId); sin él no se publican las rutas de pago.
+// `datum` (opcional) expone getRecord(coleccion, id); sin él no se publican las rutas de pago.
 // `now` es inyectable para las pruebas de expiración.
 // `notificador` expone notificar(transaccionId, estado); por defecto el real (env + fetch).
 export function createApp({ datum, now = () => new Date(), notificador = createNotificador() } = {}) {
@@ -37,7 +37,7 @@ export function createApp({ datum, now = () => new Date(), notificador = createN
   app.get(['/pay/:id', '/pagar/:id'], validarId, async (req, res) => {
     const lang = resolveLang(req.get('accept-language'));
     try {
-      const tx = await datum.getRow(req.params.id);
+      const tx = await datum.getRecord('transacciones', req.params.id);
       if (!tx) {
         res.status(404).type('text/plain').send('transacción no encontrada');
         return;
@@ -48,7 +48,7 @@ export function createApp({ datum, now = () => new Date(), notificador = createN
       const estado = tx.estado === 'PENDIENTE' && !pagable ? 'EXPIRADA' : tx.estado;
       let totalCop;
       if (pagable) {
-        const reserva = await datum.getRow(tx.reserva_id);
+        const reserva = await datum.getRecord('reservas', tx.reserva_id);
         totalCop = reserva?.total_cop;
         if (!Number.isInteger(totalCop) || totalCop < 0) {
           res.status(502).type('text/plain').send('datos de reserva inválidos');
@@ -90,7 +90,7 @@ export function createApp({ datum, now = () => new Date(), notificador = createN
       const id = req.params.id;
       let tx;
       try {
-        tx = await datum.getRow(id);
+        tx = await datum.getRecord('transacciones', id);
       } catch {
         res.status(502).type('text/plain').send('no se pudo consultar la transacción');
         return;

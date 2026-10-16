@@ -1,25 +1,31 @@
-export const DEFAULT_DATUM_BASE_URL = 'https://api.jelou.ai/v2';
-
 export class DatumError extends Error {}
 
-// Cliente mínimo de solo lectura de Datum (contrato: "Lectura de la transacción por id").
-// Los secretos se leen solo de `env`; `fetchFn` es inyectable para las pruebas.
+// Fechas `date` de Datum v2 (PocketBase): "2026-12-01 00:00:00.000Z" -> ISO con "T".
+const FECHA_DATUM = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)$/;
+
+function normalizar(registro) {
+  const salida = {};
+  for (const [k, v] of Object.entries(registro)) {
+    salida[k] = typeof v === 'string' ? v.replace(FECHA_DATUM, '$1T$2') : v;
+  }
+  return salida;
+}
+
+// Cliente mínimo de solo lectura de Datum v2 (contrato: endpoints.md, "Acceso a Datum v2").
+// Los secretos se leen solo de `env` y nunca se incluyen en errores; `fetchFn` es inyectable.
 export function createDatumClient({ env = process.env, fetchFn = fetch } = {}) {
   // Lectura pura: un GET por id es naturalmente idempotente.
-  async function getRow(rowId) {
-    const { JELOU_CLIENT_ID, JELOU_CLIENT_SECRET, DATABASE_ID } = env;
-    if (!JELOU_CLIENT_ID || !JELOU_CLIENT_SECRET || !DATABASE_ID) {
-      throw new DatumError('Datum no configurado');
-    }
-    const base = (env.DATUM_BASE_URL || DEFAULT_DATUM_BASE_URL).replace(/\/+$/, '');
-    const url = `${base}/databases/${encodeURIComponent(DATABASE_ID)}/rows/${encodeURIComponent(rowId)}`;
-    const basic = Buffer.from(`${JELOU_CLIENT_ID}:${JELOU_CLIENT_SECRET}`).toString('base64');
+  async function getRecord(coleccion, id) {
+    const { DATUM_URL, DATUM_API_KEY } = env;
+    if (!DATUM_URL || !DATUM_API_KEY) throw new DatumError('Datum no configurado');
+    const base = DATUM_URL.replace(/\/+$/, '');
+    const url = `${base}/collections/${encodeURIComponent(coleccion)}/records/${encodeURIComponent(id)}`;
 
     let res;
     try {
       res = await fetchFn(url, {
         method: 'GET',
-        headers: { Authorization: `Basic ${basic}`, Accept: 'application/json' },
+        headers: { 'X-Api-Key': DATUM_API_KEY, Accept: 'application/json' },
         signal: AbortSignal.timeout(5000),
       });
     } catch {
@@ -34,11 +40,11 @@ export function createDatumClient({ env = process.env, fetchFn = fetch } = {}) {
     } catch {
       throw new DatumError('Respuesta de Datum no es JSON');
     }
-    // SUPUESTO (GAP-09): envoltorio `fields` o campos planos; se confirma en el spike 3.1.
-    const row = body?.fields ?? body;
-    if (row === null || typeof row !== 'object') throw new DatumError('Respuesta de Datum inválida');
-    return row;
+    if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+      throw new DatumError('Respuesta de Datum inválida');
+    }
+    return normalizar(body);
   }
 
-  return { getRow };
+  return { getRecord };
 }

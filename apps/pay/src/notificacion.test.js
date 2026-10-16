@@ -15,7 +15,7 @@ const FILAS = {
   hecha: { estado: 'APROBADA', reserva_id: 'r1', expira_at: '2026-12-01T10:15:00Z' },
 };
 
-const datumFalso = { getRow: async (id) => FILAS[id] ?? null };
+const datumFalso = { getRecord: async (_c, id) => FILAS[id] ?? null };
 
 // Receptor simulado: guarda cuerpo crudo y cabeceras; `respuestas` define los status sucesivos.
 async function conReceptor(respuestas, fn) {
