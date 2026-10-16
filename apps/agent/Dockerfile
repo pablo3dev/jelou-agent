@@ -8,7 +8,8 @@
 FROM node:24.22.0-bookworm-slim
 ARG JELOU_CLI_VERSION=4.13.1
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false NPM_CONFIG_FUND=false
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
+# unzip: `jelou functions dev` descarga Deno en el primer arranque y lo necesita.
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates unzip \
  && rm -rf /var/lib/apt/lists/* \
  && npm install -g @jelou/cli@${JELOU_CLI_VERSION} \
  && npm cache clean --force \
