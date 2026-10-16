@@ -76,6 +76,26 @@ classDiagram
     id_evento: string
     estado: EstadoTransaccion
   }
+  class Cotizacion {
+    lineas: LineaCotizacion[]
+    total_cop: int
+  }
+  class LineaCotizacion {
+    concepto: ConceptoLinea
+    trayecto: SentidoTrayecto
+    pasajero_indice: int
+    monto_cop: int
+  }
+  class EnlacePago {
+    url: string
+  }
+  class ResultadoNotificacion {
+    valor: APLICADO|EXPIRADO|DUPLICADO|SIN_EFECTO
+  }
+  Cotizacion "1" *-- "N" LineaCotizacion : lineas
+  Cotizacion ..> Reserva : total_cop se persiste
+  Transaccion ..> EnlacePago : deriva
+  EventoPago ..> ResultadoNotificacion : produce
   Ruta "1" --> "N" Vuelo : opera
   Vuelo "1" *-- "174" Asiento : mapa_asientos
   Reserva "N" --> "1" Vuelo : ida
@@ -107,6 +127,11 @@ classDiagram
 | Mascota | Animal en cabina, por pasajero; no ocupa asiento. |
 | Transacción | Cobro de una reserva con su estado y el `execution_id` de la ejecución del agente a reanudar. |
 | Evento de pago | Notificación de la pasarela ya registrada, identificada por `id_evento` = `<transaccion_id>:<estado>`. |
+| Id lógico / id físico | El id lógico es el que usa el dominio; el id físico es el `id` del registro en Datum. Ruta: lógico `<origen>-<destino>` (`BOG-MDE`), físico minúsculas sin guion (`bogmde`). Temporada: físico `mes01`..`mes12`. Parámetro: físico = clave sin guiones bajos. Vuelo: `<ruta sin guion en minúsculas><fecha sin guiones>` (`bogmde20261201`); es el `vuelo_id` que ve el agente. Evento de pago: físico `<transaccion_id><estado en minúsculas>`. El resto de ids los asigna Datum. |
+| Cotización | Value object no persistido: líneas de cobro calculadas en servidor y su total. Solo `total_cop` se persiste (`reservas.total_cop`); los montos de equipaje y mascota se persisten en sus tablas. |
+| Línea de cotización | Un cobro de la cotización: concepto `PASAJE`, `EQUIPAJE` o `MASCOTA`, trayecto `IDA` o `REGRESO`, índice del pasajero y monto en COP. |
+| Enlace de pago | Value object derivado, no persistido: `PAY_PUBLIC_URL` + `/pay/` + id de la transacción. |
+| Resultado de notificación | Value object no persistido con el desenlace de procesar un evento de pago: `APLICADO`, `EXPIRADO`, `DUPLICADO` o `SIN_EFECTO`. |
 | Write-then-verify | Protocolo de escritura del mapa: escribir con `version + 1`, releer y verificar el `hold_token` o `pnr` propio; 3 intentos con backoff. |
 
 ## Entidades
@@ -122,6 +147,10 @@ classDiagram
 - **Mascota** — entidad de la Reserva, ligada a un Pasajero.
 - **Transacción** — entidad con máquina de estados; una PENDIENTE como máximo por reserva.
 - **Evento de pago** — entidad de idempotencia; se registra antes de aplicar el efecto.
+- **Cotización** — value object no persistido; agrupa Líneas de cotización y su total.
+- **Línea de cotización** — value object no persistido, parte de la Cotización.
+- **Enlace de pago** — value object derivado de la Transacción, no persistido.
+- **Resultado de notificación** — value object no persistido; desenlace del procesamiento de un Evento de pago.
 
 ## Atributos
 
@@ -129,7 +158,7 @@ classDiagram
 
 | Atributo | Tipo | Obligatorio |
 |----------|------|-------------|
-| id (`<origen>-<destino>`) | texto | Sí |
+| id (lógico `<origen>-<destino>`; físico minúsculas sin guion, p. ej. `bogmde`) | texto | Sí |
 | origen (IATA, 3 letras) | texto | Sí |
 | destino (IATA, 3 letras) | texto | Sí |
 | tarifa_base_cop | entero | Sí |
@@ -138,22 +167,22 @@ classDiagram
 
 | Atributo | Tipo | Obligatorio |
 |----------|------|-------------|
-| mes (1-12) | entero | Sí |
+| mes (1-12; id físico `mes01`..`mes12`) | entero | Sí |
 | multiplicador | decimal(3,2) | Sí |
 
 ### Parámetro
 
 | Atributo | Tipo | Obligatorio |
 |----------|------|-------------|
-| clave | enum clave_parametro | Sí |
+| clave (id físico = clave sin guiones bajos) | enum clave_parametro | Sí |
 | valor | entero | Sí |
 
 ### Vuelo
 
 | Atributo | Tipo | Obligatorio |
 |----------|------|-------------|
-| id | texto | Sí |
-| ruta_id | texto (ref Ruta) | Sí |
+| id (`<ruta sin guion en minúsculas><fecha sin guiones>`, p. ej. `bogmde20261201`; es el `vuelo_id` del agente) | texto | Sí |
+| ruta_id (id lógico de la Ruta, p. ej. `BOG-MDE`) | texto (ref Ruta) | Sí |
 | fecha | fecha | Sí |
 | hora_salida | hora (07:00) | Sí |
 | mapa_asientos | JSON (174 claves) | Sí |
@@ -231,10 +260,38 @@ classDiagram
 
 | Atributo | Tipo | Obligatorio |
 |----------|------|-------------|
-| id | texto | Sí |
+| id (`<transaccion_id><estado en minúsculas>`) | texto | Sí |
 | transaccion_id | texto (ref Transacción) | Sí |
 | id_evento | texto, único | Sí |
 | estado | enum estado_transaccion | Sí |
+
+### Cotización (no persistida)
+
+| Atributo | Tipo | Obligatorio |
+|----------|------|-------------|
+| lineas | lista de Línea de cotización | Sí |
+| total_cop (suma de las líneas ya redondeadas) | entero | Sí |
+
+### Línea de cotización (no persistida)
+
+| Atributo | Tipo | Obligatorio |
+|----------|------|-------------|
+| concepto | enum `PASAJE`, `EQUIPAJE`, `MASCOTA` | Sí |
+| trayecto | enum sentido_trayecto (`IDA`, `REGRESO`) | Sí |
+| pasajero_indice | entero | Sí |
+| monto_cop | entero | Sí |
+
+### Enlace de pago (no persistido)
+
+| Atributo | Tipo | Obligatorio |
+|----------|------|-------------|
+| url (`PAY_PUBLIC_URL` + `/pay/` + id de la transacción) | texto (URL) | Sí |
+
+### Resultado de notificación (no persistido)
+
+| Atributo | Tipo | Obligatorio |
+|----------|------|-------------|
+| valor | enum `APLICADO`, `EXPIRADO`, `DUPLICADO`, `SIN_EFECTO` | Sí |
 
 ## Relaciones y multiplicidad
 
@@ -253,7 +310,7 @@ classDiagram
 - **RN-02 Temporada**: 1.30 para los meses 1, 6, 7 y 12; 1.00 para el resto; se aplica a pasaje, equipaje y mascotas.
 - **RN-03 Equipaje de cabina**: sin costo y sin medidas.
 - **RN-04 Equipaje de bodega**: `cobrable_kg = ceil(max(peso_kg, L*A*H/6000))`; precio = `max(40000, cobrable_kg × 12000)` × temporada; L+A+H ≤ 158 cm (supuesto DEMO, GAP-17), peso ≤ 32 kg, 1 pieza por pasajero.
-- **RN-05 Mascota**: máximo 1 por reserva, ≤ 8 kg, en cabina, sin asiento; precio 150000 × temporada.
+- **RN-05 Mascota**: máximo 1 por reserva, ≤ 8 kg, en cabina, sin asiento; precio 150000 × temporada. El código cotiza una única línea de mascota por reserva, asignada al trayecto IDA y con la temporada del vuelo de ida.
 - **RN-06 Asientos**: formato `12A 12B` o `12A,12B`; deben existir en el mapa, estar LIBRES y ser tantos como pasajeros; filas 13 y 14 solo con edad ≥ 15.
 - **RN-07 Pago**: monto = suma de líneas (pasaje por pasajero y trayecto, equipaje, mascota), cada una redondeada con `Math.round`; se persisten `reservas.total_cop`, `equipaje.precio_cop` y `mascotas.precio_cop`.
 - **RN-08 Hold**: 15 minutos; válido solo si RETENIDO y `hold_expira > ahora`; un hold vencido equivale a LIBRE por lectura. Se fija en ahora+15 min en `asientos-validar-retener`; al crear la transacción se re-fija (ver RN-09).
@@ -264,7 +321,8 @@ classDiagram
 - **RN-13 PNR**: 6 caracteres de `[A-Z2-9]` sin O, I, 0 ni 1; único por verificación de lectura antes de escribir (riesgo residual).
 - **RN-14 Ventana**: toda fecha de viaje entre 2026-12-01 y 2027-01-31 inclusive.
 - **RN-15 Cantidad**: entre 1 y 9 pasajeros por reserva.
-- **RN-16 Idempotencia de pago**: `id_evento` = `<transaccion_id>:<estado>`, único; se registra antes de aplicar el efecto; un `id_evento` existente es duplicado y no repite el efecto (Datum no fuerza unicidad: riesgo residual).
+- **RN-16 Idempotencia de pago**: `id_evento` = `<transaccion_id>:<estado>`, único; se registra antes de aplicar el efecto; un `id_evento` existente es duplicado y no repite el efecto. El evento se crea con id físico `<transaccion_id><estado en minúsculas>`: la PK única de Datum hace atómica la creación y un duplicado simultáneo responde 400 `validation_not_unique`, que se trata como DUPLICADO.
 - **RN-17 Escritura del mapa**: toda escritura usa `version + 1` y se verifica por relectura (3 intentos con backoff); si falla, 503 sin efecto parcial. No es atómico: riesgo residual de doble venta aceptado solo para DEMO.
 - **RN-18 Datos personales**: nombre, documento y edad son PII; los logs enmascaran el documento.
 - **RN-19 Invariantes de datos**: las de cada tabla de `apps/agent/contract/db-design.dbml` (mascota no referencia vuelos ni mapa; regreso con ruta inversa; asientos únicos por reserva y trayecto; `execution_id` presente desde la creación de la transacción).
+- **RN-20 Compensación de creación**: si la creación de la reserva, su detalle o la transacción falla a medias, la reserva huérfana pasa a CANCELADA (mejor esfuerzo) y la operación responde 503.
