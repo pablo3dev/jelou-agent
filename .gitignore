@@ -1,0 +1,6 @@
+# >>> MakIA (gestionado por makia; no editar este bloque) >>>
+.makia/bin/
+.makia/core/
+.makia/extensions/
+.makia/worktrees/
+# <<< MakIA <<<

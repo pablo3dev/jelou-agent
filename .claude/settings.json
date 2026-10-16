@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'MakIA: lee .makia/core/agents/orchestrator/orchestrator.md antes de continuar. Memoria del proyecto: lee ## Global y la secci\u00f3n de tu unidad de .makia/config/constitution.md antes de decidir.'"
+          }
+        ]
+      }
+    ]
+  }
+}
