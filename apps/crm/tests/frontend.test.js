@@ -9,6 +9,8 @@ import { parsearHash } from '../public/js/hash.js';
 import { CATALOGOS, idiomaInicial } from '../public/js/i18n.js';
 import { aplicarFiltros, ordenar } from '../public/js/views/vuelos.js';
 import { vueloSeleccionado } from '../public/js/views/mapa.js';
+import { ordenarAsientos } from '../public/js/views/asientos.js';
+import { temaInicial } from '../public/js/tema.js';
 import { ASIENTOS, detalleAsientos } from '../src/asientos.js';
 import { AHORA, V1_MAPA } from './fixtures.js';
 
@@ -142,4 +144,22 @@ test('i18n: catalogos es/en con las mismas claves y toda clave usada existe', ()
   for (const e of ['LIBRE', 'RETENIDO', 'VENDIDO', 'BLOQUEADO']) assert.ok(`estado.${e}` in CATALOGOS.en);
   for (const c of ['PREMIUM', 'EXTENDED', 'ECONOMY']) assert.ok(`clase.${c}` in CATALOGOS.en);
   for (const r of ['EMITIDA', 'PENDIENTE_PAGO', 'PAGO_RECHAZADO', 'EXPIRADA', 'CANCELADA']) assert.ok(`reserva.${r}` in CATALOGOS.en);
+});
+
+test('hash del widget de asientos: vuelo y limite de seleccion', () => {
+  assert.deepEqual(parsearHash('#/asientos/bogmde20261201/2'), { vista: 'asientos', id: 'bogmde20261201', n: 2 });
+  assert.deepEqual(parsearHash('#/asientos/bogmde20261201'), { vista: 'asientos', id: 'bogmde20261201', n: null });
+  assert.equal(parsearHash('#/asientos/x/99').n, 9);
+  assert.equal(parsearHash('#/asientos/x/0').n, null);
+});
+
+test('asientos elegidos se copian en orden natural fila-letra', () => {
+  assert.deepEqual(ordenarAsientos(new Set(['12C', '8B', '12A', '8A'])), ['8A', '8B', '12A', '12C']);
+});
+
+test('tema: preferencia guardada o la del sistema', () => {
+  assert.equal(temaInicial('light', false), 'light');
+  assert.equal(temaInicial('dark', true), 'dark');
+  assert.equal(temaInicial(null, true), 'light');
+  assert.equal(temaInicial('raro', false), 'dark');
 });

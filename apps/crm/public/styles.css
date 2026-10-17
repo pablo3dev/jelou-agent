@@ -26,7 +26,7 @@
 }
 
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme="dark"]) {
     --bg: #f3f2ee;
     --surface: #fbfaf8;
     --surface-2: #ebe9e3;
@@ -47,6 +47,30 @@
     --sombra: 0 1px 2px rgb(40 36 20 / 10%), 0 8px 24px rgb(40 36 20 / 8%);
   }
 }
+
+/* Tema elegido con el interruptor (data-theme): manda sobre la preferencia del sistema. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f2ee;
+  --surface: #fbfaf8;
+  --surface-2: #ebe9e3;
+  --border: #cfccc3;
+  --text: #23262e;
+  --muted: #596071;
+  --accent: #5844cf;
+  --accent-ink: #ffffff;
+  --focus: #3a2bb0;
+  --info: #1a5bc8;
+  --libre: #1b7f55;
+  --retenido: #a76a00;
+  --vendido: #c1352b;
+  --bloqueado: #667085;
+  --viz-1: #5844cf;
+  --viz-2: #b8438a;
+  --viz-3: #12829a;
+  --sombra: 0 1px 2px rgb(40 36 20 / 10%), 0 8px 24px rgb(40 36 20 / 8%);
+}
+:root[data-theme="dark"] { color-scheme: dark; }
 
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
@@ -312,4 +336,18 @@ code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; backgrou
   .graficos--resumen { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .graficos--resumen > * { grid-column: span 2; }
   .graficos--resumen > .grafico--s4 { grid-column: span 4; }
+}
+
+/* ---------- Widget de seleccion de asientos (#/asientos/<vuelo>/<n>) ---------- */
+.modo-seleccion .nav, .modo-seleccion .hace, .modo-seleccion .interruptor, .modo-seleccion .acciones .btn--primario { display: none; }
+.seleccion-grid { display: grid; gap: 1rem; align-items: start; }
+.seleccion { position: sticky; bottom: 0.5rem; z-index: 5; display: grid; gap: 0.5rem; background: var(--surface); box-shadow: var(--sombra); }
+.seleccion__lista { display: block; min-height: 2.2rem; font: 800 1.4rem/1.3 var(--fuente); letter-spacing: 0.04em; overflow-wrap: anywhere; }
+.seleccion__lista[data-vacia="true"] { font: 400 0.95rem/1.5 var(--fuente); color: var(--muted); }
+.seleccion__cuenta, .seleccion__aviso { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.seleccion__aviso { min-height: 1.3rem; color: var(--text); }
+.asiento:disabled { cursor: not-allowed; opacity: 0.55; transform: none; box-shadow: none; }
+@media (min-width: 960px) {
+  .seleccion-grid { grid-template-columns: minmax(0, 1fr) 20rem; }
+  .seleccion { position: sticky; top: 6rem; bottom: auto; }
 }

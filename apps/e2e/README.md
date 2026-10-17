@@ -27,6 +27,10 @@ Los tres comparten el mismo vuelo de ida y de regreso (se elige una vez por sesi
 
 `uv run pytest` corre los tres en ese orden; uno solo: `uv run pytest -k una_persona`. Cada paso se anuncia en consola (`PASO n`) y deja captura numerada en `artifacts/<escenario>/`. Selección de botones y listas: el driver toca el control de WhatsApp Web y, si no lo encuentra, escribe el título de la opción (es lo mismo que recibe el agente). Repetir una corrida: `E2E_SEED=123`.
 
+Asientos: el agente comparte el enlace del selector del CRM (`#/asientos/<vuelo>/<n>`, requiere `CRM_PUBLIC_URL` en las functions). La prueba lo abre en otra pestaña, elige asientos, quita uno de prueba, pulsa «Copiar asientos» y pega el texto copiado en el chat (el contexto del navegador recibe permiso de portapapeles).
+
+Recorrido por el CRM al cerrar cada escenario: resumen (modo claro/oscuro, idioma y scroll), vuelos (scroll y filtro por la ruta), mapa (vuelo de la reserva y scroll), ventas (2 s, scroll y clic en el vuelo para abrir su mapa).
+
 Requiere que el agente publicado use la herramienta nativa «Buttons and list» (ver `apps/agent/workflow/agent.prompt.md`).
 
 ## Riesgo con WhatsApp

@@ -6,7 +6,7 @@ Fuente: `draft.md` (RN-01..RN-15, REQ-01..REQ-12, EC-01..EC-18, decisiones 31-38
 
 - Cada function se define con `define({ name, description, input, output, handler })` de `@jelou/functions`. La entrada se valida con zod antes del handler; si falla: HTTP 400, "Validation failed" (el campo `details` o `error` del cuerpo 400 es SUPUESTO, se confirma en 3.2).
 - Autenticación: solo `pago-notificacion` es pública (`config.public = true`), protegida por HMAC. El resto no es pública: solo la llama el agente de Brain Studio por MCP con la cabecera `Authorization: Bearer ${JELOU_FUNCTIONS_TOKEN}` (token `sk_...`; se configura en Brain Studio como `${VAR}`/placeholder, nunca con el valor en el repo).
-- Variables de entorno requeridas por las functions/agente: `PAY_WEBHOOK_SECRET` (HMAC de `pago-notificacion`), `PAY_PUBLIC_URL` (base pública de apps/pay, ej. `http://localhost:3001`; se usa para construir `enlace_pago`), `DATUM_URL` (base de datos de Datum v2: `https://<slug>.jelou.cloud/api`) y `DATUM_API_KEY` (API key `db_...`, se envía como cabecera `X-Api-Key`). `PAY_WEBHOOK_SECRET`, `DATUM_URL` y `DATUM_API_KEY` son secretos de las functions; nunca se escriben en el repo.
+- Variables de entorno requeridas por las functions/agente: `PAY_WEBHOOK_SECRET` (HMAC de `pago-notificacion`), `PAY_PUBLIC_URL` (base pública de apps/pay, ej. `http://localhost:3001`; se usa para construir `enlace_pago`), `CRM_PUBLIC_URL` (opcional; base pública de apps/crm, ej. `http://localhost:3000`; se usa para construir `mapa_url`), `DATUM_URL` (base de datos de Datum v2: `https://<slug>.jelou.cloud/api`) y `DATUM_API_KEY` (API key `db_...`, se envía como cabecera `X-Api-Key`). `PAY_WEBHOOK_SECRET`, `DATUM_URL` y `DATUM_API_KEY` son secretos de las functions; nunca se escriben en el repo.
 - Acceso a Datum v2 (PocketBase): `GET|POST ${DATUM_URL}/collections/{coleccion}/records` y `GET|PATCH|DELETE .../records/{id}` (PATCH fusiona campos; PUT y `/batch` no están disponibles). Un `id` repetido en POST devuelve 400 `validation_not_unique`. Las fechas `date` llegan como `2026-12-01 00:00:00.000Z` (espacio en vez de `T`): el cliente las normaliza a ISO.
 - El LLM solo pasa texto: todo valor llega como `string` o `number` crudo y se valida en la function. Los precios y totales los calcula el servidor; ninguna entrada los trae.
 - Errores comunes de salida: 400 validación (o regla de negocio violada, con lista de motivos), 503 fallo de write-then-verify tras 3 intentos o fallo de reanudación (sin efecto parcial visible), 500 inesperado.
@@ -74,7 +74,8 @@ export const PasajeroEntrada = z.object({
     regreso: z.array(VueloResumen).optional(), // ruta inversa de ruta_id
   })
   // VueloResumen = { vuelo_id: string, ruta_id: string, fecha: string, hora_salida: "07:00",
-  //                  asientos_libres: number, tarifa_pasajero_cop: number }
+  //                  asientos_libres: number, tarifa_pasajero_cop: number,
+  //                  mapa_url?: string }  // widget del CRM: <CRM_PUBLIC_URL>/#/asientos/<vuelo_id>/<pasajeros>; solo si hay CRM_PUBLIC_URL
   ```
 - `asientos_libres` cuenta LIBRE más RETENIDO con `hold_expira <= ahora` (RN-08). `tarifa_pasajero_cop` ya incluye temporada y redondeo (RN-01, RN-02, RN-07).
 - Lectura pura; sin efecto.

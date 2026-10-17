@@ -71,3 +71,12 @@ Deno.test("el catálogo se lee por colección (rutas, temporada, parametros, vue
   assertEquals(r.ida.length, 1);
   assertEquals([...datum.llamadas].sort(), ["listar:parametros", "listar:rutas", "listar:temporada", "listar:vuelos"]);
 });
+
+Deno.test("con CRM_PUBLIC_URL cada vuelo trae mapa_url al widget de asientos con la cantidad de pasajeros", async () => {
+  const r = await ejecutar(entrada.parse(base), {
+    datum: datumSimulado(filasCatalogo()),
+    ahora: AHORA,
+    crmPublicUrl: "https://crm.ejemplo.test/",
+  });
+  assertEquals(r.ida[0].mapa_url, "https://crm.ejemplo.test/#/asientos/v-ida-dic/2");
+});

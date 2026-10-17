@@ -23,6 +23,7 @@ const VueloResumen = z.object({
   hora_salida: z.string(),
   asientos_libres: z.number().int(),
   tarifa_pasajero_cop: z.number().int(),
+  mapa_url: z.string().optional(), // widget de seleccion de asientos del CRM (solo si hay CRM_PUBLIC_URL)
 });
 
 export const salida = z.object({
@@ -31,7 +32,7 @@ export const salida = z.object({
 });
 
 // RN-08: LIBRE más RETENIDO vencido cuentan como libres. RN-01/02/07: tarifa con temporada del mes del vuelo, redondeada.
-function resumir(cat: Catalogo, rutaId: string, fecha: string, ahora: Date) {
+function resumir(cat: Catalogo, rutaId: string, fecha: string, ahora: Date, pasajeros: number, crmUrl?: string) {
   const ruta = buscarRuta(cat, rutaId);
   return cat.vuelos
     .filter((v) => v.ruta_id === rutaId && v.fecha === fecha)
@@ -42,17 +43,18 @@ function resumir(cat: Catalogo, rutaId: string, fecha: string, ahora: Date) {
       hora_salida: v.hora_salida,
       asientos_libres: Object.values(v.mapa).filter((a) => estaLibre(a, ahora)).length,
       tarifa_pasajero_cop: precioPasaje(ruta.tarifa_base_cop, multiplicadorDeFecha(v.fecha, cat.temporada)),
+      ...(crmUrl ? { mapa_url: `${crmUrl.replace(/\/+$/, "")}/#/asientos/${v.vuelo_id}/${pasajeros}` } : {}),
     }));
 }
 
 // `pasajeros` solo se valida (RN-15): no filtra vuelos; el agente compara con `asientos_libres`.
 export async function ejecutar(
   input: z.infer<typeof entrada>,
-  dep: { datum: Datum; ahora: Date },
+  dep: { datum: Datum; ahora: Date; crmPublicUrl?: string },
 ): Promise<z.infer<typeof salida>> {
   const cat = await cargarCatalogo(dep.datum);
-  const ida = resumir(cat, input.ruta_id, input.fecha_ida, dep.ahora);
+  const ida = resumir(cat, input.ruta_id, input.fecha_ida, dep.ahora, input.pasajeros, dep.crmPublicUrl);
   if (input.fecha_regreso === undefined) return { ida };
   const inversa = rutaInversa(cat, buscarRuta(cat, input.ruta_id));
-  return { ida, regreso: resumir(cat, inversa.id, input.fecha_regreso, dep.ahora) };
+  return { ida, regreso: resumir(cat, inversa.id, input.fecha_regreso, dep.ahora, input.pasajeros, dep.crmPublicUrl) };
 }

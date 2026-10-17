@@ -1,6 +1,7 @@
 // Punto de entrada: shell, enrutado por hash, auto-refresco cada 15 s.
 import { h } from './dom.js';
 import { iniciarIdioma, setIdioma, idioma, t, locale } from './i18n.js';
+import { iniciarTema, setTema, tema } from './tema.js';
 import { formatHace } from './format.js';
 import { parsearHash, VISTAS_NAV } from './hash.js';
 import { destruirTodos } from './charts.js';
@@ -9,9 +10,10 @@ import * as resumen from './views/resumen.js';
 import * as vuelos from './views/vuelos.js';
 import * as mapa from './views/mapa.js';
 import * as ventas from './views/ventas.js';
+import * as asientos from './views/asientos.js';
 
 const INTERVALO_MS = 15000;
-const VISTAS = { resumen, vuelos, mapa, ventas };
+const VISTAS = { resumen, vuelos, mapa, ventas, asientos };
 const NAV = VISTAS_NAV;
 
 const state = { stats: null, vuelos: null, ventasVuelo: null, ventasDestino: null, asientos: null, actualizadoAt: null, error: null, cargando: false };
@@ -34,8 +36,8 @@ async function refrescar(manual = false) {
   try {
     const [stats, lista, pv, pd] = await Promise.all([getEstadisticas(), getVuelos(), getVentasPorVuelo(), getVentasPorDestino()]);
     const id = mapa.vueloSeleccionado(ruta, lista.vuelos);
-    const asientos = ruta.vista === 'mapa' && id ? await getAsientos(id) : state.asientos;
-    Object.assign(state, { stats, vuelos: lista.vuelos, ventasVuelo: pv, ventasDestino: pd, asientos, error: null, actualizadoAt: Date.now() });
+    const detalleAsientos = (ruta.vista === 'mapa' || ruta.vista === 'asientos') && id ? await getAsientos(id) : state.asientos;
+    Object.assign(state, { stats, vuelos: lista.vuelos, ventasVuelo: pv, ventasDestino: pd, asientos: detalleAsientos, error: null, actualizadoAt: Date.now() });
     if (manual) el.anuncio.textContent = t('refrescar.anuncio');
   } catch (e) {
     state.error = e;
@@ -67,6 +69,7 @@ function pintarCabecera() {
 
 function mostrarVista() {
   destruirTodos();
+  document.body.classList.toggle('modo-seleccion', ruta.vista === 'asientos');
   el.main.replaceChildren();
   vistaActiva = VISTAS[ruta.vista].montar(el.main, ctx);
   vistaActiva.actualizar(state);
@@ -95,6 +98,15 @@ function construirShell() {
     mostrarVista();
   }, text: t('idioma.actual') });
 
+  const oscuro = tema() === 'dark';
+  const botonTema = h('button', { type: 'button', id: 'tema', class: 'btn btn--sec btn--icono', 'aria-label': t(oscuro ? 'tema.claro' : 'tema.oscuro'), title: t(oscuro ? 'tema.claro' : 'tema.oscuro'), onclick: () => {
+    setTema(tema() === 'dark' ? 'light' : 'dark');
+    construirShell();
+    pintarCabecera();
+    destruirTodos();
+    mostrarVista();
+  }, text: oscuro ? '☀' : '☾' });
+
   app.replaceChildren(
     h('a', { href: '#contenido', class: 'saltar', text: t('app.saltar'), onclick: (e) => { e.preventDefault(); el.main.focus(); } }),
     h('header', { class: 'cabecera' },
@@ -102,7 +114,7 @@ function construirShell() {
         h('p', { class: 'marca' }, h('span', { class: 'marca__logo', 'aria-hidden': 'true', text: '✈' }), h('span', { text: t('app.marca') })),
         h('div', { class: 'acciones' }, el.hace,
           h('label', { class: 'interruptor', for: 'auto' }, interruptor, h('span', { class: 'interruptor__pista', 'aria-hidden': 'true' }), h('span', { text: t('refrescar.auto') })),
-          el.refrescar, lang)),
+          el.refrescar, botonTema, lang)),
       el.nav),
     el.aviso, el.main, el.anuncio);
 }
@@ -114,6 +126,7 @@ function alCambiarHash() {
 }
 
 iniciarIdioma();
+iniciarTema();
 construirShell();
 pintarCabecera();
 ruta = parsearHash(location.hash);
@@ -122,4 +135,3 @@ refrescar();
 addEventListener('hashchange', alCambiarHash);
 setInterval(() => { if (auto && !document.hidden) refrescar(); }, INTERVALO_MS);
 setInterval(pintarCabecera, 1000);
-matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { destruirTodos(); vistaActiva?.actualizar(state); });

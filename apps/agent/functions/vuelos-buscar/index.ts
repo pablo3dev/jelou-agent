@@ -12,6 +12,6 @@ export default define({
   handler: async (input, ctx) => {
     ctx.log("Buscando vuelos", sanitizarParaLog(input));
     const datum = crearDatum(configDesdeEntorno((n) => ctx.env.get(n)));
-    return await conErroresHttp(() => ejecutar(input, { datum, ahora: new Date() }));
+    return await conErroresHttp(() => ejecutar(input, { datum, ahora: new Date(), crmPublicUrl: ctx.env.get("CRM_PUBLIC_URL") || undefined }));
   },
 });

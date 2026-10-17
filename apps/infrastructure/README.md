@@ -32,6 +32,7 @@ Completa `.env` (sin valores reales en este documento):
 | `DATABASE_ID` / `DATABASE_SLUG` | Base de datos en Datum para migraciones/seed | agent-cli |
 | `PAY_WEBHOOK_SECRET` | Secreto para validar el webhook de pagos | pay |
 | `PAY_PUBLIC_URL` | URL pública de `pay` | pay |
+| `CRM_PUBLIC_URL` | URL pública del CRM; las functions la usan en `vuelos-buscar` para el enlace al selector de asientos (variable de las functions en Jelou, no de compose) | functions |
 | `PAGO_NOTIFICACION_URL` | URL a la que se notifica el pago | pay |
 | `JELOU_API_KEY` | API key de Jelou | solo en `.env.example`; no la inyecta el compose |
 | `JELOU_FUNCTIONS_TOKEN` | Token de Jelou Functions | solo en `.env.example`; no la inyecta el compose |

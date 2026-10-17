@@ -12,7 +12,8 @@ from .datos import Escenario, titulo_ruta
 from .whatsapp import Chat, pausa
 
 ENLACE = re.compile(r"https?://\S+/(?:pay|pagar)/([A-Za-z0-9_-]+)")
-VISTAS_CRM = ["resumen", "ventas", "vuelos", "mapa"]
+VISTAS_CRM = ["resumen", "vuelos", "mapa", "ventas"]
+MAPA = re.compile(r"https?://\S+/#/asientos/\S+")
 MAX_TURNOS = 30
 
 
@@ -86,6 +87,44 @@ def ejecutar(datum, esc: Escenario, wa, crm: dict, pay) -> None:
         paso(f"Datos del pasajero {i}")
         di(f"{p.nombre}, {p.documento}, {p.edad}")
 
+    def enlace_mapa(vuelo_id: str) -> str | None:
+        """Enlace al widget de asientos que el agente compartió en el chat para ese vuelo."""
+        for r in reversed(log):
+            for m in MAPA.finditer(r):
+                if vuelo_id in m.group(0):
+                    return m.group(0).rstrip(".,)")
+        return None
+
+    def elegir_en_widget(url: str | None, asientos: list[str]) -> str:
+        """Abre el widget en otra pestana, elige (y quita uno) los asientos, copia y devuelve el texto copiado."""
+        if not url:
+            print("  [el agente no compartio el enlace del mapa; se escriben los asientos]")
+            return " ".join(asientos)
+        wa.context.grant_permissions(["clipboard-read", "clipboard-write"], origin=config.CRM_URL)
+        pg = wa.context.new_page()
+        pg.goto(f"{config.CRM_URL}/#{url.split('#', 1)[1]}")
+        libres = pg.locator('.asiento[data-estado="LIBRE"]:not([disabled])')
+        libres.first.wait_for()
+        mostrar(pg)
+        # Demostracion de deseleccionar: se elige un asiento de mas y se quita.
+        extra = next(a for a in (libres.nth(i).get_attribute("data-asiento") for i in range(12)) if a not in asientos)
+        pg.locator(f'[data-asiento="{extra}"]').click()
+        pausa()
+        pg.locator(f'[data-asiento="{extra}"]').click()
+        assert pg.locator(f'[data-asiento="{extra}"]').get_attribute("aria-pressed") == "false"
+        for a in asientos:
+            pg.locator(f'[data-asiento="{a}"]').click()
+            time.sleep(0.5)
+        pausa()
+        pg.screenshot(path=str(paso.dir / f"{paso.n:02d}_widget_asientos.png"))
+        pg.locator("#copiar-asientos").click()
+        pausa()
+        copiado = pg.evaluate("navigator.clipboard.readText()")
+        assert copiado.split() == sorted(asientos, key=lambda x: (int(x[:-1]), x[-1])), f"Copiado: {copiado!r}"
+        pg.close()
+        mostrar(wa)
+        return copiado
+
     # Conduce el agente: se responde a lo que pregunte, con una entrada invalida primero si el escenario lo pide.
     pendientes_bodega = [p for p in esc.pasajeros if p.bodega]
     elegidos_lista: list[str] = []
@@ -145,8 +184,8 @@ def ejecutar(datum, esc: Escenario, wa, crm: dict, pay) -> None:
             paso("Dueño de la mascota (lista)")
             ultimo = elige(esc.pasajeros[esc.mascota.dueno].nombre[:15], prefijo=True)
         elif "asiento" in t and "regreso" in t and asiento_ida_enviado:
-            paso("Asientos de regreso (texto)")
-            ultimo = di(" ".join(p.asiento_regreso for p in esc.pasajeros))
+            paso("Asientos de regreso (widget del CRM + copiar + pegar)")
+            ultimo = di(elegir_en_widget(enlace_mapa(v.vuelo_regreso), [p.asiento_regreso for p in esc.pasajeros]))
         elif "asiento" in t and not asiento_ida_enviado:
             asiento_ida_enviado = True
             ida = [p.asiento_ida for p in esc.pasajeros]
@@ -154,8 +193,8 @@ def ejecutar(datum, esc: Escenario, wa, crm: dict, pay) -> None:
                 paso("Asiento ocupado (entrada invalida)")
                 r = di(" ".join([esc.errores["asiento_ocupado"]] + ida[1:]))
                 assert not ENLACE.search(r), "El agente retuvo un asiento ocupado"
-            paso("Asientos de ida (texto)")
-            ultimo = di(" ".join(ida))
+            paso("Asientos de ida (widget del CRM + copiar + pegar)")
+            ultimo = di(elegir_en_widget(enlace_mapa(v.vuelo_ida), ida))
         else:
             paso("El agente pide algo no previsto; continuo")
             ultimo = di("Continuar")
@@ -199,13 +238,69 @@ def ejecutar(datum, esc: Escenario, wa, crm: dict, pay) -> None:
     if ok:
         assert pnr in final, f"El PNR {pnr} no llego al chat"
 
-    # CRM: el mismo vuelo en el mapa muestra ocupados y libres acumulados por los escenarios.
+    # CRM: recorrido por las vistas; el mismo vuelo acumula ocupados y libres de todos los escenarios.
     time.sleep(11)  # el CRM cachea 10 s por coleccion
+    recorrer_crm(crm, esc, paso)
+
+
+def scroll(page, pasos: int = 3, dy: int = 450) -> None:
+    page.mouse.move(640, 420)
+    for _ in range(pasos):
+        page.mouse.wheel(0, dy)
+        time.sleep(1)
+    page.mouse.wheel(0, -dy * pasos)
+    time.sleep(1)
+
+
+def recorrer_crm(crm: dict, esc: Escenario, paso: Paso) -> None:
+    v = esc.viaje
     for vista in VISTAS_CRM:
-        mostrar(crm[vista])
+        crm[vista].goto(f"{config.CRM_URL}/#/{vista}")
         crm[vista].reload()
-        pausa()
-        if vista == "mapa":
-            crm[vista].locator("#sel-vuelo").select_option(v.vuelo_ida)
-            pausa()
-        paso(f"CRM: {vista}", crm[vista])
+
+    # Resumen: tema claro/oscuro, idioma y scroll para ver toda la informacion.
+    r = crm["resumen"]
+    mostrar(r)
+    paso("CRM resumen", r)
+    r.locator("#tema").click()
+    pausa()
+    paso("CRM resumen: modo claro/oscuro", r)
+    scroll(r)
+    r.locator("#tema").click()
+    pausa()
+    r.locator("header .acciones button.btn--icono").last.click()
+    pausa()
+    paso("CRM resumen: otro idioma", r)
+    scroll(r)
+    r.locator("header .acciones button.btn--icono").last.click()  # vuelve al idioma inicial
+    pausa()
+
+    # Vuelos: scroll y filtro por la ruta de la reserva.
+    vu = crm["vuelos"]
+    mostrar(vu)
+    paso("CRM vuelos", vu)
+    scroll(vu, 2)
+    vu.locator("#f-ruta").select_option(v.ruta_ida)
+    pausa()
+    paso(f"CRM vuelos: filtro {v.ruta_ida}", vu)
+    scroll(vu, 2)
+
+    # Mapa: el vuelo de la reserva, con scroll sobre el fuselaje.
+    m = crm["mapa"]
+    mostrar(m)
+    m.locator("#sel-vuelo").select_option(v.vuelo_ida)
+    pausa()
+    paso("CRM mapa: vuelo de la reserva", m)
+    scroll(m, 4, 500)
+    paso("CRM mapa: asientos ocupados y libres", m)
+
+    # Ventas: 2 s en pantalla, scroll y clic en el vuelo para abrir su mapa.
+    ve = crm["ventas"]
+    mostrar(ve)
+    time.sleep(2)
+    paso("CRM ventas", ve)
+    scroll(ve, 3)
+    ve.locator("a.enlace", has_text=v.vuelo_ida).first.click()
+    pausa()
+    paso("CRM ventas: clic en el vuelo abre su mapa", ve)
+    scroll(ve, 3, 500)
