@@ -173,7 +173,7 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
         elif "tramo" in t and "mascota" in t and "?" in t:
             paso(f"Tramo de la mascota: {esc.mascota.tramo if esc.mascota else 'Ida'} (botones)")
             ultimo = elige(esc.mascota.tramo if esc.mascota else "Ida")
-        elif "tramo" in t and ("bodega" in t or "maleta" in t) and "?" in t and "cuesta" not in t and "COP" not in t:  # la pregunta, no el precio ya calculado
+        elif "tramo" in t and ("bodega" in t or "maleta" in t) and "?" in t:  # la pregunta (puede venir junto al precio de la maleta)
             dueno_maleta = next((q for q in esc.pasajeros if q.bodega and q.nombre.split()[0].lower() in t), maleta_actual)
             paso(f"Tramo de la maleta de {dueno_maleta.nombre.split()[0]}: {dueno_maleta.bodega_tramo} (botones)")
             ultimo = elige(dueno_maleta.bodega_tramo)
