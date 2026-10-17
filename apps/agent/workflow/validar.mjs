@@ -37,7 +37,7 @@ for (const t of [...esperadas]) ok(prompt.includes("`" + t + "`"), `el prompt no
 ok(prompt.includes("{{$context.executionId}}"), "el prompt no usa {{$context.executionId}}");
 const etapas = {
   trayecto: /### 1\. Trayecto/, pasajeros: /### 2\. Pasajeros/, fechas: /### 3\. Fechas de ida y de vuelta/,
-  vuelos: /### 4\. Vuelos/, equipaje: /### 5\..*equipaje/, mascotas: /### 5\..*mascotas/, asientos: /### 6\. Asientos de ida y de vuelta/,
+  vuelos: /### 4\. Vuelos/, equipaje: /### 5\..*equipaje/, mascotas: /### 5\..*mascota/, asientos: /### 6\. Asientos de ida y de vuelta/,
   resumen: /### 7\. Resumen y total/, transaccion: /### 8\. Transacci/, pago: /### 9\. Pago/, resultado: /### 10\. Resultado/,
   paid: /`paid`/, rejected: /`rejected`/, expired: /`expired`/, pnr: /PNR/, "texto plano": /texto plano/,
   "400": /HTTP 400/, "503": /HTTP 503/, privacidad: /Nunca repitas.*documento/,
