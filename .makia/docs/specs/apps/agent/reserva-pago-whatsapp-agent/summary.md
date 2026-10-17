@@ -6,7 +6,7 @@
 
 | Estado global | Última actualización |
 |:---:|:---:|
-| `En progreso` | `2026-10-16` |
+| `En progreso` | `2026-10-17` |
 
 ## Objetivo
 
@@ -35,10 +35,10 @@ El 100% mide solo las tareas del plan; el spec sigue `En progreso` porque el AUD
 - [x] Pago rechazado o expirado: asientos liberados y aviso al cliente sin reintentar el pago (verificado de extremo a extremo; notificación duplicada sin efecto).
 - [x] Cargar los datos base (6 rutas, 12 temporadas, 12 parámetros, 372 vuelos) de forma repetible y comprobar que las colecciones coinciden con el diseño publicado.
 - [ ] AUDIT del DEPLOY.
-- [ ] Aprobación del USUARIO de `requirements.md`.
+- [x] Aprobación del USUARIO de `requirements.md` (2026-10-17).
 - [ ] Prueba con un mensaje real desde un teléfono (hasta ahora solo el canal sandbox).
 - [ ] REQ-09 (confirmación en el chat) y REQ-10 (entrega del enlace por WhatsApp) sin prueba automatizada; solo evidencia manual.
-- [ ] Decisión del USUARIO sobre si la mascota se cobra también en el regreso (hoy se cobra una sola vez, en la ida).
+- [x] Mascota: rige una sola línea por reserva, cobrada en la ida (aceptado por el USUARIO el 2026-10-17).
 
 ### Coordinación multi-unidad
 

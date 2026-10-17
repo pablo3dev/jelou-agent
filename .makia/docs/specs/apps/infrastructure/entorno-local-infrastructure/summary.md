@@ -6,7 +6,7 @@
 
 | Estado global | Última actualización |
 |:---:|:---:|
-| `En progreso` | `2026-10-16` |
+| `En progreso` | `2026-10-17` |
 
 ## Objetivo
 
@@ -32,7 +32,7 @@ El estado global sigue en `En progreso` porque el AUDIT, que ejecuta el DEPLOY, 
 - [x] Recorrido E2E verificado con evidencia: reserva de ida y vuelta aprobada (PNR, asientos vendidos), rechazada (asientos libres), expirada (asientos libres, el agente avisa) y notificación duplicada sin efecto; dashboard coherente con las reservas emitidas.
 - [x] Fin de línea LF en los archivos versionados y hash del contrato idéntico en `apps/agent`, `apps/pay` y `apps/crm`.
 - [ ] AUDIT del spec (lo ejecuta el DEPLOY).
-- [ ] Aprobación del USUARIO de `requirements.md`.
+- [x] Aprobación del USUARIO de `requirements.md` (2026-10-17).
 - [ ] E2E automatizado como script versionado: hoy la evidencia es manual.
 - [ ] Mensaje real desde un teléfono por WhatsApp: solo se verificó el canal sandbox (falta agregar el teléfono como probador).
 - [ ] Enlace de pago accesible fuera de la máquina local: hoy solo abre en `localhost`.

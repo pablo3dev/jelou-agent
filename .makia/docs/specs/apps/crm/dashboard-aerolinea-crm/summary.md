@@ -6,7 +6,7 @@
 
 | Estado global | Última actualización |
 |:---:|:---:|
-| `En progreso` | `2026-10-16` |
+| `En progreso` | `2026-10-17` |
 
 ## Objetivo
 
@@ -33,7 +33,7 @@ El spec sigue `En progreso` porque el AUDIT, que ejecuta el DEPLOY, aún no se h
 - [x] Operar en solo lectura y sin datos personales de pasajeros.
 - [x] Verificado en vivo contra el almacén de datos con el seed cargado (372 vuelos) y con 47 pruebas automatizadas verdes (2026-10-16).
 - [ ] AUDIT del DEPLOY (pendiente).
-- [ ] Aprobación del USUARIO de `requirements.md` (pendiente).
+- [x] Aprobación del USUARIO de `requirements.md` (2026-10-17).
 - [ ] REQ-06 (copia verificable del contrato) sin test automatizado versionado: se verifica por comando.
 - [ ] Autenticación del operador: no existe; el panel es una DEMO de uso local.
 

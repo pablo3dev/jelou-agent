@@ -25,6 +25,6 @@ graph LR
 
 | Spec | Estado | Creación | Paralelizable con | Ruta | Depende de |
 |---|:---:|:---:|:---:|---|---|
-| reserva-pago-whatsapp-agent | `En progreso` | `Creado — pendiente aprobación` | `—` | `reserva-pago-whatsapp-agent/summary.md` | — |
+| reserva-pago-whatsapp-agent | `En progreso` | `Aprobado` | `—` | `reserva-pago-whatsapp-agent/summary.md` | — |
 
 > El modelo de dominio de la capacidad es [domain-model.md](domain-model.md); esta unidad es su dueña. Los specs de pay, crm e infrastructure dependen de este spec por contrato (ver [pay](../pay/INDEX.md), [crm](../crm/INDEX.md), [infrastructure](../infrastructure/INDEX.md)).

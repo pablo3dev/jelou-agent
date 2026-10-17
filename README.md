@@ -191,8 +191,8 @@ A la izquierda, el resumen con el detalle de la cotización y los botones nativo
     <th align="center">Pago y reserva emitida</th>
   </tr>
   <tr>
-    <td><img src="docs/capturas/chat-resumen.webp" alt="Resumen de la reserva en WhatsApp con los botones Confirmar y pagar, Cambiar asientos y Cancelar" width="400"></td>
-    <td><img src="docs/capturas/chat-pago.webp" alt="Conversación de WhatsApp con el enlace de pago, el pago confirmado y el PNR" width="400"></td>
+    <td><img src="apps/infrastructure/docs/capturas/chat-resumen.webp" alt="Resumen de la reserva en WhatsApp con los botones Confirmar y pagar, Cambiar asientos y Cancelar" width="400"></td>
+    <td><img src="apps/infrastructure/docs/capturas/chat-pago.webp" alt="Conversación de WhatsApp con el enlace de pago, el pago confirmado y el PNR" width="400"></td>
   </tr>
 </table>
 
@@ -222,7 +222,7 @@ El CRM es un panel **de solo lectura** (español e inglés, tema claro y oscuro,
 Indicadores globales, ocupación por destino, reservas por estado, ventas por fecha y rutas más vendidas.
 
 <div align="center">
-  <img src="docs/capturas/resumen-claro.webp" alt="Resumen, tema claro" width="620">
+  <img src="apps/infrastructure/docs/capturas/resumen-claro.webp" alt="Resumen, tema claro" width="620">
 </div>
 
 ### Vuelos
@@ -235,8 +235,8 @@ Todos los vuelos con filtros por ruta y fechas, columnas ordenables y barra de o
     <th align="center">Tema oscuro</th>
   </tr>
   <tr>
-    <td><img src="docs/capturas/vuelos-claro.webp" alt="Vuelos, tema claro" width="460"></td>
-    <td><img src="docs/capturas/vuelos-oscuro.webp" alt="Vuelos, tema oscuro" width="460"></td>
+    <td><img src="apps/infrastructure/docs/capturas/vuelos-claro.webp" alt="Vuelos, tema claro" width="460"></td>
+    <td><img src="apps/infrastructure/docs/capturas/vuelos-oscuro.webp" alt="Vuelos, tema oscuro" width="460"></td>
   </tr>
 </table>
 
@@ -250,8 +250,8 @@ Boeing 737-8 MAX por clase, con filas de salida de emergencia y el estado de cad
     <th align="center">Tema oscuro</th>
   </tr>
   <tr>
-    <td><img src="docs/capturas/mapa-claro.webp" alt="Mapa de asientos, tema claro" width="460"></td>
-    <td><img src="docs/capturas/mapa-oscuro.webp" alt="Mapa de asientos, tema oscuro" width="460"></td>
+    <td><img src="apps/infrastructure/docs/capturas/mapa-claro.webp" alt="Mapa de asientos, tema claro" width="460"></td>
+    <td><img src="apps/infrastructure/docs/capturas/mapa-oscuro.webp" alt="Mapa de asientos, tema oscuro" width="460"></td>
   </tr>
 </table>
 
@@ -265,8 +265,8 @@ Gráfica por periodo (día, semana o mes) con los picos marcados, y el detalle p
     <th align="center">Tema oscuro</th>
   </tr>
   <tr>
-    <td><img src="docs/capturas/ventas-claro.webp" alt="Ventas, tema claro" width="460"></td>
-    <td><img src="docs/capturas/ventas-oscuro.webp" alt="Ventas, tema oscuro" width="460"></td>
+    <td><img src="apps/infrastructure/docs/capturas/ventas-claro.webp" alt="Ventas, tema claro" width="460"></td>
+    <td><img src="apps/infrastructure/docs/capturas/ventas-oscuro.webp" alt="Ventas, tema oscuro" width="460"></td>
   </tr>
 </table>
 
@@ -320,9 +320,7 @@ Las validan las functions, nunca el prompt.
 │   ├── crm/                    # Dashboard y mapa de asientos (solo lectura)
 │   ├── pay/                    # Pasarela de demostración
 │   ├── e2e/                    # Pruebas end-to-end con video
-│   └── infrastructure/         # Docker Compose y guía de migración de cuenta
-├── docs/
-│   └── asientos-avion.webp     # Distribución del Boeing 737-8 MAX
+│   └── infrastructure/         # Docker Compose, guía de migración de cuenta y docs/ (capturas y distribución del Boeing 737-8 MAX)
 └── README.md
 ```
 

@@ -6,7 +6,7 @@
 
 | Estado global | Última actualización |
 |:---:|:---:|
-| `En progreso` | `2026-10-16` |
+| `En progreso` | `2026-10-17` |
 
 ## Objetivo
 
@@ -31,7 +31,7 @@ El spec sigue `En progreso` porque el AUDIT, que ejecuta el DEPLOY, aún está p
 - [x] Aprobar o rechazar el pago y que Jelou reciba la notificación firmada, con reintentos ante fallos transitorios.
 - [x] Verificado en vivo: transacción real leída por id, notificación firmada aceptada, evento duplicado respondido sin efecto y firma inválida rechazada.
 - [ ] AUDIT del DEPLOY.
-- [ ] Aprobación del USUARIO de `requirements.md`.
+- [x] Aprobación del USUARIO de `requirements.md` (2026-10-17).
 - [ ] REQ-04 (contrato sin desvío) sin test automatizado: se verifica solo por comando `sha256sum -c`.
 - [ ] El enlace de pago solo abre en localhost (máquina del USUARIO que ejecuta la demo).
 
