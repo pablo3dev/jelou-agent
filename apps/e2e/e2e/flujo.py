@@ -82,8 +82,7 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
 
     paso("Saludo y lista de destinos")
     r0 = di("Hola, quiero reservar un vuelo")
-    assert "trayecto" in r0.lower() or "dónde" in r0.lower(), f"El agente no reinicio el flujo (pregunta otra cosa):
-{r0}"
+    assert "trayecto" in r0.lower() or "dónde" in r0.lower(), f"El agente no reinicio el flujo (pregunta otra cosa): {r0}"
     paso("Elijo el destino en la lista")
     elige(titulo_ruta(v.ruta_ida))
     paso("Elijo el numero de pasajeros")
