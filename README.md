@@ -198,7 +198,9 @@ stateDiagram-v2
 
 ## 🖥️ CRM de operación
 
-El CRM es un panel **de solo lectura** (español e inglés, tema claro y oscuro, actualización automática cada 15 s) para ver en vivo lo que vende el agente: ocupación, reservas por estado, ingresos y el mapa de asientos de cada vuelo. Las capturas usan datos de demostración (`apps/agent/seed/demo.mjs`).
+El CRM es un panel **de solo lectura** (español e inglés, tema claro y oscuro, actualización automática cada 15 s) para ver en vivo lo que vende el agente: ocupación, reservas por estado, ingresos y el mapa de asientos de cada vuelo. 
+
+> **Datos reales, no maquetas.** Todo lo que muestra el CRM se lee en vivo de **Datum** (la base de datos de Jelou): vuelos, mapas de asientos, reservas, pasajeros y pagos. Son los mismos registros que escribe el agente al vender. Para que las capturas luzcan con operación, se cargaron reservas de demostración con `apps/agent/seed/demo.mjs`; las cifras salen de Datum, no están escritas a mano en la interfaz.
 
 ### Resumen
 
