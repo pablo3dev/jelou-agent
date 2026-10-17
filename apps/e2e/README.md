@@ -15,7 +15,19 @@ uv run pytest
 
 La primera vez se abre Chrome con el perfil `.profile/` (propio, gitignoreado): escanea el QR de WhatsApp Web; la prueba espera hasta 5 min. Las siguientes corridas reutilizan la sesión. Abre en pestañas WhatsApp, pasarela y las 4 vistas del CRM. Pausa de 3 s (`E2E_PAUSA_S`) tras cada acción y tras cada respuesta del chat. Capturas en `artifacts/`.
 
-Repetir una corrida: `E2E_SEED=123`. Rechazo de pago: `E2E_ESCENARIO=rechazar`.
+## Escenarios
+
+Los tres comparten el mismo vuelo de ida y de regreso (se elige una vez por sesión), con asientos distintos en cada uno; al cerrar cada escenario el CRM muestra el mapa de ese vuelo con los asientos ocupados y libres acumulados.
+
+| Escenario | Qué recorre | Pago |
+|-----------|-------------|------|
+| `una_persona` | lista de destino y de pasajeros, botones ida y vuelta, vuelos en lista, equipaje «Cabina y bodega» (medidas directas), mascota Sí/No | aprobado |
+| `varias_personas` | 3 pasajeros: lista de nombres para elegir quién lleva bodega, medidas por persona, sin mascota | aprobado |
+| `flujo_por_mal` | asiento ocupado, maleta fuera de límites y mascota de más de 8 kg (el agente debe rechazar y pedir de nuevo) | rechazado: asientos liberados |
+
+`uv run pytest` corre los tres en ese orden; uno solo: `uv run pytest -k una_persona`. Cada paso se anuncia en consola (`PASO n`) y deja captura numerada en `artifacts/<escenario>/`. Selección de botones y listas: el driver toca el control de WhatsApp Web y, si no lo encuentra, escribe el título de la opción (es lo mismo que recibe el agente). Repetir una corrida: `E2E_SEED=123`.
+
+Requiere que el agente publicado use la herramienta nativa «Buttons and list» (ver `apps/agent/workflow/agent.prompt.md`).
 
 ## Riesgo con WhatsApp
 

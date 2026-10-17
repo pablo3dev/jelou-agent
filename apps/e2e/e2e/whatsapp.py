@@ -1,5 +1,6 @@
 """Driver minimo de WhatsApp Web. Escribe como una persona: pausa fija tras cada accion."""
 import random
+import re
 import time
 
 from playwright.sync_api import Page
@@ -90,4 +91,52 @@ class Chat:
 
     def decir(self, texto: str) -> str:
         self.enviar(texto)  # tras enviar, _entrantes() solo ve lo posterior a este mensaje
-        return "\n".join(self.esperar_respuesta(0))
+        try:
+            return "\n".join(self.esperar_respuesta(0, timeout_s=90))
+        except TimeoutError:
+            # El agente a veces deja un mensaje sin respuesta: se reenvia una sola vez.
+            print("[sin respuesta; reenvio una vez]")
+            self.enviar(texto)
+            return "\n".join(self.esperar_respuesta(0))
+
+    def elegir(self, opcion: str, prefijo: bool = False) -> str:
+        """Selecciona una opcion de un mensaje interactivo (boton o lista) del ultimo mensaje del bot.
+
+        Si el DOM de WhatsApp Web no ofrece el control, escribe el titulo de la opcion: es lo mismo que
+        recibe el agente al tocar el control (el titulo), asi la prueba no depende de un selector fragil.
+        """
+        self.cuenta.tick()
+        self.cerrar_avisos()
+        via = self._tocar(opcion, prefijo)
+        print(f"[seleccion: {opcion!r} via {via}]")
+        pausa()
+        try:
+            return "\n".join(self.esperar_respuesta(0, timeout_s=90))
+        except TimeoutError:
+            print("[sin respuesta tras la seleccion; reenvio escrita una vez]")
+            self.enviar(opcion)
+            return "\n".join(self.esperar_respuesta(0))
+
+    def _tocar(self, opcion: str, prefijo: bool = False) -> str:
+        pg = self.page
+        exacto = re.compile(rf"^\s*{re.escape(opcion)}" + ("" if prefijo else r"\s*$"), re.I)
+        try:
+            # Boton de respuesta rapida: control con el texto exacto en el area de mensajes.
+            boton = pg.locator("#main [role='button']").filter(has_text=exacto).last
+            if boton.count():
+                boton.click(timeout=3000)
+                return "boton"
+            # Lista: el boton del mensaje abre un panel con las filas.
+            abrir = pg.locator("#main [role='button']").filter(has_text=re.compile(r"ver opciones|opciones|seleccionar|view options|select", re.I)).last
+            if abrir.count():
+                abrir.click(timeout=3000)
+                pausa()
+                fila = pg.locator("div[role='dialog'] , [data-animate-modal-popup]").get_by_text(exacto).first
+                fila.click(timeout=4000)
+                pg.locator("div[role='dialog'] button, [data-animate-modal-popup] button").filter(has_text=re.compile(r"enviar|send", re.I)).last.click(timeout=4000)
+                return "lista"
+        except Exception as e:
+            print("[no se pudo tocar el control:", type(e).__name__, "]")
+            pg.keyboard.press("Escape")
+        self.enviar(opcion)
+        return "texto"

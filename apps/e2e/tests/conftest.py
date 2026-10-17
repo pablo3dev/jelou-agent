@@ -50,3 +50,31 @@ def pytest_runtest_makereport(item, call):
                     (config.ARTEFACTOS / "fallo_wa.txt").write_text(pg.locator("body").inner_text(), encoding="utf-8")
             except Exception:
                 pass
+
+
+@pytest.fixture(scope="session")
+def viaje(datum, fk):
+    """Un unico vuelo de ida y de regreso para todos los escenarios: el mapa del CRM acumula ocupados y libres."""
+    from e2e import guard
+    from e2e.datos import elegir_viaje
+
+    assert config.WA_PHONE, "Define WA_AGENT_PHONE en apps/e2e/.env"
+    guard.verificar_cooldown()  # una vez por sesion, no por escenario
+    v = elegir_viaje(fk, datum)
+    print("\nViaje compartido por los escenarios:", v)
+    return v
+
+
+@pytest.fixture(scope="session")
+def paginas(ctx):
+    """Pestanas abiertas desde el inicio: WhatsApp, pasarela y las 4 vistas del CRM."""
+    from e2e.flujo import VISTAS_CRM
+
+    wa = ctx.pages[0] if ctx.pages else ctx.new_page()
+    crm = {}
+    for vista in VISTAS_CRM:
+        crm[vista] = ctx.new_page()
+        crm[vista].goto(f"{config.CRM_URL}/#/{vista}")
+    pay = ctx.new_page()
+    pay.goto(f"{config.PAY_URL}/health")
+    return wa, crm, pay
