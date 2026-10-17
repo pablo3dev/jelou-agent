@@ -44,7 +44,7 @@ Esta prueba de concepto (PoC) demuestra que una aerolínea puede vender vuelos n
 | **Extras** | equipaje de bodega por pasajero y tramo, una mascota por reserva |
 | **Asientos** | mapa visual que el cliente abre desde el chat (Boeing 737-8 MAX) |
 | **Pago** | pasarela de demostración (no se cobra dinero real) |
-| **Inventario sembrado** | 1.116 vuelos, 3 horarios por ruta y fecha (07:00, 12:30, 18:45) |
+| **Inventario sembrado** | Vuelos en 3 horarios por ruta y fecha (07:00, 12:30, 18:45) |
 
 > [!NOTE]
 > Es una **demo**. La pasarela de pago y el CRM son simulados; los datos se guardan en una base de datos de pruebas.
@@ -212,7 +212,7 @@ Indicadores globales, ocupación por destino, reservas por estado, ventas por fe
 
 ### Vuelos
 
-Los 1.116 vuelos con filtros por ruta y fechas, columnas ordenables y barra de ocupación.
+Todos los vuelos con filtros por ruta y fechas, columnas ordenables y barra de ocupación.
 
 <table>
   <tr>
@@ -227,7 +227,7 @@ Los 1.116 vuelos con filtros por ruta y fechas, columnas ordenables y barra de o
 
 ### Mapa de asientos
 
-Boeing 737-8 MAX de 174 asientos por clase, con filas de salida de emergencia y el estado de cada asiento (libre, retenido, vendido o bloqueado).
+Boeing 737-8 MAX por clase, con filas de salida de emergencia y el estado de cada asiento (libre, retenido, vendido o bloqueado).
 
 <table>
   <tr>
