@@ -38,7 +38,7 @@
           "tools": [
             {
               "id": "tool-rutas-listar",
-              "toolId": 8884,
+              "toolId": 8903,
               "name": "rutas-listar",
               "description": "Lista las rutas disponibles con origen, destino y tarifa base",
               "version": "1.0.0",
@@ -47,7 +47,7 @@
             },
             {
               "id": "tool-vuelos-buscar",
-              "toolId": 8882,
+              "toolId": 8905,
               "name": "vuelos-buscar",
               "description": "Busca vuelos de ida y regreso con asientos libres y tarifa por pasajero",
               "version": "1.0.0",
@@ -59,7 +59,7 @@
                   "description": "Cuerpo JSON (texto) para vuelos-buscar. JSON: {\"ruta_id\":\"BOG-MDE\",\"fecha_ida\":\"2026-12-10\",\"fecha_regreso\":\"2026-12-20\" (opcional),\"pasajeros\":2}",
                   "type": "STRING",
                   "required": true,
-                  "toolId": 8882,
+                  "toolId": 8905,
                   "state": true
                 }
               ],
@@ -67,7 +67,7 @@
             },
             {
               "id": "tool-equipaje-calcular",
-              "toolId": 8887,
+              "toolId": 8902,
               "name": "equipaje-calcular",
               "description": "Calcula peso volumetrico, kilos cobrables y precio de una pieza de equipaje de bodega",
               "version": "1.0.0",
@@ -79,7 +79,7 @@
                   "description": "Cuerpo JSON (texto) para equipaje-calcular. JSON: {\"vuelo_id\":\"<vuelo_id>\",\"bodega\":{\"largo_cm\":60,\"ancho_cm\":40,\"alto_cm\":30,\"peso_kg\":20}}",
                   "type": "STRING",
                   "required": true,
-                  "toolId": 8887,
+                  "toolId": 8902,
                   "state": true
                 }
               ],
@@ -87,7 +87,7 @@
             },
             {
               "id": "tool-cotizar",
-              "toolId": 8885,
+              "toolId": 8901,
               "name": "cotizar",
               "description": "Cotiza pasajes, equipaje y mascota; devuelve lineas y total en COP",
               "version": "1.0.0",
@@ -99,7 +99,7 @@
                   "description": "Cuerpo JSON (texto) para cotizar. JSON: {\"vuelo_ida_id\":\"..\",\"vuelo_regreso_id\":\"..\" (opcional),\"pasajeros\":[{\"edad\":30,\"bodega_ida\":{..},\"bodega_regreso\":{..}}],\"mascota\":{\"pasajero_indice\":0,\"especie\":\"perro\",\"peso_kg\":5} (opcional)}",
                   "type": "STRING",
                   "required": true,
-                  "toolId": 8885,
+                  "toolId": 8901,
                   "state": true
                 }
               ],
@@ -107,7 +107,7 @@
             },
             {
               "id": "tool-asientos-validar-retener",
-              "toolId": 8883,
+              "toolId": 8900,
               "name": "asientos-validar-retener",
               "description": "Valida y retiene 15 minutos los asientos elegidos; devuelve hold_token",
               "version": "1.0.0",
@@ -119,7 +119,7 @@
                   "description": "Cuerpo JSON (texto) para asientos-validar-retener. JSON: {\"vuelo_ida_id\":\"..\",\"vuelo_regreso_id\":\"..\" (opcional),\"edades\":[30,12],\"asientos_ida\":\"12A 12B\",\"asientos_regreso\":\"14A 14B\" (opcional)}",
                   "type": "STRING",
                   "required": true,
-                  "toolId": 8883,
+                  "toolId": 8900,
                   "state": true
                 }
               ],
@@ -127,7 +127,7 @@
             },
             {
               "id": "tool-transaccion-crear",
-              "toolId": 8886,
+              "toolId": 8904,
               "name": "transaccion-crear",
               "description": "Crea la reserva pendiente y su transaccion de pago; devuelve PNR, total y enlace de pago",
               "version": "1.0.0",
@@ -139,7 +139,7 @@
                   "description": "Cuerpo JSON (texto) para transaccion-crear. JSON: {\"hold_token\":\"..\",\"vuelo_ida_id\":\"..\",\"vuelo_regreso_id\":\"..\" (opcional),\"pasajeros\":[{\"nombre\":\"..\",\"documento\":\"..\",\"edad\":30,\"cabina\":true,\"bodega_ida\":{..},\"bodega_regreso\":{..},\"asiento_ida\":\"12A\",\"a",
                   "type": "STRING",
                   "required": true,
-                  "toolId": 8886,
+                  "toolId": 8904,
                   "state": true
                 }
               ],
