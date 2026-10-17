@@ -46,7 +46,7 @@ def _hora(datum, ruta: str, fecha: str) -> str:
 
 def _falla_de_sistema(respuesta: str) -> None:
     """Si el agente avisa que sus herramientas fallan, corta: reintentar solo gasta mensajes y creditos."""
-    if re.search(r"error de autorizaci|problema (al|de) busca|sistema de (b[uú]squeda|vuelos) (sigue|no)", respuesta, re.I):
+    if re.search(r"error de autorizaci|problema (al|de) busca|sistema de (b[uú]squeda|vuelos) (sigue|no)|problema en nuestro sistema|no pude consultar los vuelos|sigue sin (responder|funcionar)", respuesta, re.I):
         raise AssertionError(f"El agente reporta una falla de sus herramientas: {respuesta[:200]}")
 
 
