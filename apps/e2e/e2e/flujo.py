@@ -9,10 +9,10 @@ import time
 
 from . import config
 from .datos import Escenario, titulo_ruta
+from .guion import ENLACE, Estado, decidir
 from .pestanas import Pestanas
 from .whatsapp import Chat, pausa
 
-ENLACE = re.compile(r"https?://\S+/(?:pay|pagar)/([A-Za-z0-9_-]+)")
 VISTAS_CRM = ["resumen", "vuelos", "mapa", "ventas"]
 MAPA = re.compile(r"https?://\S+/#/asientos/\S+")
 MAX_TURNOS = 30
@@ -48,11 +48,6 @@ def _falla_de_sistema(respuesta: str) -> None:
     """Si el agente avisa que sus herramientas fallan, corta: reintentar solo gasta mensajes y creditos."""
     if re.search(r"error de autorizaci|problema (al|de) busca|sistema de (b[uú]squeda|vuelos) (sigue|no)|problema en nuestro sistema|no pude consultar los vuelos|sigue sin (responder|funcionar)", respuesta, re.I):
         raise AssertionError(f"El agente reporta una falla de sus herramientas: {respuesta[:200]}")
-
-
-def corto(nombre: str) -> str:
-    """Las filas de las listas llevan el nombre abreviado por el agente: se busca por las dos primeras palabras."""
-    return " ".join(nombre.split()[:2])
 
 
 def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
@@ -140,88 +135,31 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
         mostrar(wa)
         return copiado_ok
 
-    # Conduce el agente: se responde a lo que pregunte, con una entrada invalida primero si el escenario lo pide.
-    pendientes_bodega = [p for p in esc.pasajeros if p.bodega]
-    elegidos_lista: list[str] = []
-    probado: set[str] = set()
-    maleta_actual = esc.pasajeros[0]
-    asiento_ida_enviado = False
+    # Conduce el agente: la decision vive en guion.py (pura y probada offline); aqui solo se ejecuta.
+    st = Estado(esc)
     ultimo = log[-1]
     for _ in range(MAX_TURNOS):
-        t = ultimo.lower()
-        if ENLACE.search(ultimo):
+        a = decidir(ultimo, st)
+        if a.tipo == "fin":
             break
-        if "confirmar y pagar" in t or "confirmas y pagas" in t or "todo correcto" in t:
-            paso("Resumen y confirmacion (botones)")
-            ultimo = elige("Confirmar y pagar")
-        elif "qué equipaje" in t or "que equipaje" in t:
-            paso(f"Equipaje: {esc.equipaje} (botones)")
-            ultimo = elige(esc.equipaje)
-        elif re.search(r"qui[eé]n( m[aá]s)? lleva", t):
-            quedan = [p for p in esc.pasajeros if p.bodega and p.nombre not in elegidos_lista]
-            if quedan:
-                paso("Quienes llevan bodega (lista de nombres)")
-                elegidos_lista.append(quedan[0].nombre)
-                ultimo = elige(corto(quedan[0].nombre), prefijo=True)
-            else:
-                paso("Nadie mas lleva bodega (ultima fila de la lista)")
-                ultimo = elige("Nadie más, continuar")
-        elif "alguien más" in t or "alguien mas" in t:
-            paso("Alguien mas lleva bodega? (botones)")
-            quedan = len(elegidos_lista) < len(pendientes_bodega)
-            ultimo = elige("Sí" if quedan else "No, seguimos")
-        elif "tramo" in t and "mascota" in t and "?" in t:
-            paso(f"Tramo de la mascota: {esc.mascota.tramo if esc.mascota else 'Ida'} (botones)")
-            ultimo = elige(esc.mascota.tramo if esc.mascota else "Ida")
-        elif "tramo" in t and ("bodega" in t or "maleta" in t) and "?" in t:  # la pregunta (puede venir junto al precio de la maleta)
-            dueno_maleta = next((q for q in esc.pasajeros if q.bodega and q.nombre.split()[0].lower() in t), maleta_actual)
-            paso(f"Tramo de la maleta de {dueno_maleta.nombre.split()[0]}: {dueno_maleta.bodega_tramo} (botones)")
-            ultimo = elige(dueno_maleta.bodega_tramo)
-        elif pendientes_bodega and any(k in t for k in ("largo", "medidas", "alto")) and "kg" in t:
-            if "bodega_excedida" in esc.errores and "bodega" not in probado:
-                probado.add("bodega")
-                paso("Maleta fuera de limites (entrada invalida)")
-                lo, an, al, kg = esc.errores["bodega_excedida"]
-                ultimo = di(f"{lo}x{an}x{al} cm, {kg} kg")
-                assert not ENLACE.search(ultimo), "El agente acepto una maleta fuera de limites"
-                continue
-            p = maleta_actual = pendientes_bodega.pop(0)
-            lo, an, al, kg = p.bodega
-            paso(f"Medidas y peso de la maleta de {p.nombre.split()[0]}")
-            ultimo = di(f"{lo}x{an}x{al} cm, {kg} kg")
-        elif "viaja una mascota" in t or ("mascota" in t and "?" in t and "especie" not in t and "peso" not in t):
-            paso("Mascota: Si / No (botones)")
-            ultimo = elige("Sí" if esc.mascota else "No")
-        elif esc.mascota and "especie" in t:
-            paso("Especie de la mascota (botones)")
-            ultimo = elige(esc.mascota.especie)
-        elif esc.mascota and "peso" in t and "mascota" in t:
-            if "mascota_pesada" in esc.errores and "mascota" not in probado:
-                probado.add("mascota")
-                paso("Mascota con peso fuera de limite (entrada invalida)")
-                ultimo = di(f"{esc.errores['mascota_pesada']} kg")
-                assert not ENLACE.search(ultimo)
-                continue
-            paso("Peso de la mascota")
-            ultimo = di(f"{esc.mascota.peso_kg} kg")
-        elif esc.mascota and "nombre de quién" in t:
-            paso("Dueño de la mascota (lista)")
-            ultimo = elige(corto(esc.pasajeros[esc.mascota.dueno].nombre), prefijo=True)
-        elif "asiento" in t and "regreso" in t and asiento_ida_enviado:
-            paso("Asientos de regreso (widget del CRM + copiar + pegar)")
-            ultimo = di(elegir_en_widget(enlace_mapa(v.vuelo_regreso), [p.asiento_regreso for p in esc.pasajeros]))
-        elif "asiento" in t and not asiento_ida_enviado:
-            asiento_ida_enviado = True
+        if a.tipo == "widget_ida":
             ida = [p.asiento_ida for p in esc.pasajeros]
-            if "asiento_ocupado" in esc.errores:
+            if a.invalida == "asiento":
                 paso("Asiento ocupado (entrada invalida)")
                 r = di(" ".join([esc.errores["asiento_ocupado"]] + ida[1:]))
                 assert not ENLACE.search(r), "El agente retuvo un asiento ocupado"
-            paso("Asientos de ida (widget del CRM + copiar + pegar)")
+            paso(a.titulo)
             ultimo = di(elegir_en_widget(enlace_mapa(v.vuelo_ida), ida))
-        else:
-            paso("El agente pide algo no previsto; continuo")
-            ultimo = di("Continuar")
+            continue
+        paso(a.titulo)
+        if a.tipo == "elegir":
+            ultimo = elige(a.valor, a.prefijo)
+        elif a.tipo == "decir":
+            ultimo = di(a.valor)
+            if a.invalida:
+                assert not ENLACE.search(ultimo), f"El agente acepto una entrada invalida ({a.invalida})"
+        elif a.tipo == "widget_regreso":
+            ultimo = di(elegir_en_widget(enlace_mapa(v.vuelo_regreso), [p.asiento_regreso for p in esc.pasajeros]))
     m = ENLACE.search(ultimo)
     assert m, f"El agente no envio el enlace de pago:\n{log[-3:]}"
     tx_id = m.group(1)

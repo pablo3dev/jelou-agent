@@ -39,6 +39,10 @@ uv run playwright install ffmpeg
 
 Requiere que el agente publicado use la herramienta nativa «Buttons and list» (ver `apps/agent/workflow/agent.prompt.md`).
 
+## Pruebas offline del guion (sin gastar mensajes)
+
+`tests/test_00_guion.py` corre primero y comprueba, sin navegador ni créditos, qué responde la prueba a mensajes reales del agente (equipaje, quién lleva maleta, tramo por maleta, mascota, asientos, confirmación). `e2e/guion.py` además corta la corrida si el agente pide algo no previsto o repite el mismo mensaje, en vez de escribir «Continuar» a ciegas. `uv run pytest tests/test_00_guion.py` las corre solas. Si el agente cambia una frase, esta prueba falla antes de gastar nada; `workflow/validar.mjs` vigila que el prompt conserve las frases que usa el guion.
+
 ## Prevalidación (antes de gastar mensajes)
 
 Al inicio de la sesión, antes de abrir WhatsApp, la prueba llama a cada function con el mismo cuerpo y cabecera que usan las tools del agente (`e2e/preflight.py`): Datum con datos, `rutas-listar`, `vuelos-buscar` (con `mapa_url`), `equipaje-calcular`, `cotizar`, la firma HMAC del webhook de pago (`pago-notificacion` con una transacción inexistente; falla con 401 si falta `PAY_WEBHOOK_SECRET` en las functions) y, con entradas inválidas, `asientos-validar-retener` y `transaccion-crear` (esperan un error de negocio, nunca 401/5xx; no escribe nada). Si algo falla, aborta sin enviar un solo mensaje. También se puede correr sola: `uv run python -m e2e.preflight`.
