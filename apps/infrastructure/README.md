@@ -79,3 +79,5 @@ docker compose --env-file .env.example config -q
 ## Seguridad
 
 `.env` está ignorado por git. Nunca commitees secretos; solo `.env.example` (sin valores).
+
+Para recrear todo en otra cuenta de Jelou, ver [MIGRAR-CUENTA.md](MIGRAR-CUENTA.md).
