@@ -123,7 +123,7 @@ def _pasajeros(fk: Faker, datum: Datum, v: Viaje, n: int) -> list[Pasajero]:
     s_ida = libres(datum.vuelo(v.ruta_ida, v.fecha_ida, v.hora_ida), n)
     s_reg = libres(datum.vuelo(v.ruta_regreso, v.fecha_regreso, v.hora_regreso), n)
     return [
-        Pasajero(fk.name(), fk.numerify("##########"), random.randint(18, 60), s_ida[i], s_reg[i])
+        Pasajero(f"{fk.first_name()} {fk.last_name()}", fk.numerify("##########"), random.randint(18, 60), s_ida[i], s_reg[i])
         for i in range(n)
     ]
 

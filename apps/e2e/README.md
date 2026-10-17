@@ -25,7 +25,7 @@ Cada ruta y fecha tiene 3 vuelos sembrados (07:00, 12:30 y 18:45) para que la li
 | `varias_personas` | 3 pasajeros: lista de nombres para elegir quién lleva bodega, medidas por persona, sin mascota | aprobado |
 | `flujo_por_mal` | asiento ocupado, maleta fuera de límites y mascota de más de 8 kg (el agente debe rechazar y pedir de nuevo) | rechazado: asientos liberados |
 
-`uv run pytest` corre los tres en ese orden; uno solo: `uv run pytest -k una_persona`. Cada paso se anuncia en consola (`PASO n`) y deja captura numerada en `artifacts/<escenario>/`. Selección de botones y listas: el driver toca el control de WhatsApp Web y, si no lo encuentra, escribe el título de la opción (es lo mismo que recibe el agente). Repetir una corrida: `E2E_SEED=123`.
+`uv run pytest` corre los tres en ese orden; uno solo: `uv run pytest -k una_persona`. Cada paso se anuncia en consola (`PASO n`) y deja captura numerada en `artifacts/<escenario>/`. Selección de botones y listas: el driver toca el control de WhatsApp Web y, si no lo encuentra, escribe el título de la opción (es lo mismo que recibe el agente). Los datos son fijos entre corridas (semilla `E2E_SEED=2026` por escenario: mismo trayecto, fechas, pasajeros, maletas y asientos mientras la base esté igual), para que el agente no reciba información distinta cada vez; cambia la semilla para otros datos.
 
 Asientos: el agente comparte el enlace del selector del CRM (`#/asientos/<vuelo>/<n>`, requiere `CRM_PUBLIC_URL` en las functions). La prueba lo abre en otra pestaña, elige asientos, quita uno de prueba, pulsa «Copiar asientos» y pega el texto copiado en el chat (el contexto del navegador recibe permiso de portapapeles).
 

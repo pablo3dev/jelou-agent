@@ -112,3 +112,28 @@ def test_viaje_siempre_elige_los_mismos_horarios():
     assert v.vuelo_regreso == "mdebog202612231845"
     # el horario base de las 07:00 conserva el id original
     assert Viaje("BOG-MDE", "2026-12-16", "MDE-BOG", "2026-12-23", "07:00", "07:00").vuelo_ida == "bogmde20261216"
+
+
+def test_datos_de_los_escenarios_son_fijos_entre_corridas():
+    import random
+
+    from faker import Faker
+
+    from e2e import datos
+
+    class DatumFalso:
+        def vuelo(self, ruta, fecha, hora="07:00"):
+            return {"mapa_asientos": {f"{n}{l}": {"estado": "LIBRE"} for n in range(1, 31) for l in "ABCDEF"}}
+
+    def generar():
+        salida = []
+        for nombre in ("una_persona", "varias_personas", "flujo_por_mal"):
+            fk = Faker("es_CO")
+            Faker.seed(f"2026-{nombre}")
+            random.seed(f"2026-{nombre}")
+            salida.append(getattr(datos, nombre)(fk, DatumFalso(), V))
+        return salida
+
+    a, b = generar(), generar()
+    assert a == b
+    assert all(len(p.nombre.split()) == 2 for e in a for p in e.pasajeros)  # nombre y apellido, como los muestra la lista
