@@ -112,7 +112,7 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
         wa.context.grant_permissions(["clipboard-read", "clipboard-write"], origin=config.CRM_URL)
         with pest.abrir("widget_asientos") as pg:
             pg.goto(f"{config.CRM_URL}/#{url.split('#', 1)[1]}")
-            libres = pg.locator('.asiento[data-estado="LIBRE"]:not([disabled])')
+            libres = pg.locator('button.asiento[data-asiento][data-estado="LIBRE"]:not([disabled])')  # sin la leyenda, que tambien es .asiento
             libres.first.wait_for()
             mostrar(pg)
             # Demostracion de deseleccionar: se elige un asiento de mas y se quita.
@@ -159,7 +159,7 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
             paso("Alguien mas lleva bodega? (botones)")
             quedan = len(elegidos_lista) < len(pendientes_bodega)
             ultimo = elige("Sí" if quedan else "No, seguimos")
-        elif "tramo" in t and "bodega" in t:
+        elif "tramo" in t and "bodega" in t and "cuesta" not in t and "COP" not in t:  # la pregunta, no el precio ya calculado
             paso("Tramo de la bodega (botones)")
             ultimo = elige("Solo ida")
         elif pendientes_bodega and any(k in t for k in ("largo", "medidas", "alto")) and "kg" in t:
