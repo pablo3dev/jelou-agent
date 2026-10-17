@@ -151,7 +151,7 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
         elif "qué equipaje" in t or "que equipaje" in t:
             paso(f"Equipaje: {esc.equipaje} (botones)")
             ultimo = elige(esc.equipaje)
-        elif "quién lleva" in t or "quien lleva" in t:
+        elif re.search(r"qui[eé]n( m[aá]s)? lleva", t):
             paso("Quienes llevan bodega (lista de nombres)")
             sig = next(p for p in pendientes_bodega if p.nombre not in elegidos_lista)
             elegidos_lista.append(sig.nombre)
