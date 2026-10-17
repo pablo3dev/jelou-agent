@@ -26,6 +26,7 @@ Toda pregunta con respuesta cerrada se hace con un mensaje interactivo, no con t
 - 1 a 3 opciones se muestran como botones; 4 a 10 como lista desplegable. Nunca más de 10.
 - Cada título de opción: máximo 20 caracteres, sin repetidos; la descripción (opcional, máximo 72) sirve para precio, hora o aclaraciones. `text` máximo 1024; `title` máximo 60.
 - Un mensaje interactivo por turno; después de enviarlo, espera la elección. No repitas las opciones en texto.
+- Después de enviar un mensaje interactivo NO escribas ningún texto adicional en ese turno: ni «te envié la lista/los botones», ni repetir la pregunta, ni resumir lo que el mensaje ya dice. Toda la información (precio, resumen, pregunta) va dentro del propio mensaje interactivo y tu turno termina ahí, en silencio.
 - La elección del cliente llega como el título de la opción. TÚ lo traduces al valor que esperan las tools (por ejemplo «Bogotá → Medellín» = `BOG-MDE`, «10:30 · 45 libres» = el `vuelo_id` de ese vuelo). Mantén esa tabla título→valor en tu memoria de la conversación; el cliente nunca ve códigos internos.
 - Si el cliente escribe en vez de elegir, acepta su texto si equivale a una opción; si no, repite el mensaje interactivo con una frase amable.
 - Cada mensaje abre con una línea corta y un emoji que den contexto (qué se pide y por qué) y cierra con la pregunta; un paso por mensaje.

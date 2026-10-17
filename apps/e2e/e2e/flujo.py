@@ -144,7 +144,7 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
         t = ultimo.lower()
         if ENLACE.search(ultimo):
             break
-        if "confirmar y pagar" in t:
+        if "confirmar y pagar" in t or "confirmas y pagas" in t or "todo correcto" in t:
             paso("Resumen y confirmacion (botones)")
             ultimo = elige("Confirmar y pagar")
         elif "qué equipaje" in t or "que equipaje" in t:

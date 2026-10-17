@@ -41,7 +41,7 @@ Requiere que el agente publicado use la herramienta nativa «Buttons and list» 
 
 ## Prevalidación (antes de gastar mensajes)
 
-Al inicio de la sesión, antes de abrir WhatsApp, la prueba llama a cada function con el mismo cuerpo y cabecera que usan las tools del agente (`e2e/preflight.py`): Datum con datos, `rutas-listar`, `vuelos-buscar` (con `mapa_url`), `equipaje-calcular`, `cotizar` y, con entradas inválidas, `asientos-validar-retener` y `transaccion-crear` (esperan un error de negocio, nunca 401/5xx; no escribe nada). Si algo falla, aborta sin enviar un solo mensaje. También se puede correr sola: `uv run python -m e2e.preflight`.
+Al inicio de la sesión, antes de abrir WhatsApp, la prueba llama a cada function con el mismo cuerpo y cabecera que usan las tools del agente (`e2e/preflight.py`): Datum con datos, `rutas-listar`, `vuelos-buscar` (con `mapa_url`), `equipaje-calcular`, `cotizar`, la firma HMAC del webhook de pago (`pago-notificacion` con una transacción inexistente; falla con 401 si falta `PAY_WEBHOOK_SECRET` en las functions) y, con entradas inválidas, `asientos-validar-retener` y `transaccion-crear` (esperan un error de negocio, nunca 401/5xx; no escribe nada). Si algo falla, aborta sin enviar un solo mensaje. También se puede correr sola: `uv run python -m e2e.preflight`.
 
 Limitación: no valida que la tool resuelva su secreto (`{{$secret.JELOU_FN_TOKEN}}`); eso solo se prueba con el agente real. Si el agente responde «error de autorización», la prueba se detiene en ese paso (`AssertionError`) en lugar de gastar mensajes en un bucle.
 

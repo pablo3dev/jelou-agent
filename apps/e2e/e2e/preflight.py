@@ -3,6 +3,8 @@
 Sin IA ni WhatsApp. Las operaciones que escriben solo se prueban con entradas invalidas (esperan un error de negocio, no 401/5xx).
 Limite conocido: la resolucion del secreto `{{$secret.JELOU_FN_TOKEN}}` dentro de la tool solo se prueba con el agente real.
 """
+import hashlib
+import hmac
 import json
 import re
 
@@ -87,6 +89,16 @@ def ejecutar() -> None:
 
     st, _ = httpx.post(f"{base}/rutas-listar", headers={"Authorization": "Bearer invalido"}, json={}, timeout=30).status_code, None
     r.ok("las functions rechazan un token invalido (401)", st == 401, f"status {st}")
+
+    # Webhook de pago: la function debe aceptar la firma HMAC de `pay` (mismo PAY_WEBHOOK_SECRET). Transaccion inexistente: sin efectos.
+    secreto = config.env("PAY_WEBHOOK_SECRET")
+    if secreto:
+        cuerpo = json.dumps({"transaccion_id": "noexiste000000x", "estado": "APROBADA", "event_id": "noexiste000000x:APROBADA", "emitido_at": "2026-01-01T00:00:00.000Z"}, separators=(",", ":"))
+        firma = hmac.new(secreto.encode(), cuerpo.encode(), hashlib.sha256).hexdigest()
+        resp = c.post(f"{base}/pago-notificacion", content=cuerpo, headers={"Content-Type": "application/json", "X-Webhook-Signature": f"sha256={firma}"})
+        r.ok("pago-notificacion acepta la firma de pay (no 401 'Firma invalida')", resp.status_code == 200, f"status {resp.status_code} {resp.text[:80]}")
+    else:
+        r.ok("PAY_WEBHOOK_SECRET definido en .env (firma del webhook de pago)", False, "falta")
 
     if r.fallas:
         raise RuntimeError("Prevalidacion fallida; no se envia nada a WhatsApp:\n- " + "\n- ".join(r.fallas))
