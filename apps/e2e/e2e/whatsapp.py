@@ -126,14 +126,19 @@ class Chat:
             if boton.count():
                 boton.click(timeout=3000)
                 return "boton"
-            # Lista: el boton del mensaje abre un panel con las filas.
-            abrir = pg.locator("#main [role='button']").filter(has_text=re.compile(r"ver opciones|opciones|seleccionar|view options|select", re.I)).last
+            # Lista: el boton del mensaje (solo icono; el texto va en title) abre un panel con filas de seleccion.
+            abrir = pg.locator("#main button[role='button'][title]").last
             if abrir.count():
                 abrir.click(timeout=3000)
+                panel = pg.locator("div[role='dialog'][aria-modal='true']").last
+                panel.wait_for(state="visible", timeout=5000)
                 pausa()
-                fila = pg.locator("div[role='dialog'] , [data-animate-modal-popup]").get_by_text(exacto).first
+                fila = panel.get_by_text(exacto).first
                 fila.click(timeout=4000)
-                pg.locator("div[role='dialog'] button, [data-animate-modal-popup] button").filter(has_text=re.compile(r"enviar|send", re.I)).last.click(timeout=4000)
+                time.sleep(1)
+                # Tras elegir la fila aparece el boton redondo de enviar (un div role=button sin etiqueta).
+                panel.locator("[role='button']").last.click(timeout=4000)
+                panel.wait_for(state="hidden", timeout=5000)
                 return "lista"
         except Exception as e:
             print("[no se pudo tocar el control:", type(e).__name__, "]")
