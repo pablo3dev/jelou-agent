@@ -351,3 +351,15 @@ code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; backgrou
   .seleccion-grid { grid-template-columns: minmax(0, 1fr) 20rem; }
   .seleccion { position: sticky; top: 6rem; bottom: auto; }
 }
+
+/* Ventas: pestanas y buscador del detalle por vuelo */
+.tarjeta__cab { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; padding: 0.9rem 1rem 0.5rem; }
+.tarjeta__cab .tarjeta__titulo { margin: 0; flex: 1 1 100%; }
+.pestanas { display: inline-flex; gap: 0.25rem; padding: 0.2rem; border-radius: 0.8rem; background: var(--bg, rgba(127,127,127,0.12)); border: 1px solid rgba(127,127,127,0.25); }
+.pestana { min-height: 2.25rem; padding: 0.2rem 0.8rem; border: 0; border-radius: 0.6rem; background: transparent; color: var(--muted); font: 600 0.85rem var(--fuente); cursor: pointer; white-space: nowrap; }
+.pestana:hover { color: var(--text); }
+.pestana[aria-selected="true"] { background: var(--accent); color: #fff; }
+.buscador { flex: 1 1 12rem; min-width: 0; min-height: 2.25rem; }
+
+.pestanas--grafico { margin: 0 0 0.6rem; }
+.grafico .tarjeta__titulo { margin-bottom: 0.4rem; }

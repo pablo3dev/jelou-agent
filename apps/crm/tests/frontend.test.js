@@ -163,3 +163,38 @@ test('tema: preferencia guardada o la del sistema', () => {
   assert.equal(temaInicial(null, true), 'light');
   assert.equal(temaInicial('raro', false), 'dark');
 });
+
+test('ventas: pestanas con/sin ventas y buscador por palabra clave', async () => {
+  const { filtrarVentasVuelo } = await import('../public/js/views/ventas.js');
+  const v = [
+    { vuelo_id: 'bogmde20261201', ruta: 'BOG-MDE', fecha: '2026-12-01', vendidos: 0 },
+    { vuelo_id: 'bogclo20261202', ruta: 'BOG-CLO', fecha: '2026-12-02', vendidos: 3 },
+    { vuelo_id: 'clobog20261203', ruta: 'CLO-BOG', fecha: '2026-12-03', vendidos: 9 },
+  ];
+  const ids = (l) => l.map((x) => x.vuelo_id);
+  assert.deepEqual(ids(filtrarVentasVuelo(v, { pestana: 'todos', texto: '' })), ids(v));
+  assert.deepEqual(ids(filtrarVentasVuelo(v, { pestana: 'con', texto: '' })), ['clobog20261203', 'bogclo20261202']);
+  assert.deepEqual(ids(filtrarVentasVuelo(v, { pestana: 'sin', texto: '' })), ['bogmde20261201']);
+  assert.deepEqual(ids(filtrarVentasVuelo(v, { pestana: 'con', texto: 'CLO bog' })), ['clobog20261203', 'bogclo20261202']);
+  assert.deepEqual(ids(filtrarVentasVuelo(v, { pestana: 'todos', texto: 'mde 2026-12-01' })), ['bogmde20261201']);
+  assert.deepEqual(ids(filtrarVentasVuelo(v, { pestana: 'sin', texto: 'clo' })), []);
+});
+
+test('ventas: agrupa por dia/semana/mes y detecta picos', async () => {
+  const { agruparVentas, indicesPicos } = await import('../public/js/views/ventas.js');
+  const v = [
+    { vuelo_id: 'a', ruta: 'BOG-MDE', fecha: '2026-12-01', vendidos: 5 },
+    { vuelo_id: 'b', ruta: 'BOG-CLO', fecha: '2026-12-01', vendidos: 9 },
+    { vuelo_id: 'c', ruta: 'BOG-CLO', fecha: '2026-12-06', vendidos: 0 },
+    { vuelo_id: 'd', ruta: 'CLO-BOG', fecha: '2026-12-07', vendidos: 4 },
+    { vuelo_id: 'e', ruta: 'CLO-BOG', fecha: '2027-01-02', vendidos: 2 },
+  ];
+  const dia = agruparVentas(v, 'dia');
+  assert.equal(dia.length, 4);
+  assert.deepEqual([dia[0].vendidos, dia[0].vuelosConVentas, dia[0].top.vuelo_id], [14, 2, 'b']);
+  // 2026-12-01 es martes: su semana empieza el lunes 2026-11-30; el 2026-12-07 abre otra semana
+  assert.deepEqual(agruparVentas(v, 'semana').map((p) => [p.fecha, p.vendidos]), [['2026-11-30', 14], ['2026-12-07', 4], ['2026-12-28', 2]]);
+  assert.deepEqual(agruparVentas(v, 'mes').map((p) => [p.fecha, p.vendidos]), [['2026-12-01', 18], ['2027-01-01', 2]]);
+  assert.equal(agruparVentas([{ vuelo_id: 'z', ruta: 'X-Y', fecha: '2026-12-03', vendidos: 0 }])[0].top, null);
+  assert.deepEqual(indicesPicos([1, 5, 2, 8, 3, 3, 0], 2), [3, 1]);
+});
