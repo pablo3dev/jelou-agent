@@ -13,8 +13,8 @@ ENLACE = re.compile(r"https?://\S+/(?:pay|pagar)/([A-Za-z0-9_-]+)")
 
 
 def corto(nombre: str) -> str:
-    """Las filas de las listas llevan el nombre abreviado por el agente: se busca por las dos primeras palabras."""
-    return " ".join(nombre.split()[:2])
+    """Las filas de las listas llevan el nombre abreviado por el agente (nombre y apellido, o solo dos palabras): se busca por el primer nombre."""
+    return nombre.split()[0]
 
 
 @dataclass
@@ -77,7 +77,8 @@ def _decidir(texto: str, st: Estado) -> Accion:
     if "tramo" in t and ("bodega" in t or "maleta" in t) and "?" in t:  # la pregunta (puede venir junto al precio de la maleta)
         dueno = next((q for q in esc.pasajeros if q.bodega and q.nombre.split()[0].lower() in t), st.maleta_actual)
         return Accion("elegir", f"Tramo de la maleta de {dueno.nombre.split()[0]}: {dueno.bodega_tramo} (botones)", dueno.bodega_tramo)
-    if st.pendientes_bodega and any(k in t for k in ("largo", "medidas", "alto")) and "kg" in t:
+    # "Ahora las medidas de X" puede llegar solo, antes del mensaje con el formato (largo, ancho, alto, kg).
+    if st.pendientes_bodega and ("medidas" in t or (any(k in t for k in ("largo", "alto")) and "kg" in t)):
         if "bodega_excedida" in esc.errores and "bodega" not in st.probado:
             st.probado.add("bodega")
             lo, an, al, kg = esc.errores["bodega_excedida"]

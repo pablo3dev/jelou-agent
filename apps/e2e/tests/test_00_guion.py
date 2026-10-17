@@ -37,9 +37,9 @@ def test_varias_personas_con_tramos_y_mascota_de_regreso():
     e = esc_varias()
     recorrer(e, [
         ("🧳 ¿Qué equipaje llevan?", "elegir", "Cabina y bodega"),
-        ("👥 ¿Quién lleva maleta de bodega?", "elegir", "Gilma Ramírez"),
-        ("👥 ¿Quién más lleva maleta de bodega?", "elegir", "Javier Gómez"),
-        ("👥 ¿Quién más lleva maleta de bodega?", "elegir", "María Adriana"),
+        ("👥 ¿Quién lleva maleta de bodega?", "elegir", "Gilma"),
+        ("👥 ¿Quién más lleva maleta de bodega?", "elegir", "Javier"),
+        ("👥 ¿Quién más lleva maleta de bodega?", "elegir", "María"),
         ("🧳 Maleta de Gilma: escribe largo, ancho, alto en cm y peso en kg. Ejemplo: 60x40x30 cm, 20 kg.", "decir", "50x35x25 cm, 15 kg"),
         ("🧳 La maleta de Gilma cuesta COP 124.800 (8 kg cobrables). ¿En qué tramo lleva la maleta Gilma?", "elegir", "Solo ida"),
         ("Anoté la maleta de Gilma para la ida. Ahora las medidas de Javier.\n🧳 Maleta de Javier: escribe largo, ancho, alto en cm y peso en kg. Ejemplo: 60x40x30 cm, 20 kg.", "decir", "43x39x20 cm, 8 kg"),
@@ -49,7 +49,7 @@ def test_varias_personas_con_tramos_y_mascota_de_regreso():
         ("🐾 ¿Viaja una mascota?", "elegir", "Sí"),
         ("🐾 ¿Qué especie es la mascota?", "elegir", "Perro"),
         ("🐾 ¿Cuánto pesa la mascota? Escribe el peso en kg.", "decir", "5 kg"),
-        ("🐾 ¿A nombre de quién viaja la mascota?", "elegir", "María Adriana"),
+        ("🐾 ¿A nombre de quién viaja la mascota?", "elegir", "María"),
         ("🐾 ¿En qué tramo viaja la mascota?", "elegir", "Regreso"),
         ("💺 Elige los asientos de ida aquí: http://localhost:3000/#/asientos/mdebog20261216/3", "widget_ida", ""),
         ("💺 Ahora elige los asientos de regreso: http://localhost:3000/#/asientos/bogmde20261223/3", "widget_regreso", ""),
@@ -68,6 +68,12 @@ def test_una_persona_mascota_de_ida():
         ("🐾 ¿Cuánto pesa en kg?", "decir", "5 kg"),
         ("🐾 ¿En qué tramo viaja la mascota?", "elegir", "Ida"),
     ])
+
+
+def test_medidas_llegan_en_un_mensaje_aparte_del_formato():
+    st = Estado(esc_varias())
+    a = decidir("Anotado: María Adriana Pérez también lleva maleta de bodega. Ahora las medidas de Gilma.", st)
+    assert (a.tipo, a.valor) == ("decir", "50x35x25 cm, 15 kg")
 
 
 def test_mensaje_no_previsto_corta_en_vez_de_escribir_continuar():
