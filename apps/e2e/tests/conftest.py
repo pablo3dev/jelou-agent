@@ -1,15 +1,21 @@
 import random
+import sys
 
 import pytest
 from faker import Faker
 from playwright.sync_api import sync_playwright
 
-from e2e import config
+from e2e import config, preflight
 from e2e.datum import Datum
+
+# Los textos de WhatsApp llevan flechas y tildes: la salida redirigida a archivo en Windows usa cp1252.
+for _f in (sys.stdout, sys.stderr):
+    _f.reconfigure(encoding="utf-8", errors="replace")
 
 
 @pytest.fixture(scope="session")
 def datum():
+    preflight.ejecutar()  # valida las functions antes de gastar un solo mensaje de WhatsApp
     return Datum()
 
 

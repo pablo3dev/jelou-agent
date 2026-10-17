@@ -9,7 +9,7 @@ class Datum:
     def __init__(self) -> None:
         if not DATUM_URL or not DATUM_API_KEY:
             raise RuntimeError("Falta DATUM_URL/DATUM_API_KEY (apps/infrastructure/.env)")
-        self.c = httpx.Client(base_url=DATUM_URL, headers={"X-Api-Key": DATUM_API_KEY}, timeout=15)
+        self.c = httpx.Client(base_url=DATUM_URL, headers={"X-Api-Key": DATUM_API_KEY}, timeout=15, transport=httpx.HTTPTransport(retries=3))  # reintenta cortes de red al conectar
 
     def get(self, coleccion: str, id_: str) -> dict | None:
         r = self.c.get(f"/collections/{coleccion}/records/{id_}")

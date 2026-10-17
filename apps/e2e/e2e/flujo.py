@@ -44,6 +44,12 @@ def _hora(datum, ruta: str, fecha: str) -> str:
     return datum.vuelo(ruta, fecha)["hora_salida"][:5]
 
 
+def _falla_de_sistema(respuesta: str) -> None:
+    """Si el agente avisa que sus herramientas fallan, corta: reintentar solo gasta mensajes y creditos."""
+    if re.search(r"error de autorizaci|problema (al|de) busca|sistema de (b[uú]squeda|vuelos) (sigue|no)", respuesta, re.I):
+        raise AssertionError(f"El agente reporta una falla de sus herramientas: {respuesta[:200]}")
+
+
 def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
     v = esc.viaje
     paso = Paso(esc, wa)
@@ -54,12 +60,14 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
         r = chat.decir(texto)
         print(f"  >> {texto}\n  << {r}\n")
         log.append(r)
+        _falla_de_sistema(r)
         return r
 
     def elige(opcion: str, prefijo: bool = False) -> str:
         r = chat.elegir(opcion, prefijo)
         print(f"  << {r}\n")
         log.append(r)
+        _falla_de_sistema(r)
         return r
 
     mostrar(wa)
