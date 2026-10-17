@@ -84,7 +84,7 @@ La tarea 1.1 de la unidad `apps/agent` es la copia fuente del contrato: [tasks.m
 - [x] La estructura de archivos coincide con el mapeo de `design.md`.
 - [x] Todos los tests unitarios, de integración y E2E pasan sin advertencias críticas.
 - [x] La fila del spec en el `INDEX.md` de specs (`.makia/docs/specs/<categoría>/INDEX.md`) está sincronizada con el `Estado global` de `summary.md`.
-- [ ] AUDIT pendiente (lo ejecuta el DEPLOY).
+- [x] AUDIT ejecutado: ciclo 1, `PASA_CON_OBSERVACIONES` (2026-10-17); sin hallazgos y con observaciones no bloqueantes (ver `audit.md`).
 
 ---
 

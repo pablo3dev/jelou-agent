@@ -44,7 +44,7 @@ graph TD
 
 | Riesgo | Impacto | Mitigación |
 |:---|:---|:---|
-| Lectura completa de colecciones en el servidor (`vuelos`, `rutas`, `reservas`; 372 vuelos con su `mapa_asientos`) en cada cálculo | Latencia y carga sobre Datum al crecer los datos | Caché TTL en memoria por colección (10 s por defecto, `CRM_CACHE_TTL_MS`), con deduplicación de lecturas concurrentes; colecciones pequeñas en la DEMO |
+| Lectura completa de colecciones en el servidor (`vuelos` con su `mapa_asientos`, `rutas`, `reservas`) en cada cálculo | Latencia y carga sobre Datum al crecer los datos | Caché TTL en memoria por colección (10 s por defecto, `CRM_CACHE_TTL_MS`), con deduplicación de lecturas concurrentes; colecciones pequeñas en la DEMO |
 | Dependencia de CDN para Chart.js | Sin conexión a `cdn.jsdelivr.net` los gráficos no se dibujan | Versión fijada (4.5.1); la UI detecta `window.Chart` ausente y muestra un aviso textual; tablas y mapa siguen funcionando |
 | Sin autenticación del dashboard | Cualquiera con acceso al puerto ve ocupación e ingresos | Es DEMO local; el contenedor se publica solo en `127.0.0.1` en los comandos documentados; no sin protección en un servicio abierto |
 | Retraso de unos segundos por la caché | Una venta puede tardar hasta el TTL en reflejarse | Aceptado (requirements, restricciones operativas); TTL configurable |
@@ -69,7 +69,7 @@ Sin actualizaciones futuras declaradas.
 
 | Colección | Campos que usa crm | Uso |
 |:---|:---|:---|
-| `vuelos` | `id` (id físico, p. ej. `bogmde20261201`), `ruta_id` (ruta lógica, p. ej. `BOG-MDE`), `fecha`, `hora_salida`, `mapa_asientos` (JSON: clave `<fila><letra>`, valor `{estado, pnr, hold_token, hold_expira}`) | Resumen por vuelo, mapa, ventas |
+| `vuelos` | `id` (id físico del vuelo), `ruta_id` (ruta lógica, p. ej. `BOG-MDE`), `fecha`, `hora_salida`, `mapa_asientos` (JSON: clave `<fila><letra>`, valor `{estado, pnr, hold_token, hold_expira}`) | Resumen por vuelo, mapa, ventas |
 | `rutas` | `id`, `origen`, `destino` | Origen y destino de cada vuelo |
 | `reservas` | `estado`, `total_cop` | Conteo por estado e ingresos (suma de `total_cop` de las EMITIDA) |
 
@@ -78,7 +78,7 @@ crm no lee `pasajeros`, `equipaje`, `mascotas`, `transacciones` ni `eventos_pago
 **Reglas de dominio aplicadas (de [domain-model.md](../../agent/domain-model.md) y los requirements):**
 - Clase por fila: Premium filas 1 a 3 (letras A, C, D, F; 12 asientos), Extended filas 4 a 7 (A a F; 24), Economy filas 8 a 30 (A a F; 138). Total 174. Salida de emergencia: filas 13 y 14.
 - Estado efectivo (RN-08): un asiento RETENIDO cuyo `hold_expira` es menor o igual que el instante de consulta cuenta como LIBRE; un RETENIDO vigente no es venta. Estado ausente o fuera de `LIBRE | RETENIDO | VENDIDO | BLOQUEADO` se reporta `BLOQUEADO`.
-- Ocupación % = `round(vendidos / total * 1000) / 10` (una decimal); `total` = 174 por vuelo (o `vuelos * 174` en agregados).
+- Ocupación % = `round(vendidos / total * 1000) / 10` (una decimal); `total` = 174 por vuelo (o `vuelos * 174` en agregados, con `vuelos` el número de vuelos leídos).
 
 **Modelos de lectura derivados (no persistidos):**
 
@@ -176,20 +176,20 @@ Todas las rutas son `GET`. Prefijo `/api` salvo `/health`. Todas las respuestas 
 - 200: `{ "total_vendidos": number, "vuelos": [ { "vuelo_id", "ruta", "fecha", "vendidos" } ] }` (mismo orden que `/api/vuelos`, sin filtros).
 
 **`GET /api/ventas/por-destino`**
-- 200: `{ "destinos": [ { "destino", "vuelos", "vendidos", "total_asientos", "ocupacion_pct" } ] }`, ordenado por `vendidos` descendente y luego `destino`. `vuelos` = número de vuelos del destino; `total_asientos` = `vuelos * 174`; `ocupacion_pct` = `vendidos / total_asientos`.
+- 200: `{ "destinos": [ { "destino", "vuelos", "vendidos", "total_asientos", "ocupacion_pct" } ] }`, ordenado por `vendidos` descendente y luego `destino`. `vuelos` = número de vuelos leídos del destino; `total_asientos` = `vuelos * 174`; `ocupacion_pct` = `vendidos / total_asientos`.
 
 **`GET /api/estadisticas`**
 - 200:
   ```json
-  { "generado_at": "2026-12-01T12:00:00.000Z", "vuelos": 372,
-    "asientos": { "total": 64728, "vendidos": 0, "retenidos": 0, "libres": 0, "bloqueados": 0 },
+  { "generado_at": "2026-12-01T12:00:00.000Z", "vuelos": 0,
+    "asientos": { "total": 0, "vendidos": 0, "retenidos": 0, "libres": 0, "bloqueados": 0 },
     "ocupacion_pct": 0,
     "reservas_por_estado": { "PENDIENTE_PAGO": 0, "EMITIDA": 0, "PAGO_RECHAZADO": 0, "EXPIRADA": 0, "CANCELADA": 0 },
     "ingresos_cop": 0,
     "top_rutas": [ { "ruta": "BOG-MDE", "origen": "BOG", "destino": "MDE", "vendidos": 0 } ],
     "serie_vendidos_por_fecha": [ { "fecha": "2026-12-01", "vendidos": 0 } ] }
   ```
-  `ingresos_cop` = suma de `total_cop` de las reservas EMITIDA; `reservas_por_estado` inicia en 0 las cinco claves y suma cualquier otro estado que aparezca; `top_rutas` = las 5 rutas con más vendidos (desempate por ruta); `serie_vendidos_por_fecha` ordenada por fecha. (Los valores numéricos del ejemplo son ilustrativos de la forma.)
+  `ingresos_cop` = suma de `total_cop` de las reservas EMITIDA; `reservas_por_estado` inicia en 0 las cinco claves y suma cualquier otro estado que aparezca; `top_rutas` = las 5 rutas con más vendidos (desempate por ruta); `serie_vendidos_por_fecha` ordenada por fecha. (Los valores del ejemplo son ilustrativos de la forma: el número de vuelos y de asientos depende de los datos vigentes.)
 
 **Errores transversales de `/api`**
 - 405 `metodo_no_permitido` (cabecera `Allow: GET, HEAD, OPTIONS`) para cualquier método distinto de GET, HEAD y OPTIONS, en cualquier subruta de `/api`, antes de tocar Datum.
@@ -209,8 +209,9 @@ Todas las rutas son `GET`. Prefijo `/api` salvo `/health`. Todas las respuestas 
 - `index.html` carga `https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js` con `defer` y `/js/main.js` como módulo; solo `<div id="app">`. Sin atributos `style` ni `<style>`: los valores dinámicos (barra de ocupación) usan `style.setProperty` de variables CSS vía `h({vars})`.
 - `dom.js`: constructor `h(tag, attrs, ...hijos)`; los datos entran siempre con `textContent`/nodos de texto (ningún `innerHTML`).
 - `api.js` (cliente): `fetch` con el verbo por defecto (GET) a `/api/estadisticas`, `/api/vuelos`, `/api/ventas/por-vuelo`, `/api/ventas/por-destino`, `/api/vuelos/<id>/asientos`; los errores se envuelven en `ApiError(codigo, status)` (`red` si falla el fetch). El frontend no envía filtros al servidor: descarga `/api/vuelos` completo y filtra y ordena en cliente con la misma semántica (`aplicarFiltros`, `ordenar`).
-- Routing por hash (`hash.js`): `#/resumen`, `#/vuelos`, `#/mapa` y `#/mapa/<vuelo_id>`, `#/ventas`; cualquier otro hash cae en `resumen`. `main.js` construye el shell (navegación, botón refrescar, interruptor de auto-refresco cada 15 s sin pestaña oculta, cambio de idioma), carga en paralelo estadísticas, vuelos y ventas (y el mapa si la vista es `mapa`), conserva los últimos datos si un refresco falla (aviso de datos obsoletos) y evita refrescos solapados.
-- Vistas (`views/`): `resumen.js` (KPI de vuelos, vendidos, retenidos, libres, ocupación e ingresos; chips de reservas por estado; gráficos de ocupación global, por destino, vendidos por fecha, rutas destacadas y reservas por estado), `vuelos.js` (filtros ruta, desde y hasta; tabla ordenable con barra de ocupación; gráfico; clic abre el mapa), `ventas.js` (gráficos y tablas por destino y por vuelo), `mapa.js` (selector de vuelo, fuselaje con cabinas, bloques 2+2 en Premium y 3+3 en Extended y Economy, banner y marcas de salida en filas 13 y 14, contadores por estado y por clase, panel de detalle del asiento, navegación con flechas).
+- Routing por hash (`hash.js`): `#/resumen`, `#/vuelos`, `#/mapa` y `#/mapa/<vuelo_id>`, `#/ventas`, y la vista `#/asientos/<vuelo_id>/<n>` (widget compartible, fuera de la navegación; `n` entero >= 1 opcional, tope `MAX_SELECCION` = 9; sin valor válido `ruta.n` es `null`); cualquier otro hash cae en `resumen`. `main.js` construye el shell (navegación, botón refrescar, interruptor de auto-refresco cada 15 s sin pestaña oculta, cambio de idioma y de tema), carga en paralelo estadísticas, vuelos y ventas (y el detalle de asientos si la vista es `mapa` o `asientos`), conserva los últimos datos si un refresco falla (aviso de datos obsoletos) y evita refrescos solapados.
+- Vistas (`views/`): `resumen.js` (KPI de vuelos, vendidos, retenidos, libres, ocupación e ingresos; chips de reservas por estado; gráficos de ocupación global, por destino, vendidos por fecha, rutas destacadas y reservas por estado), `vuelos.js` (filtros ruta, desde y hasta; tabla ordenable con barra de ocupación; gráfico; clic abre el mapa), `ventas.js` (gráfico de barras por destino; gráfica de línea de vendidos por periodo con selector de granularidad día, semana ISO con inicio en lunes o mes, `agruparVentas` y puntos resaltados en los 5 máximos locales `indicesPicos`, con tooltip de vuelos con ventas y vuelo con más vendidos; tabla por destino; tabla de detalle por vuelo con pestañas Todos, Con ventas y Sin ventas con su conteo, y buscador `filtrarVentasVuelo` por palabras que deben estar todas en identificador, ruta o fecha, sin distinguir mayúsculas ni tildes; la pestaña, el texto y la granularidad viven a nivel de módulo y sobreviven al auto-refresco; «Con ventas» ordena por vendidos descendente), `mapa.js` (selector de vuelo, fuselaje con cabinas, bloques 2+2 en Premium y 3+3 en Extended y Economy, banner y marcas de salida en filas 13 y 14, contadores por estado y por clase, panel de detalle del asiento, navegación con flechas), `asientos.js` (widget de selección sobre el mismo layout y `GET /api/vuelos/:id/asientos`: solo se eligen asientos LIBRE; límite `ruta.n` con aviso al superarlo; un asiento elegido que deja de estar LIBRE al refrescar se quita; lista en orden natural fila-letra `ordenarAsientos`; botón copiar vía `navigator.clipboard` con respaldo `execCommand`; la selección es estado local, sin escrituras; es la interfaz a la que apunta el `mapa_url` del contrato de `apps/agent`).
+- Tema (`tema.js`): claro u oscuro aplicado con `data-theme` en `<html>`; `temaInicial(guardado, prefiereClaro)` usa `localStorage` (`crm-theme`: `light` o `dark`) y, sin valor guardado, `prefers-color-scheme: light` (si no, oscuro); `iniciarTema()` al arrancar, `setTema()` desde el botón de la barra superior (id `tema`) guarda la elección; `styles.css` define ambos temas con variables CSS.
 - `seatmap-layout.js`: layout puro de 174 asientos (`construirLayout`, `validarLayout`, `contarPorEstado`, `contarPorClase`, `vecino`); `charts.js`: envoltorio de Chart.js con aviso si `window.Chart` no existe; `ui.js`: estados cargando, vacío y error con reintento (mensajes específicos para `datum_no_configurado` y `red`).
 - i18n (`i18n.js`): catálogos `es` y `en` con las mismas claves; idioma inicial desde `localStorage` (`crm-lang`) o `navigator.language` (español por defecto); `t(clave, params)` con interpolación `{param}`. `format.js`: `formatCOP` (COP sin decimales), `formatInt`, `formatPct` (el valor llega en escala 0-100, hasta una decimal), `formatFecha` (UTC, sin desfase de zona) y `formatHace`, con locales `es-CO` y `en-US`.
 
@@ -238,7 +239,8 @@ Raíz: `apps/crm/` (unidad nueva). Estructura: `src/` (domain, application y ada
 | `apps/crm/public/js/main.js` | Shell, enrutado, refresco, idioma | 2.16 |
 | `apps/crm/public/js/api.js` | Cliente de `/api/*` (solo GET) | 2.16 |
 | `apps/crm/public/js/dom.js` | Constructor de DOM seguro | 2.16 |
-| `apps/crm/public/js/hash.js` | Parseo del hash de navegación | 2.16 |
+| `apps/crm/public/js/hash.js` | Parseo del hash de navegación (incluye `#/asientos/<vuelo>/<n>`) | 2.16 |
+| `apps/crm/public/js/tema.js` | Tema claro/oscuro (preferencia guardada o del sistema) | 2.16 |
 | `apps/crm/public/js/i18n.js` | Catálogos es/en, `t`, idioma inicial | 2.16 |
 | `apps/crm/public/js/format.js` | Formateadores COP, enteros, porcentaje, fechas | 2.16 |
 | `apps/crm/public/js/charts.js` | Envoltorio de Chart.js | 2.16 |
@@ -246,7 +248,8 @@ Raíz: `apps/crm/` (unidad nueva). Estructura: `src/` (domain, application y ada
 | `apps/crm/public/js/seatmap-layout.js` | Layout de 174 asientos y contadores | 2.16 |
 | `apps/crm/public/js/views/resumen.js` | Vista Resumen | 2.16 |
 | `apps/crm/public/js/views/vuelos.js` | Vista Vuelos | 2.16 |
-| `apps/crm/public/js/views/ventas.js` | Vista Ventas | 2.16 |
+| `apps/crm/public/js/views/ventas.js` | Vista Ventas (serie por periodo, pestañas y buscador) | 2.16 |
+| `apps/crm/public/js/views/asientos.js` | Widget de selección de asientos compartible | 2.16 |
 | `apps/crm/public/js/views/mapa.js` | Vista Mapa de asientos | 2.16 |
 | `apps/crm/Dockerfile` | Imagen `node:24.22.0-bookworm-slim`, usuario 1000:1000, HEALTHCHECK Node | 2.17 |
 | `apps/crm/.dockerignore` | Excluye `tests`, `contract`, `*.md` y `node_modules` de la imagen | 2.17 |
@@ -276,9 +279,9 @@ Sin cortes de migración afectados.
 
 | Requirement ID | Design Section | Implementation File(s) |
 |:---|:---|:---|
-| REQ-01 (REQ-1.1 a REQ-1.6) | §3.1 estado efectivo y ocupación; §4.2 `GET /api/vuelos`, `/api/ventas/por-vuelo`, `/api/ventas/por-destino` | `src/asientos.js`, `src/agregados.js`, `src/api.js`, `public/js/views/vuelos.js`, `public/js/views/ventas.js` |
-| REQ-02 (REQ-2.1 a REQ-2.5) | §3.1 mapa canónico; §4.2 `GET /api/vuelos/:id/asientos`; §4.2 Frontend (mapa) | `src/asientos.js`, `src/api.js`, `public/js/seatmap-layout.js`, `public/js/views/mapa.js` |
-| REQ-03 (REQ-3.1 a REQ-3.4) | §4.2 `GET /api/estadisticas`; §4.2 Frontend (formatos) | `src/agregados.js`, `src/api.js`, `public/js/format.js`, `public/js/views/resumen.js`, `public/js/i18n.js` |
+| REQ-01 (REQ-1.1 a REQ-1.8) | §3.1 estado efectivo y ocupación; §4.2 `GET /api/vuelos`, `/api/ventas/por-vuelo`, `/api/ventas/por-destino` | `src/asientos.js`, `src/agregados.js`, `src/api.js`, `public/js/views/vuelos.js`, `public/js/views/ventas.js` |
+| REQ-02 (REQ-2.1 a REQ-2.8) | §3.1 mapa canónico; §4.2 `GET /api/vuelos/:id/asientos`; §4.2 Frontend (mapa, widget de asientos) | `src/asientos.js`, `src/api.js`, `public/js/seatmap-layout.js`, `public/js/views/mapa.js`, `public/js/views/asientos.js`, `public/js/hash.js` |
+| REQ-03 (REQ-3.1 a REQ-3.5) | §4.2 `GET /api/estadisticas`; §4.2 Frontend (formatos) | `src/agregados.js`, `src/api.js`, `public/js/format.js`, `public/js/views/resumen.js`, `public/js/i18n.js`, `public/js/tema.js` |
 | REQ-04 (REQ-4.1 a REQ-4.5) | §4.1 cliente Datum; §4.2 errores 405, 502, 503; §7.1 y §7.2 | `src/datum.js`, `src/api.js`, `public/js/api.js` |
 | REQ-05 (REQ-5.1 a REQ-5.4) | §4.2 `/health`, cabeceras, arranque y frontend; §7.2 | `src/config.js`, `src/app.js`, `src/server.js`, `public/index.html`, `public/js/dom.js`, `Dockerfile` |
 | REQ-06 (REQ-6.1, REQ-6.2) | §3 (esquema consumido por copia); §8.3 | `contract/CONTRACT.sha256`, `contract/verify-contract.sh`, `contract/db-design.dbml`, `contract/endpoints.md` |
@@ -306,10 +309,10 @@ Sin cortes de migración afectados.
 
 ## 8. Testing Strategy & Verification Plan
 
-Verificado el 2026-10-16: 47 pruebas verdes en `apps/crm`.
+Suite `node:test` de `apps/crm` en contenedor (comandos al final de este apartado).
 
 ### 8.1 Unit Tests
-- `tests/frontend.test.js` (lógica pura del frontend): layout de 174 asientos, bloques 2+2 y 3+3, salida en filas 13-14, coincidencia con el mapa canónico del servidor, `validarLayout`, contadores por estado y clase, navegación con flechas, formateadores COP, enteros y porcentaje (es-CO y en-US), fechas en UTC, `formatHace`, hash routing, filtros y orden de vuelos, catálogos i18n con claves idénticas y todas las claves usadas definidas.
+- `tests/frontend.test.js` (lógica pura del frontend): layout de 174 asientos, bloques 2+2 y 3+3, salida en filas 13-14, coincidencia con el mapa canónico del servidor, `validarLayout`, contadores por estado y clase, navegación con flechas, formateadores COP, enteros y porcentaje (es-CO y en-US), fechas en UTC, `formatHace`, hash routing, filtros y orden de vuelos, hash del widget de asientos y límite de selección, orden natural de asientos elegidos, tema inicial, pestañas y buscador de Ventas, agrupación por día, semana y mes con picos, catálogos i18n con claves idénticas y todas las claves usadas definidas.
 - `tests/datum.test.js` (9): normalización de filas, paginación con `X-Api-Key` y solo GET, página vacía y respuesta sin `items`, caché TTL (TTL 0 desactiva), fallo no cacheado, `getById`, red caída sin filtrar el secreto, sin configuración sin llamadas de red, cliente sin métodos de escritura.
 
 ### 8.2 Integration Tests
@@ -319,7 +322,7 @@ Verificado el 2026-10-16: 47 pruebas verdes en `apps/crm`.
 
 ### 8.3 Contract / E2E Tests
 - Contrato: `sh apps/crm/contract/verify-contract.sh` (equivale a `sha256sum -c CONTRACT.sha256` y compara con `apps/agent/contract`). No es una prueba `node:test` versionada; se ejecuta por comando.
-- Dashboard en vivo con el seed cargado (372 vuelos) y E2E con Docker Compose: tareas 3.6 y 4.1 (ver `tasks.md`).
+- Dashboard en vivo con el seed cargado y E2E con Docker Compose: tareas 3.6 y 4.1 (ver `tasks.md`).
 
 **Comandos (todo en contenedor; en Git Bash anteponer `MSYS_NO_PATHCONV=1`):**
 

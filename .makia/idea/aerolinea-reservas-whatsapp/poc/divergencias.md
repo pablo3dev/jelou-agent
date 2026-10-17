@@ -3,14 +3,14 @@
 Fecha: 2026-10-16 (aprobada el 2026-10-17). Rama: `makia/dev/aerolinea-reservas-whatsapp`.
 
 - Qué es: hoja priorizada de divergencias, notas y observaciones surgidas al crear los 4 specs de la PoC; el USUARIO la aprueba junto con los `requirements.md` de los 4 specs (etapa S).
-- Estado: aprobada por el USUARIO el 2026-10-17; AUDIT pendiente (DEPLOY).
+- Estado: aprobada por el USUARIO el 2026-10-17; AUDIT ejecutado el 2026-10-17 (4 specs `PASA_CON_OBSERVACIONES`).
 - Cómo leerla: prioridad P1 alta, P2 media, P3 baja. Clase: Divergencia = el resultado difiere de lo especificado o falta verificación; Nota = hecho a registrar sin acción; Observación no confirmada = no establecido.
 
 ## 1. Hoja priorizada
 
 | ID | Prioridad | Clase | Hallazgo (con cita) | Recomendación | Decisión del USUARIO (sí/no) |
 |----|-----------|-------|---------------------|---------------|------------------------------|
-| D-01 | P1 | Divergencia abierta (decisión del USUARIO) | Mascota cobrada solo en la ida: línea Mascota ida (Luis) COP 195.000 = 150.000 x 1,30 (diciembre) y ninguna línea de mascota en el regreso. No es bug respecto del texto literal; la intención no es concluyente. Ver [D-01](#d-01). | Decidir entre (A) una sola línea de mascota por reserva o (B) cobro por trayecto. Hasta decidir, rige (A). | Sí — se acepta tal cual en el MVP (rige (A): una sola línea de mascota por reserva) |
+| D-01 | P1 | Decisión (cerrada) | Mascota cobrada solo en la ida: línea Mascota ida (Luis) COP 195.000 = 150.000 x 1,30 (diciembre) y ninguna línea de mascota en el regreso. No es bug respecto del texto literal; la intención no era concluyente. Ver [D-01](#d-01). | Decisión: cobro de mascota por trayecto (código as-built, aprobado el 2026-10-17): una sola línea por reserva, en `IDA` o `REGRESO` según elija el cliente, con la temporada del vuelo de ese trayecto. | Sí — decisión: cobro de mascota por trayecto (código as-built, aprobado el 2026-10-17) |
 | D-02 | P1 | Riesgo de seguridad residual (decisión del USUARIO) | La señal de reanudación `paid`, `rejected` o `expired` llega al agente como texto; en pausa, un cliente podría escribir `paid` y recibir el PNR sin pagar (evidencia de la tarea 4.1). El prompt (paso 10) acepta la señal envuelta y trata otros mensajes como estado no claro, pero no la autentica. | Antes de entregar el PNR, consultar el estado real de la transacción con una tool de solo lectura (o que la reanudación lleve un valor no adivinable derivado de la transacción), como iteración posterior; aceptable solo en la DEMO. | Sí — se acepta tal cual en el MVP (limitación aceptada de la DEMO) |
 | D-03 | P1 | Divergencia (REQ sin test verde) | Spec reserva-pago-whatsapp-agent: REQ-09 (confirmación con PNR en el chat) sin test automatizado; evidencia manual E2E (commits 1d3cc35, 289e60f, d257860). REQ-10 (enlace de pago): la construcción del enlace tiene test (transaccion-crear), la entrega por WhatsApp solo manual (fix 631350d). REQ-12: el test automatizado cubre el comparador dbml-colecciones; la comparación en vivo es manual (conformidad.sh, 4ae8456). | Pruebas de conversación con transcripciones de referencia (agente simulado o evaluación del prompt) en la etapa TEST o AUDIT; mientras tanto, la evidencia manual de las tareas 2.8 y 4.1. | Sí — se acepta tal cual en el MVP |
 | D-04 | P1 | Divergencia (REQ sin test verde) | Spec entorno-local-infrastructure: REQ-05 (E2E de punta a punta) es manual, sin script versionado. REQ-01 a REQ-04 se verifican con comandos deterministas que TEST ejecutó el 2026-10-16 con salida 0 (`docker compose --profile tools config --services`; `git check-ignore`; `git ls-files --eol`; `sha256sum -c`), pero no existe suite automatizada versionada. NO se verificó un mensaje real desde un teléfono (solo canal sandbox con `jelou test send`; la lista de testers del sandbox está vacía). | Versionar un script de E2E (compose más simulación de pago) y agregar el teléfono del USUARIO como tester para una prueba real. | Sí — se acepta tal cual en el MVP |
@@ -31,7 +31,7 @@ Fecha: 2026-10-16 (aprobada el 2026-10-17). Rama: `makia/dev/aerolinea-reservas-
 
 ### D-01
 
-Mascota cobrada solo en la ida (P1, divergencia abierta, decisión del USUARIO).
+Mascota cobrada solo en la ida (P1). Decisión: cobro de mascota por trayecto (código as-built, aprobado el 2026-10-17). La mascota se cobra una vez por reserva, en el trayecto `IDA` o `REGRESO` elegido, con la temporada del vuelo de ese trayecto; el trayecto no se persiste en `mascotas`. El análisis siguiente es el histórico previo a la decisión.
 
 - Evidencia de la prueba real: línea Mascota ida (Luis) COP 195.000 = 150.000 x 1,30 (diciembre) y ninguna línea de mascota en el regreso.
 - Análisis de la regla:
@@ -45,7 +45,7 @@ Mascota cobrada solo en la ida (P1, divergencia abierta, decisión del USUARIO).
 - Recomendación: el USUARIO decide entre:
   - (A) Mantener una sola línea de mascota por reserva. Queda documentado como regla vigente en REQ-04 y en domain-model RN-05.
   - (B) Cobrar la mascota por trayecto (dos líneas). Requiere agregar trayecto a `mascotas` o persistir dos precios: cambio de datos primero en domain-model y db-design, regenerar hash de contrato y copias, cambiar `cotizar`, `transaccion-crear` y el prompt, más tests.
-- Hasta decidir, la regla vigente es (A).
+- La decisión final no es (A) ni (B) literal: el código as-built admite una sola línea con trayecto elegible.
 
 ## 2. REQ sin test verde (por spec)
 

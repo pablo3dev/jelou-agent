@@ -25,8 +25,8 @@
 ## Fuente de verdad
 - Specs generados: `reserva-pago-whatsapp-agent`, `reserva-pago-whatsapp-pay`, `dashboard-aerolinea-crm`, `entorno-local-infrastructure`.
 - Hoja de divergencias: `poc/divergencias.md` (18 hallazgos: REQ sin test verde, entidades del domain-model, resultado de gates).
-- Aprobación: el USUARIO aprobó el paquete único (los 4 `requirements.md` y la hoja de divergencias) el 2026-10-17; los 4 specs quedan con `Creación: Aprobado` y `Estado: En progreso`.
-- Pendiente: AUDIT real en el DEPLOY.
+- Aprobación: el USUARIO aprobó el paquete único (los 4 `requirements.md` y la hoja de divergencias) el 2026-10-17; los 4 specs quedan con `Creación: Aprobado` y `Estado: Completado` tras AUDIT.
+- AUDIT (2026-10-17): los 4 specs `PASA_CON_OBSERVACIONES`; `reserva-pago-whatsapp-agent` y `dashboard-aerolinea-crm` en ciclo 2, `reserva-pago-whatsapp-pay` y `entorno-local-infrastructure` en ciclo 1.
 
 ## Siguiente paso
-Primer flujo posterior: DEPLOY normal (con AUDIT).
+Merge a `main`.

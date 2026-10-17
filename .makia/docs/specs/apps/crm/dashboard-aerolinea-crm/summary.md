@@ -6,7 +6,7 @@
 
 | Estado global | Última actualización |
 |:---:|:---:|
-| `En progreso` | `2026-10-17` |
+| `Completado` | `2026-10-17` |
 
 ## Objetivo
 
@@ -19,11 +19,9 @@ El operador de la aerolínea necesita ver en el momento cuántos asientos se han
 | Phase 1: Contrato | `Completado` |
 | Phase 2: Implementación sin credenciales | `Completado` |
 | Phase 3: Datum en vivo | `Completado` |
-| AUDIT (pendiente del DEPLOY) | `Pendiente` |
+| AUDIT | `Hecho — PASA_CON_OBSERVACIONES` |
 
 **Progreso global:** `100%` (6 de 6 tareas completadas)
-
-El spec sigue `En progreso` porque el AUDIT, que ejecuta el DEPLOY, aún no se ha realizado.
 
 ## Qué puede hacer ya el usuario / Qué falta
 
@@ -31,8 +29,8 @@ El spec sigue `En progreso` porque el AUDIT, que ejecuta el DEPLOY, aún no se h
 - [x] Abrir el mapa de los 174 asientos de un vuelo con clase, salida de emergencia y estado efectivo.
 - [x] Consultar estadísticas: ingresos, vendidos, ocupación, reservas por estado y rutas destacadas, en español o inglés.
 - [x] Operar en solo lectura y sin datos personales de pasajeros.
-- [x] Verificado en vivo contra el almacén de datos con el seed cargado (372 vuelos) y con 47 pruebas automatizadas verdes (2026-10-16).
-- [ ] AUDIT del DEPLOY (pendiente).
+- [x] Verificado en vivo contra el almacén de datos con el seed cargado y con las pruebas automatizadas de `apps/crm` verdes.
+- [x] AUDIT del DEPLOY.
 - [x] Aprobación del USUARIO de `requirements.md` (2026-10-17).
 - [ ] REQ-06 (copia verificable del contrato) sin test automatizado versionado: se verifica por comando.
 - [ ] Autenticación del operador: no existe; el panel es una DEMO de uso local.

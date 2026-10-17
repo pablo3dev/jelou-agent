@@ -101,7 +101,7 @@ classDiagram
   Reserva "N" --> "1" Vuelo : ida
   Reserva "N" --> "0..1" Vuelo : regreso
   Reserva "1" *-- "1..9" Pasajero : agrupa
-  Pasajero "1" --> "0..2" Equipaje : declara
+  Pasajero "1" --> "0..4" Equipaje : declara
   Pasajero "1" --> "0..1" Mascota : lleva
   Reserva "1" --> "N" Transaccion : se cobra con
   Transaccion "1" --> "N" EventoPago : registra
@@ -116,7 +116,7 @@ classDiagram
 | Ruta | Trayecto dirigido `origen-destino` con tarifa base. Exactamente 6; la bidireccionalidad se modela con una fila por sentido. |
 | Temporada | Multiplicador por mes del año: 1.30 en los meses 1, 6, 7 y 12; 1.00 en el resto. Se aplica por el mes de `vuelos.fecha` de cada trayecto, no por la fecha de compra. |
 | Parámetro | Valor comercial u operativo por clave (12 claves). |
-| Vuelo | Ruta más fecha; un vuelo por ruta y día entre 2026-12-01 y 2027-01-31 (372). Salida 07:00. Boeing 737-8 MAX, 174 asientos. |
+| Vuelo | Salida de una ruta en una fecha y hora dentro de la ventana 2026-12-01 a 2027-01-31. Una ruta puede tener varios vuelos en la misma fecha, distinguidos por `hora_salida`. Boeing 737-8 MAX, 174 asientos. |
 | Mapa de asientos | JSON del vuelo con una clave por asiento; único inventario de asientos. Se escribe entero (lectura-modificación-escritura). |
 | Asiento | Clave `<fila><letra>` (p. ej. `12A`) con estado LIBRE, RETENIDO, VENDIDO o BLOQUEADO. Premium: filas 1-3 (A, C, D, F); Extended: 4-7 (A-F); Economy: 8-30 (A-F). Exit row: filas 13 y 14. |
 | Hold | Retención temporal de asientos: estado RETENIDO con `hold_token` y `hold_expira`. Un hold vencido equivale a LIBRE por lectura. |
@@ -127,9 +127,9 @@ classDiagram
 | Mascota | Animal en cabina, por pasajero; no ocupa asiento. |
 | Transacción | Cobro de una reserva con su estado y el `execution_id` de la ejecución del agente a reanudar. |
 | Evento de pago | Notificación de la pasarela ya registrada, identificada por `id_evento` = `<transaccion_id>:<estado>`. |
-| Id lógico / id físico | El id lógico es el que usa el dominio; el id físico es el `id` del registro en Datum. Ruta: lógico `<origen>-<destino>` (`BOG-MDE`), físico minúsculas sin guion (`bogmde`). Temporada: físico `mes01`..`mes12`. Parámetro: físico = clave sin guiones bajos. Vuelo: `<ruta sin guion en minúsculas><fecha sin guiones>` (`bogmde20261201`); es el `vuelo_id` que ve el agente. Evento de pago: físico `<transaccion_id><estado en minúsculas>`. El resto de ids los asigna Datum. |
+| Id lógico / id físico | El id lógico es el que usa el dominio; el id físico es el `id` del registro en Datum. Ruta: lógico `<origen>-<destino>` (`BOG-MDE`), físico minúsculas sin guion (`bogmde`). Temporada: físico `mes01`..`mes12`. Parámetro: físico = clave sin guiones bajos. Vuelo: `<ruta sin guion en minúsculas><fecha sin guiones>` para el vuelo del horario base (`bogmde20261201`) y `<ruta sin guion en minúsculas><fecha sin guiones><hhmm>` para los demás horarios de la misma fecha; es el `vuelo_id` que ve el agente. Evento de pago: físico `<transaccion_id><estado en minúsculas>`. El resto de ids los asigna Datum. |
 | Cotización | Value object no persistido: líneas de cobro calculadas en servidor y su total. Solo `total_cop` se persiste (`reservas.total_cop`); los montos de equipaje y mascota se persisten en sus tablas. |
-| Línea de cotización | Un cobro de la cotización: concepto `PASAJE`, `EQUIPAJE` o `MASCOTA`, trayecto `IDA` o `REGRESO`, índice del pasajero y monto en COP. |
+| Línea de cotización | Un cobro de la cotización: concepto `PASAJE`, `EQUIPAJE` o `MASCOTA`, trayecto `IDA` o `REGRESO`, índice del pasajero y monto en COP. En `MASCOTA`, el trayecto es el elegido para la mascota (dato de la cotización, no de la tabla `mascotas`). |
 | Enlace de pago | Value object derivado, no persistido: `PAY_PUBLIC_URL` + `/pay/` + id de la transacción. |
 | Resultado de notificación | Value object no persistido con el desenlace de procesar un evento de pago: `APLICADO`, `EXPIRADO`, `DUPLICADO` o `SIN_EFECTO`. |
 | Write-then-verify | Protocolo de escritura del mapa: escribir con `version + 1`, releer y verificar el `hold_token` o `pnr` propio; 3 intentos con backoff. |
@@ -181,10 +181,10 @@ classDiagram
 
 | Atributo | Tipo | Obligatorio |
 |----------|------|-------------|
-| id (`<ruta sin guion en minúsculas><fecha sin guiones>`, p. ej. `bogmde20261201`; es el `vuelo_id` del agente) | texto | Sí |
+| id (`<ruta sin guion en minúsculas><fecha sin guiones>` para el horario base, p. ej. `bogmde20261201`; `<ruta><fecha><hhmm>` para los demás horarios de esa fecha; es el `vuelo_id` del agente) | texto | Sí |
 | ruta_id (id lógico de la Ruta, p. ej. `BOG-MDE`) | texto (ref Ruta) | Sí |
 | fecha | fecha | Sí |
-| hora_salida | hora (07:00) | Sí |
+| hora_salida (con `ruta_id` y `fecha` identifica el vuelo) | hora | Sí |
 | mapa_asientos | JSON (174 claves) | Sí |
 | version | entero | Sí |
 
@@ -295,11 +295,11 @@ classDiagram
 
 ## Relaciones y multiplicidad
 
-- **Ruta** `1:N` **Vuelo** — una ruta tiene un vuelo por día de la ventana.
+- **Ruta** `1:N` **Vuelo** — una ruta tiene uno o varios vuelos por día de la ventana, distinguidos por `hora_salida`.
 - **Vuelo** `1:174` **Asiento** — el mapa contiene exactamente 174 claves.
 - **Reserva** `N:1` **Vuelo** (ida) y `N:0..1` **Vuelo** (regreso) — el vuelo de regreso es de la ruta inversa.
 - **Reserva** `1:1..9` **Pasajero** — entre 1 y 9 pasajeros.
-- **Pasajero** `1:0..2` **Equipaje** — a lo sumo una pieza de bodega por trayecto, más cabina.
+- **Pasajero** `1:0..4` **Equipaje** — por trayecto, a lo sumo una pieza de bodega más una de cabina (cabina es opcional, activa por defecto): hasta 2 filas por pasajero en solo ida y hasta 4 en ida y vuelta.
 - **Pasajero** `1:0..1` **Mascota** — como máximo una por reserva.
 - **Reserva** `1:N` **Transacción** — a lo sumo una PENDIENTE a la vez.
 - **Transacción** `1:N` **Evento de pago** — un evento por estado alcanzado.
@@ -309,8 +309,8 @@ classDiagram
 - **RN-01 Tarifa**: tarifa por pasajero y trayecto = `rutas.tarifa_base_cop` × multiplicador de temporada del mes de `vuelos.fecha` (BOG-MDE y MDE-BOG 350000; BOG-CLO y CLO-BOG 380000; BOG-CTG y CTG-BOG 420000).
 - **RN-02 Temporada**: 1.30 para los meses 1, 6, 7 y 12; 1.00 para el resto; se aplica a pasaje, equipaje y mascotas.
 - **RN-03 Equipaje de cabina**: sin costo y sin medidas.
-- **RN-04 Equipaje de bodega**: `cobrable_kg = ceil(max(peso_kg, L*A*H/6000))`; precio = `max(40000, cobrable_kg × 12000)` × temporada; L+A+H ≤ 158 cm (supuesto DEMO, GAP-17), peso ≤ 32 kg, 1 pieza por pasajero.
-- **RN-05 Mascota**: máximo 1 por reserva, ≤ 8 kg, en cabina, sin asiento; precio 150000 × temporada. El código cotiza una única línea de mascota por reserva, asignada al trayecto IDA y con la temporada del vuelo de ida.
+- **RN-04 Equipaje de bodega**: `cobrable_kg = ceil(max(peso_kg, L*A*H/6000))`; precio = `max(40000, cobrable_kg × 12000)` × temporada; L+A+H ≤ 158 cm (supuesto DEMO, GAP-17), peso ≤ 32 kg, 1 pieza por pasajero y trayecto (el contrato admite `bodega_ida` y `bodega_regreso`, una cada uno; en ida y vuelta un pasajero puede tener 2 piezas de bodega, una por trayecto).
+- **RN-05 Mascota**: máximo 1 por reserva, ≤ 8 kg, en cabina, sin asiento; precio 150000 × temporada. Se cobra una sola vez por reserva, en el trayecto que elige el cliente (`IDA` por defecto, o `REGRESO`), con la temporada del mes del vuelo de ese trayecto; `REGRESO` exige vuelo de regreso. El trayecto es dato de la cotización (línea `MASCOTA`) y no se persiste: `mascotas` guarda solo el precio ya calculado.
 - **RN-06 Asientos**: formato `12A 12B` o `12A,12B`; deben existir en el mapa, estar LIBRES y ser tantos como pasajeros; filas 13 y 14 solo con edad ≥ 15.
 - **RN-07 Pago**: monto = suma de líneas (pasaje por pasajero y trayecto, equipaje, mascota), cada una redondeada con `Math.round`; se persisten `reservas.total_cop`, `equipaje.precio_cop` y `mascotas.precio_cop`.
 - **RN-08 Hold**: 15 minutos; válido solo si RETENIDO y `hold_expira > ahora`; un hold vencido equivale a LIBRE por lectura. Se fija en ahora+15 min en `asientos-validar-retener`; al crear la transacción se re-fija (ver RN-09).

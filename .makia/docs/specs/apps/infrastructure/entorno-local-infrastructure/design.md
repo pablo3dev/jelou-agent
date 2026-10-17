@@ -71,7 +71,7 @@ Variables que `compose.yaml` inyecta a cada servicio (solo nombres):
 | `PAY_PUBLIC_URL` es `http://localhost:3001`: el enlace de pago apunta a la máquina local | El enlace solo abre en la máquina del USUARIO, no en un teléfono u otro dispositivo (EC-23) | Limitación declarada de la demo; el E2E abre el enlace desde la misma máquina |
 | Windows y CRLF en archivos versionados | Fallo difícil de diagnosticar al arrancar contenedores con scripts o YAML con CRLF | `.gitattributes` con `eol=lf` y verificación con `git ls-files --eol` |
 | El E2E real depende de credenciales y de un canal de WhatsApp propios del USUARIO | Sin ellos no puede reproducirse el recorrido; el envío desde un teléfono real no está verificado | Se verificó el canal sandbox; el USUARIO debe conectar el canal o agregar su teléfono como probador (EC-22) |
-| Variables obligatorias vacías o ausentes en `.env` | Un servicio puede arrancar con configuración incompleta | Healthcheck por servicio, plantilla `.env.example` con todos los nombres, README con la tabla de variables (ver §7.1) |
+| Variables obligatorias vacías o ausentes en `.env` | Un servicio puede arrancar con configuración incompleta | Plantilla `.env.example` con todos los nombres y README con la tabla de variables; el healthcheck no detecta variables vacías (ver §7.1) |
 
 ### 2.7 Directrices del proyecto
 - **Global:** el nombre del proyecto compose deriva del identificador de la idea (`aerolinea-reservas-whatsapp`).
@@ -112,7 +112,7 @@ Contratos de `compose.yaml`:
 | Entrada de configuración | `.env` (opcional para compose, requerido para operar), con plantilla `.env.example` |
 | Salida observable | estado `healthy` de `crm` y `pay` en `docker compose ps` |
 
-Variables de `.env.example` (solo nombres): `PORT_CRM`, `PORT_PAY`, `JELOU_TOKEN`, `JELOU_API_KEY`, `PAY_WEBHOOK_SECRET`, `PAY_PUBLIC_URL`, `PAGO_NOTIFICACION_URL`, `JELOU_FUNCTIONS_TOKEN`, `JELOU_PROJECT_ID`, `DATUM_URL`, `DATUM_API_KEY`, `DATABASE_ID`, `DATABASE_SLUG`; opcionales y comentadas: `DATUM_BASE_URL`, `CRM_CACHE_TTL_MS`. Solo los puertos (3000, 3001), `PAY_PUBLIC_URL` (`http://localhost:3001`) y `PAGO_NOTIFICACION_URL` (URL pública de la función de notificación) traen valor; ninguno es sensible.
+Variables de `.env.example` (solo nombres): `PORT_CRM`, `PORT_PAY`, `JELOU_TOKEN`, `JELOU_API_KEY`, `PAY_WEBHOOK_SECRET`, `PAY_PUBLIC_URL`, `CRM_PUBLIC_URL`, `PAGO_NOTIFICACION_URL`, `JELOU_FUNCTIONS_TOKEN`, `JELOU_PROJECT_ID`, `DATUM_URL`, `DATUM_API_KEY`, `DATABASE_ID`, `DATABASE_SLUG`; opcionales y comentadas: `DATUM_BASE_URL`, `CRM_CACHE_TTL_MS`. Solo los puertos (3000, 3001), `PAY_PUBLIC_URL` (`http://localhost:3001`), `CRM_PUBLIC_URL` (`http://localhost:3000`) y `PAGO_NOTIFICACION_URL` (URL pública de la función de notificación) traen valor; ninguno es sensible. `CRM_PUBLIC_URL` no la consume `compose.yaml`: es una variable de las functions en Jelou (`vuelos-buscar` arma con ella el enlace al selector de asientos del CRM) y el README la documenta.
 
 ### 4.2 External API / RPC / Event Schemas
 - **Endpoint / Event Name:** `GET /health` de `crm` (puerto `PORT_CRM`) y de `pay` (puerto `PORT_PAY`), usado por el healthcheck de cada servicio. Éxito: respuesta HTTP `ok`; cualquier otra respuesta o error de conexión hace fallar la comprobación (salida 1).
@@ -133,6 +133,8 @@ Variables de `.env.example` (solo nombres): `PORT_CRM`, `PORT_PAY`, `JELOU_TOKEN
 | `apps/infrastructure/.gitattributes` | Reglas `eol=lf` para `*.sh`, `*.yaml`, `*.js`, `*.ts` y `Dockerfile` |
 | `apps/infrastructure/.gitignore` | Excluye `.env` y `.env.*`, con excepción de `.env.example` |
 | `apps/infrastructure/README.md` | Guía de arranque del USUARIO |
+| `apps/infrastructure/MIGRAR-CUENTA.md` | Guía para replicar el entorno en otra cuenta de Jelou; enlazada desde el README |
+| `apps/infrastructure/docs/` | Capturas del chat de WhatsApp (`capturas/`) y `asientos-avion.webp`, usadas por el README del repositorio |
 
 ### 5.1 Barrido de términos críticos
 sin términos críticos afectados
@@ -172,7 +174,7 @@ sin cortes de migración afectados
 ## 7. Error Handling, Edge Cases & Performance Constraints
 
 ### 7.1 Error Strategy & Failure Modes
-- **Variable obligatoria ausente (EC-19):** `compose.yaml` no usa la sintaxis de variable obligatoria (`${VAR:?}`) para las credenciales; una variable sin definir se interpola vacía. La defensa es la comprobación de salud de cada servicio (un servicio sin configuración válida no queda en `healthy`), la plantilla `.env.example` que enumera todos los nombres y la tabla de variables del README. Un servicio con `restart: unless-stopped` que no logra arrancar se reinicia y es visible en `docker compose ps` y `docker compose logs`.
+- **Variable obligatoria ausente (EC-19):** `compose.yaml` no usa la sintaxis de variable obligatoria (`${VAR:?}`) para las credenciales; una variable sin definir se interpola vacía. El healthcheck solo consulta `/health`, que responde `ok` sin validar la configuración: un servicio con credenciales vacías puede quedar `healthy` y responder error de configuración en sus consultas (p. ej. `crm` responde `503 datum_no_configurado`). La defensa es la plantilla `.env.example` que enumera todos los nombres y la tabla de variables del README. Un servicio con `restart: unless-stopped` que no logra arrancar se reinicia y es visible en `docker compose ps` y `docker compose logs`.
 - **Puerto ocupado (EC-20):** el enlace del puerto de host falla al crear el contenedor y compose lo informa; el USUARIO cambia `PORT_CRM` o `PORT_PAY` en `.env`.
 - **Servicio no saludable:** el healthcheck devuelve salida 1 si `/health` no responde `ok` o la conexión falla; tras 3 reintentos el estado pasa a `unhealthy`.
 - **CRLF (EC-21):** `.gitattributes` evita el CRLF al clonar o guardar y `git ls-files --eol` lo detecta.
@@ -208,7 +210,7 @@ No hay pruebas unitarias ni suite automatizada en esta unidad. Resultados de los
 | `git check-ignore -v apps/infrastructure/.env` | REQ-2.1, REQ-2.4 | Ignorado por `apps/infrastructure/.gitignore`; `.env` no versionado |
 | `git ls-files --eol` sobre `*.sh`, `*.yaml`, `*.yml`, `*.js` y `Dockerfile` bajo `apps/` | REQ-3.1, REQ-3.3 | 54 archivos, 0 con `i/crlf` (en el E2E eran 53: cambió el conjunto de archivos versionados, no es un fallo) |
 | `sha256sum -c CONTRACT.sha256` en `apps/agent`, `apps/pay` y `apps/crm`; comparación de `db-design.dbml` y `endpoints.md` | REQ-4.1, REQ-4.2 | OK en las tres unidades; las tres copias de `db-design.dbml` y de `endpoints.md` tienen el mismo sha256 |
-| Revisión de `apps/infrastructure/.env.example` | REQ-2.2 | Solo trae valores no secretos (puertos 3000/3001, `PAY_PUBLIC_URL` `http://localhost:3001` y `PAGO_NOTIFICACION_URL` pública); el resto vacío |
+| Revisión de `apps/infrastructure/.env.example` | REQ-2.2 | Solo trae valores no secretos (puertos 3000/3001, `PAY_PUBLIC_URL` `http://localhost:3001`, `CRM_PUBLIC_URL` `http://localhost:3000` y `PAGO_NOTIFICACION_URL` pública); el resto vacío |
 
 ### 8.2 Integration Tests
 No hay pruebas de integración automatizadas. La integración de `crm` y `pay` con Datum y la del agente con `pay` se validan en el recorrido de §8.3. La comprobación de salud de `crm` y `pay` en `docker compose ps` (estado `healthy`) se verificó en ese recorrido.
@@ -221,7 +223,7 @@ Recorrido manual con evidencia, ejecutado el 2026-10-16 con `docker compose up` 
 - Duplicada: respuesta 200 DUPLICADO; RECHAZADA tras APROBADA: SIN_EFECTO (REQ-5.4).
 - Dashboard crm: 6 vendidos e ingresos COP 3.549.000, igual a la suma de las 3 reservas EMITIDA (REQ-5.5).
 - Reverificación independiente por canal sandbox de WhatsApp (`jelou test send`): total COP 2.483.000, aprobar con PNR, rechazar con asientos libres, expiración con asientos libres, duplicada con DUPLICADO.
-- Datos de prueba eliminados; seed en 6 rutas, 12 temporadas, 12 parámetros y 372 vuelos.
+- Datos de prueba eliminados; seed con su contenido base.
 
 **Divergencia:** el recorrido no está automatizado como script versionado. No se verificó el envío real de un mensaje desde un teléfono por WhatsApp (solo el canal sandbox), ni la cotización de la mascota en la vuelta (se cotiza solo en la ida), ni las respuestas 503 y 422 al notificar muy tarde una ejecución inactiva. La señal de reanudación al agente viaja como texto.
 

@@ -18,7 +18,7 @@ Servicio HTTP pequeño y sin estado en tres módulos con responsabilidad única,
 - `src/pagina.js`: render HTML (es/en), escape, formato COP y política CSP.
 - `src/server.js`: arranque (carga opcional de `.env`, puerto, cierre ordenado por `SIGTERM`/`SIGINT`).
 
-Pay nunca escribe en Datum: lee `transacciones` y `reservas`, y el efecto de la decisión (asientos, reserva, transacción, reanudación del agente) lo aplica la function pública `pago-notificacion` de `apps/agent` al recibir la notificación. Si `createApp` se invoca sin `datum`, solo publica `/health`.
+Pay nunca escribe en Datum: lee `transacciones` y `reservas`, y el efecto de la decisión (asientos, reserva, transacción, reanudación del agente) lo aplica la function pública `pago-notificacion` de `apps/agent` al recibir la notificación. Si `createApp` se invoca sin `datum`, solo publica `/health`: rama usada únicamente por las pruebas (`app.test.js`); `server.js` siempre inyecta el cliente Datum.
 
 Variables de entorno (solo nombres): `PORT_PAY` (opcional, por defecto 3001), `DATUM_URL`, `DATUM_API_KEY`, `PAY_WEBHOOK_SECRET`, `PAGO_NOTIFICACION_URL`.
 

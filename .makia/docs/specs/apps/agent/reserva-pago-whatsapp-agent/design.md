@@ -22,14 +22,14 @@ Hexagonal ligera por function, dentro de `apps/agent/functions/`:
 - `functions/index.ts` registra las 7 tools con `app({ tools })`; solo `pago-notificacion` es pública.
 - Errores: `ErrorNegocio` y `ErrorAsientos` responden 400; `FirmaInvalida` responde 401; `DatumNoDisponible` responde 503. La plataforma convierte cualquier excepción del handler en 500 y no respeta `error.status`, por eso `conErroresHttp` devuelve una `Response` nativa con el status del contrato. Cualquier otra excepción se relanza (500).
 - Agente: la fuente real del agente de Brain Studio es `apps/agent/brain/` (proyecto `jelou.yml` + `jelou.lock`, 6 Tools HTTP en `brain/tools/*.json` y el workflow `brain/workflows/mi-primer-workflow.whatsapp.json`). Se genera con `node workflow/generar-tools.mjs` y `node workflow/generar-brain.mjs` (cwd = `apps/agent`) a partir de `workflow/agent.prompt.md`, que es la fuente del texto del agente.
-- Cada Tool HTTP hace `POST https://aerolinea-reservas.fn.jelou.ai/<function>` (base sobreescribible con la variable `FUNCTIONS_URL` del generador) con `Authorization: Bearer {{$secret.JELOU_FN_INVOKE_KEY}}` y el cuerpo JSON recibido como texto en el único input `payload`; devuelve `{ ok, status, data }` al agente, con los errores de negocio dentro de `data`.
+- Cada Tool HTTP hace `POST https://aerolinea-reservas.fn.jelou.ai/<function>` (base sobreescribible con la variable `FUNCTIONS_URL` del generador) con `Authorization: Bearer {{$secret.JELOU_FN_TOKEN}}` y el cuerpo JSON recibido como texto en el único input `payload`; devuelve `{ ok, status, data }` al agente, con los errores de negocio dentro de `data`.
 - El nodo `AI_TASK` "Agente de reservas" tiene `allowExternalResume: true`, expiración de 24 h, historial de 15 mensajes y las 6 tools con `action: none` (sin pausa por tool). La pausa y la reanudación las hace la plataforma con el `executionId`.
 
 ### 2.2 Component Diagram / Module Interaction
 ```mermaid
 graph TD
     C[Cliente WhatsApp] <--> A[Brain Studio: Agente de reservas AI_TASK]
-    A -->|Tool HTTP + Bearer JELOU_FN_INVOKE_KEY| T[Functions: rutas-listar, vuelos-buscar, cotizar, equipaje-calcular, asientos-validar-retener, transaccion-crear]
+    A -->|Tool HTTP + Bearer JELOU_FN_TOKEN| T[Functions: rutas-listar, vuelos-buscar, cotizar, equipaje-calcular, asientos-validar-retener, transaccion-crear]
     T --> L[logica.ts + lib: dominio puro]
     L --> D[(Datum v2 PocketBase: X-Api-Key)]
     P[apps/pay: pasarela simulada] -->|POST firmado HMAC sha256=| N[Function publica pago-notificacion]
@@ -73,7 +73,6 @@ Flujo: el agente conduce la conversación y llama las tools; `transaccion-crear`
 | Deuda del contrato `apps/agent/contract/endpoints.md`: afirma autenticación Bearer/MCP de las tools (real: Tools HTTP con secreto de organización), marca nombres de campos como SUPUESTO y tiene una línea «Fuente» que remite a documentos ajenos a `.makia/docs/` | El contrato puede inducir a error a quien lo lea | Cambiarlo exige regenerar `contract/CONTRACT.sha256` y las copias de `apps/pay` y `apps/crm` (se verifican por hash); el comportamiento vigente es el descrito en [§4.2](#42-external-api--rpc--event-schemas) |
 
 #### Divergencias vigentes
-- **Mascota en el regreso (REQ-04), abierta:** `cotizar` y `transaccion-crear` cobran la mascota una sola vez, en la línea de concepto `MASCOTA` con trayecto `IDA` y la temporada del vuelo de ida. La regla de negocio dice 1 por reserva y temporada del mes de cada trayecto sin precisar si se cobra en el regreso. Decisión del USUARIO pendiente; rige el comportamiento descrito.
 - **Firma inválida (REQ-07), interpretación vigente:** el rechazo se registra con `ctx.log("Notificación de pago rechazada: firma inválida")`; no se escribe ninguna fila en `eventos_pago`.
 - **Confirmación en el chat (REQ-09):** sin test automatizado; evidencia manual E2E en los commits `1d3cc35`, `289e60f` y `d257860`.
 - **Enlace de pago en el chat (REQ-10), parcial:** la construcción del enlace tiene test; la entrega por WhatsApp se verificó manualmente (commit `631350d`).
@@ -124,7 +123,7 @@ type Resultado = "APLICADO" | "EXPIRADO" | "DUPLICADO" | "SIN_EFECTO";
 - **Target Database / Storage:** Datum v2 (PocketBase) de Jelou, la única base de datos. Accesible por REST con `X-Api-Key`. Mono-tenant: una sola base para toda la DEMO; ninguna colección lleva campo de tenant o cuenta y no existe aislamiento entre clientes más allá de la propia clave de la base.
 - **Colecciones (10):** `rutas`, `temporada`, `parametros`, `vuelos`, `reservas`, `pasajeros`, `equipaje`, `mascotas`, `transacciones`, `eventos_pago`. Campos, tipos, invariantes e índices lógicos: [db-design.dbml](db-design.dbml). No se repite aquí.
 - **Mapeo de tipos a Datum:** enum -> `select` (maxSelect=1); ref -> `text`; int -> `number` (onlyInt); decimal -> `number`; date/timestamp -> `date`; time/char/text -> `text`; json -> `json`. En `number`, `required` significa "distinto de 0", por lo que los números no se marcan obligatorios.
-- **Ids físicos:** admiten solo `[a-z0-9]`; la PK es única y atómica (un `id` repetido en `POST` responde 400 `validation_not_unique`). Datum no permite otros índices únicos, por lo que `rutas(origen,destino)`, `vuelos(ruta_id,fecha)`, `reservas.pnr`, `pasajeros(reserva_id,asiento_*)` y `eventos_pago.id_evento` se garantizan por id determinista o por código de aplicación.
+- **Ids físicos:** admiten solo `[a-z0-9]`; la PK es única y atómica (un `id` repetido en `POST` responde 400 `validation_not_unique`). Datum no permite otros índices únicos, por lo que `rutas(origen,destino)`, `vuelos(ruta_id,fecha,hora_salida)`, `reservas.pnr`, `pasajeros(reserva_id,asiento_*)` y `eventos_pago.id_evento` se garantizan por id determinista o por código de aplicación.
 - **Fechas:** las `date` llegan como `2026-12-01 00:00:00.000Z`; `lib/datum.ts` las normaliza a ISO con `T`.
 - **Migraciones / DDL:** no hay SQL. Las migraciones son scripts `bash` que ejecutan el CLI de Jelou (`jelou databases collections create`), uno por colección, en `apps/agent/migrations/`:
   - Orden: `01-rutas.sh`, `02-temporada.sh`, `03-parametros.sh`, `04-vuelos.sh`, `05-reservas.sh`, `06-pasajeros.sh`, `07-equipaje.sh`, `08-mascotas.sh`, `09-transacciones.sh`, `10-eventos_pago.sh`.
@@ -169,12 +168,12 @@ Lectura de catálogo (`lib/catalogo.ts`): `cargarCatalogo(datum)` lista las 4 co
 
 ### 4.2 External API / RPC / Event Schemas
 Convenciones comunes:
-- Las 6 tools del agente son `POST /<function>` sobre `https://aerolinea-reservas.fn.jelou.ai`, invocadas por las Tools HTTP con `Authorization: Bearer ${JELOU_FN_INVOKE_KEY}` (secreto de organización). `pago-notificacion` es `POST /pago-notificacion` pública (`config: { path: "/pago-notificacion", methods: ["POST"], public: true }`).
+- Las 6 tools del agente son `POST /<function>` sobre `https://aerolinea-reservas.fn.jelou.ai`, invocadas por las Tools HTTP con `Authorization: Bearer ${JELOU_FN_TOKEN}` (secreto de organización). `pago-notificacion` es `POST /pago-notificacion` pública (`config: { path: "/pago-notificacion", methods: ["POST"], public: true }`).
 - Entrada validada con zod antes del handler: si falla, la plataforma responde 400 `Validation failed`.
 - Errores comunes de salida: `400 { error, motivos }` (regla de negocio, `ErrorNegocio`); `400 { error: "Asientos inválidos", asientos_invalidos }` (`ErrorAsientos`); `401 { error: "Firma inválida" }`; `503 { error }` (`DatumNoDisponible`: fallo de write-then-verify o de reanudación); 500 inesperado (variable de entorno faltante, parámetros faltantes en Datum). Los cuerpos de error nunca llevan causas técnicas ni datos de Datum.
 - Dinero: COP enteros. Fechas de viaje `YYYY-MM-DD` dentro de 2026-12-01..2027-01-31 (zod `FechaViaje`, que además exige fecha de calendario real). Instantes: ISO 8601 UTC.
-- Variables de entorno de las functions (solo nombres): `DATUM_URL`, `DATUM_API_KEY` (todas), `PAY_PUBLIC_URL` (`transaccion-crear`), `PAY_WEBHOOK_SECRET` y `JELOU_API_KEY` (`pago-notificacion`).
-- Esquemas compartidos (`lib/esquemas.ts`): `RutaId` = enum de las 6 rutas; `NumPasajeros` = entero 1..9; `Bodega` = `{ largo_cm, ancho_cm, alto_cm }` enteros positivos + `peso_kg` positivo <= 32, con L+A+H <= 158; `Mascota` = `{ pasajero_indice: 0..8, especie: 1..50 caracteres, peso_kg: positivo <= 8 }`; `PasajeroEntrada` = `{ nombre, documento, edad 0..120, cabina (default true), bodega_ida?, bodega_regreso? }`.
+- Variables de entorno de las functions (solo nombres): `DATUM_URL`, `DATUM_API_KEY` (todas), `PAY_PUBLIC_URL` (`transaccion-crear`), `CRM_PUBLIC_URL` (`vuelos-buscar`, opcional: sin ella no se devuelve `mapa_url`), `PAY_WEBHOOK_SECRET` y `JELOU_API_KEY` (`pago-notificacion`).
+- Esquemas compartidos (`lib/esquemas.ts`): `RutaId` = enum de las 6 rutas; `NumPasajeros` = entero 1..9; `Bodega` = `{ largo_cm, ancho_cm, alto_cm }` enteros positivos + `peso_kg` positivo <= 32, con L+A+H <= 158; `Mascota` = `{ pasajero_indice: 0..8, especie: 1..50 caracteres, peso_kg: positivo <= 8, trayecto: IDA | REGRESO (default IDA) }`; `PasajeroEntrada` = `{ nombre, documento, edad 0..120, cabina (default true), bodega_ida?, bodega_regreso? }`.
 - Mono-tenant: ninguna function recibe ni filtra por tenant o cuenta; todas operan sobre la única base configurada por `DATUM_URL`.
 
 #### rutas-listar (lectura, REQ-01)
@@ -183,12 +182,12 @@ Convenciones comunes:
 
 #### vuelos-buscar (lectura, REQ-01)
 - Entrada: `{ ruta_id: RutaId, fecha_ida: FechaViaje, fecha_regreso?: FechaViaje, pasajeros: 1..9 }`; `fecha_regreso >= fecha_ida` o 400.
-- Salida 200: `{ ida: [VueloResumen], regreso?: [VueloResumen] }` con `VueloResumen = { vuelo_id, ruta_id, fecha, hora_salida, asientos_libres, tarifa_pasajero_cop }`. El regreso se busca en la ruta inversa de `ruta_id`. `asientos_libres` cuenta LIBRE más RETENIDO con hold vencido; `tarifa_pasajero_cop` = `round(tarifa_base * multiplicador del mes del vuelo)`. `pasajeros` solo se valida (no filtra vuelos). Una fecha sin vuelo devuelve la lista vacía.
+- Salida 200: `{ ida: [VueloResumen], regreso?: [VueloResumen] }` con `VueloResumen = { vuelo_id, ruta_id, fecha, hora_salida, asientos_libres, tarifa_pasajero_cop, mapa_url? }`. Cada lista contiene todos los vuelos de la ruta en esa fecha (puede haber varios, con distinta `hora_salida`), sin orden garantizado más allá del catálogo. `mapa_url` (opcional) solo se devuelve si `CRM_PUBLIC_URL` está definida y es `<CRM_PUBLIC_URL sin barras finales>/#/asientos/<vuelo_id>/<pasajeros>`: abre el widget de selección de asientos del CRM (el paso 6 del prompt depende de él). El regreso se busca en la ruta inversa de `ruta_id`. `asientos_libres` cuenta LIBRE más RETENIDO con hold vencido; `tarifa_pasajero_cop` = `round(tarifa_base * multiplicador del mes del vuelo)`. `pasajeros` solo se valida (no filtra vuelos). Una fecha sin vuelo devuelve la lista vacía. El cliente elige un `vuelo_id` entre los devueltos.
 - Errores: 400 (zod: ruta, fecha fuera de ventana, pasajeros fuera de 1..9, regreso anterior); 503.
 
 #### cotizar (lectura, REQ-02, REQ-03, REQ-04)
 - Entrada: `{ vuelo_ida_id, vuelo_regreso_id?, pasajeros: [{ edad, bodega_ida?, bodega_regreso? }] (1..9), mascota?: Mascota }`.
-- Salida 200: `{ lineas: [{ concepto: PASAJE|EQUIPAJE|MASCOTA, trayecto?: IDA|REGRESO, pasajero_indice?, monto_cop }], total_cop }`, con `total_cop` = suma de líneas ya redondeadas (`Math.round` por línea). Una línea `PASAJE` por pasajero y trayecto; `EQUIPAJE` por cada bodega declarada, con el mínimo de 40000 y la temporada del vuelo del trayecto; una única línea `MASCOTA` (trayecto `IDA`, temporada del vuelo de ida).
+- Salida 200: `{ lineas: [{ concepto: PASAJE|EQUIPAJE|MASCOTA, trayecto?: IDA|REGRESO, pasajero_indice?, monto_cop }], total_cop }`, con `total_cop` = suma de líneas ya redondeadas (`Math.round` por línea). Una línea `PASAJE` por pasajero y trayecto; `EQUIPAJE` por cada bodega declarada, con el mínimo de 40000 y la temporada del vuelo del trayecto; una única línea `MASCOTA` con el `trayecto` de la mascota (`IDA` por defecto o `REGRESO`) y la temporada del vuelo de ese trayecto. El `trayecto` forma parte de la entrada `mascota` y de la línea de cotización; `transaccion-crear` persiste en `mascotas` solo `especie`, `peso_kg`, `pasajero_id` y el `precio_cop` de esa línea, sin trayecto. Cada pasajero admite una bodega por trayecto (`bodega_ida`, `bodega_regreso`).
 - Errores 400: vuelo inexistente; regreso que no es la ruta inversa o es anterior a la ida; equipaje de regreso sin vuelo de regreso; `pasajero_indice` de la mascota fuera de rango; bodega o mascota fuera de límites (mensaje con el pasajero y trayecto). 503.
 
 #### equipaje-calcular (lectura, REQ-03)
@@ -267,6 +266,7 @@ Archivos reales de `apps/agent/` (cada ruta se lista por separado; las rutas de 
 | `contract/conformidad.mjs`, `conformidad.test.mjs`, `conformidad.sh` | Comparador DBML vs colecciones reales, sus 9 pruebas y el script en vivo |
 | `migrations/01-rutas.sh` a `migrations/10-eventos_pago.sh` (10 archivos), `migrations/apply.sh`, `migrations/README.md` | Migraciones de las 10 colecciones |
 | `seed/seed.mjs`, `cargar.mjs`, `cliente.mjs`, `datos.mjs`, `package.json`, `seed.test.mjs` | Seed idempotente (CLI, carga, cliente REST con ritmo bajo, datos base, pruebas) |
+| `seed/demo.mjs` | Carga opcional DEMO fuera del seed base: reservas, pasajeros, equipaje, mascotas, pagos y mapas de asientos para el CRM y las capturas del README; usa sus propias tarifas, horarios y retenciones de duración propia; se niega a correr si ya hay reservas suficientes salvo `--force` (también `--dry-run`); requiere `DATUM_URL` y `DATUM_API_KEY` |
 | `brain/jelou.yml`, `brain/jelou.lock`, `brain/.gitignore`, `brain/.vscode/settings.json` | Proyecto de Brain Studio |
 | `brain/tools/.schema.json`, `brain/tools/{rutas-listar,vuelos-buscar,cotizar,equipaje-calcular,asientos-validar-retener,transaccion-crear}.json` | 6 Tools HTTP del agente |
 | `brain/workflows/.schema.json`, `brain/workflows/mi-primer-workflow.whatsapp.json` | Workflow real del agente |
@@ -305,9 +305,10 @@ Rutas de `functions/` relativas a `apps/agent/functions/`.
 | REQ-3.1 | §4.2 transaccion-crear (equipaje CABINA) | `lib/esquemas.ts` (`PasajeroEntrada.cabina`), `transaccion-crear/logica.ts` |
 | REQ-3.2 | §4.2 equipaje-calcular | `equipaje-calcular/logica.ts`, `lib/precios.ts` |
 | REQ-3.3 | §4.2 equipaje-calcular, §7.1 | `lib/precios.ts`, `lib/esquemas.ts`, `equipaje-calcular/logica.ts` |
-| REQ-4.1 | §4.2 cotizar, §2.6 Divergencias | `lib/precios.ts` (`precioMascota`), `lib/esquemas.ts` |
-| REQ-4.2 | §4.2 cotizar, §2.6 Divergencias | `cotizar/logica.ts`, `lib/precios.ts` |
+| REQ-4.1 | §4.2 cotizar | `lib/precios.ts` (`precioMascota`), `lib/esquemas.ts` |
+| REQ-4.2 | §4.2 cotizar | `cotizar/logica.ts`, `lib/precios.ts` |
 | REQ-4.3 | §4.2 cotizar, §7.1 | `lib/precios.ts`, `lib/esquemas.ts` |
+| REQ-4.4 | §4.2 cotizar, §7.1 | `cotizar/logica.ts` |
 | REQ-5.1 | §4.2 asientos-validar-retener | `lib/asientos.ts` (`validarSeleccion`), `asientos-validar-retener/logica.ts` |
 | REQ-5.2 | §4.2 asientos-validar-retener | `lib/hold.ts`, `asientos-validar-retener/logica.ts` |
 | REQ-5.3 | §4.2 asientos-validar-retener | `lib/asientos.ts` (`holdValido`, `estaLibre`) |
@@ -330,6 +331,7 @@ Rutas de `functions/` relativas a `apps/agent/functions/`.
 | REQ-9.2 | §4.2 Agente | `workflow/agent.prompt.md`, `brain/workflows/mi-primer-workflow.whatsapp.json` |
 | REQ-10.1 | §4.2 transaccion-crear, Agente | `transaccion-crear/logica.ts`, `workflow/agent.prompt.md`, `brain/tools/transaccion-crear.json` |
 | REQ-11.1 | §3.2, §5 | `seed/datos.mjs`, `seed/cargar.mjs`, `seed/seed.mjs` |
+| REQ-11.4 | §5 | `seed/demo.mjs` |
 | REQ-11.2 | §3.2, §7.2 | `seed/cargar.mjs`, `seed/cliente.mjs` |
 | REQ-11.3 | §7.2 | `seed/cliente.mjs` |
 | REQ-12.1 | §3.2 | `contract/db-design.dbml`, `migrations/*.sh` |
@@ -345,11 +347,11 @@ Rutas de `functions/` relativas a `apps/agent/functions/`.
 - **Infraestructura** (`lib/datum.ts`, `lib/http.ts`): un fallo HTTP, de red o de formato de Datum cuenta como intento fallido en write-then-verify; los errores de negocio de `mutar` suben sin reintentar. Agotados 3 intentos (espera 200 ms y 400 ms): reversión de mejor esfuerzo (`deshacer`) y 503. Los mensajes de error solo llevan método, ruta y código HTTP.
 - **Entrada**: la validación zod ocurre antes del handler; 400 `Validation failed`.
 - **Edge cases:** EC-01 a EC-18 de `requirements.md` se cubren con los tests de [§8](#8-testing-strategy--verification-plan). Un hold vencido es LIBRE por lectura; una aprobación vencida deja la transacción EXPIRADA; un evento repetido es DUPLICADO; una notificación para una transacción no PENDIENTE no tiene efecto; un fallo de reanudación deja la transacción PENDIENTE.
-- **Rendimiento:** `cargarCatalogo` lee las 4 colecciones completas en cada llamada (372 vuelos con su mapa) en lectura paginada de 200 filas; es aceptable para el tráfico bajo de la DEMO. El seed espacia las peticiones 250 ms (<= 4 req/s; el gateway limita a 120/min) con 5 reintentos y espera creciente de 500 ms hasta 30 s.
+- **Rendimiento:** `cargarCatalogo` lee las 4 colecciones completas en cada llamada (todos los vuelos con su mapa) en lectura paginada de 200 filas; es aceptable para el tráfico bajo de la DEMO. El seed espacia las peticiones 250 ms (<= 4 req/s; el gateway limita a 120/min) con 5 reintentos y espera creciente de 500 ms hasta 30 s.
 
 ### 7.2 Security & Isolation
 - **Aislamiento (mono-tenant DEMO):** una sola base Datum, una organización y un proyecto de functions. Ninguna de las 10 colecciones (`rutas`, `temporada`, `parametros`, `vuelos`, `reservas`, `pasajeros`, `equipaje`, `mascotas`, `transacciones`, `eventos_pago`) ni ninguna function discrimina por tenant o cuenta: todos los datos son de la misma aerolínea y los separa solo el acceso a la base con `DATUM_API_KEY`. La DEMO no garantiza multi-tenencia.
-- **Secretos:** solo viven como variables de entorno de las functions (`DATUM_URL`, `DATUM_API_KEY`, `PAY_WEBHOOK_SECRET`, `PAY_PUBLIC_URL`, `JELOU_API_KEY`) o como secreto de organización (`JELOU_FN_INVOKE_KEY`); nunca en el repositorio ni en los logs. `.env` está ignorado en `.gitignore` y `.dockerignore`; la imagen no lleva `.env`.
+- **Secretos:** solo viven como variables de entorno de las functions (`DATUM_URL`, `DATUM_API_KEY`, `PAY_WEBHOOK_SECRET`, `PAY_PUBLIC_URL`, `CRM_PUBLIC_URL`, `JELOU_API_KEY`) o como secreto de organización (`JELOU_FN_TOKEN`); nunca en el repositorio ni en los logs. `.env` está ignorado en `.gitignore` y `.dockerignore`; la imagen no lleva `.env`.
 - **Superficie pública:** solo `pago-notificacion`, protegida por HMAC `sha256=` sobre el cuerpo crudo (`ctx.verifyHmac`) verificado antes de leer o escribir datos; firma inválida o ausente -> 401 sin efecto. Las otras 6 tools requieren `Authorization: Bearer` con el secreto de organización.
 - **Inyección:** los filtros a Datum usan `literalFiltro` (literal entre comillas dobles con `"` y `\` escapados); las rutas de Datum codifican colección e id con `encodeURIComponent`. El agente no decide precios: los calcula el servidor y ninguna entrada los trae. El prompt ignora instrucciones del cliente que pidan cambiar reglas o aplicar descuentos.
 - **Datos personales:** `pasajeros.documento` es PII. `ctx.log` usa `sanitizarParaLog` (deja visibles los 2 últimos caracteres; los de 4 o menos se ocultan por completo); `transaccion-crear` omite además `hold_token` del log; `pago-notificacion` registra solo `transaccion_id` y `estado`. El prompt prohíbe repetir documentos en el chat.
@@ -377,7 +379,7 @@ Todo se ejecuta en contenedor (en Git Bash anteponer `MSYS_NO_PATHCONV=1`).
 
 ### 8.2 Integration Tests
 - `lib/datum_test.ts`: cliente REST y write-then-verify con `fetch` simulado (5 pruebas «write-then-verify: ...»: éxito, relectura distinta, conflicto de negocio, agotamiento de 3 intentos con 503, errores HTTP).
-- Verificación en vivo contra Datum real (manual, sin test automatizado verde): carga del seed (6 rutas, 12 temporadas, 12 parámetros, 372 vuelos; segunda ejecución sin duplicar), `node seed.mjs --verificar`, `contract/conformidad.sh` y `jelou functions check` offline.
+- Verificación en vivo contra Datum real (manual, sin test automatizado verde): carga del seed (rutas, temporadas, parámetros y vuelos; segunda ejecución sin duplicar), `node seed.mjs --verificar`, `contract/conformidad.sh` y `jelou functions check` offline.
 
 ### 8.3 Contract / E2E Tests
 - Contrato: la copia de `contract/db-design.dbml` y `contract/endpoints.md` se verifica con `contract/CONTRACT.sha256`.

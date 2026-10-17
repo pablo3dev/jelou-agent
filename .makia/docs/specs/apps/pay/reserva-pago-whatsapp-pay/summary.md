@@ -6,7 +6,7 @@
 
 | Estado global | Última actualización |
 |:---:|:---:|
-| `En progreso` | `2026-10-17` |
+| `Completado` | `2026-10-17` |
 
 ## Objetivo
 
@@ -19,18 +19,16 @@ Permite cerrar la reserva de un vuelo sin salir del flujo de WhatsApp: el client
 | Phase 1: Contrato | `Completado` |
 | Phase 2: Implementación sin credenciales | `Completado` |
 | Phase 3: Datum en vivo | `Completado` |
-| AUDIT (pendiente del DEPLOY) | `Pendiente` |
+| AUDIT | `Hecho — PASA_CON_OBSERVACIONES` |
 
 **Progreso global:** `100%` (6 de 6 tareas completadas)
-
-El spec sigue `En progreso` porque el AUDIT, que ejecuta el DEPLOY, aún está pendiente.
 
 ## Qué puede hacer ya el usuario / Qué falta
 
 - [x] Abrir el enlace de pago de una transacción pendiente y vigente y ver el monto a pagar con las acciones aprobar y rechazar; en otros casos ver el estado sin acciones o el error correspondiente.
 - [x] Aprobar o rechazar el pago y que Jelou reciba la notificación firmada, con reintentos ante fallos transitorios.
 - [x] Verificado en vivo: transacción real leída por id, notificación firmada aceptada, evento duplicado respondido sin efecto y firma inválida rechazada.
-- [ ] AUDIT del DEPLOY.
+- [x] AUDIT del DEPLOY.
 - [x] Aprobación del USUARIO de `requirements.md` (2026-10-17).
 - [ ] REQ-04 (contrato sin desvío) sin test automatizado: se verifica solo por comando `sha256sum -c`.
 - [ ] El enlace de pago solo abre en localhost (máquina del USUARIO que ejecuta la demo).

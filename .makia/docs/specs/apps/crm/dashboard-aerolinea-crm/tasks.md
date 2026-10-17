@@ -39,7 +39,7 @@
   - Verificación: `MSYS_NO_PATHCONV=1 docker run --rm -v C:/repos/jelou-agent/apps/crm:/src:ro node:24.22.0-bookworm-slim sh -c 'mkdir /w && cd /src && tar cf - --exclude=./node_modules . | tar xf - -C /w && cd /w && npm ci && node --test tests/api.test.js tests/datum.test.js'` (14 + 9 pruebas).
   - Evidencia: commit `fad0325`; `tests/api.test.js` (contadores con holds vencidos como LIBRE, filtros, ventas por vuelo y destino, estadísticas, mapa de 174, 404, sin `hold_token`, 405, 502, 503, sin escrituras) y `tests/datum.test.js` verdes.
 - [x] **Task 2.16: Frontend estático con vistas, i18n y formatos** `[REQ-1.2, REQ-1.3, REQ-1.4, REQ-1.5, REQ-2.2, REQ-2.3, REQ-3.1, REQ-3.2, REQ-3.3, REQ-3.4, REQ-4.3, REQ-5.3, REQ-5.4]` `[DESIGN §4.2 Frontend, §7.2]`
-  - Archivos: `apps/crm/public/index.html`, `apps/crm/public/styles.css`, `apps/crm/public/js/main.js`, `apps/crm/public/js/api.js`, `apps/crm/public/js/dom.js`, `apps/crm/public/js/hash.js`, `apps/crm/public/js/i18n.js`, `apps/crm/public/js/format.js`, `apps/crm/public/js/charts.js`, `apps/crm/public/js/ui.js`, `apps/crm/public/js/seatmap-layout.js`, `apps/crm/public/js/views/resumen.js`, `apps/crm/public/js/views/vuelos.js`, `apps/crm/public/js/views/ventas.js`, `apps/crm/public/js/views/mapa.js`, `apps/crm/tests/frontend.test.js`, `apps/crm/tests/static.test.js`.
+  - Archivos: `apps/crm/public/index.html`, `apps/crm/public/styles.css`, `apps/crm/public/js/main.js`, `apps/crm/public/js/api.js`, `apps/crm/public/js/dom.js`, `apps/crm/public/js/hash.js`, `apps/crm/public/js/i18n.js`, `apps/crm/public/js/format.js`, `apps/crm/public/js/charts.js`, `apps/crm/public/js/ui.js`, `apps/crm/public/js/seatmap-layout.js`, `apps/crm/public/js/views/resumen.js`, `apps/crm/public/js/views/vuelos.js`, `apps/crm/public/js/views/ventas.js`, `apps/crm/public/js/views/mapa.js`, `apps/crm/public/js/views/asientos.js`, `apps/crm/public/js/tema.js`, `apps/crm/tests/frontend.test.js`, `apps/crm/tests/static.test.js`.
   - Depende de: 2.15.
   - Verificación: `MSYS_NO_PATHCONV=1 docker run --rm -v C:/repos/jelou-agent/apps/crm:/src:ro node:24.22.0-bookworm-slim sh -c 'mkdir /w && cd /src && tar cf - --exclude=./node_modules . | tar xf - -C /w && cd /w && npm ci && node --test tests/frontend.test.js tests/static.test.js'` (7 pruebas de `static.test.js` más las de `frontend.test.js`).
   - Evidencia: commit `bfe00fc`; `tests/frontend.test.js` (layout de 174, bloques 2+2 y 3+3, filas 13-14, formateadores, filtros y orden, i18n) y `tests/static.test.js` (Chart.js 4.5.1, sin estilos inline ni `innerHTML`, solo GET) verdes.
@@ -52,9 +52,9 @@
 ### Phase 3: Datum en vivo
 - [x] **Task 3.6: Dashboard en vivo con el seed cargado (Datum v2)** `[REQ-1.2, REQ-2.1, REQ-3.1]` `[DESIGN §4.1, §8.3]`
   - Archivos: `apps/crm/README.md`.
-  - Depende de: 2.15, 2.16, 2.17; tarea 1.1 de `apps/agent` (contrato) y seed cargado en Datum (372 vuelos).
+  - Depende de: 2.15, 2.16, 2.17; tarea 1.1 de `apps/agent` (contrato) y seed cargado en Datum.
   - Verificación: `docker build -t crm C:/repos/jelou-agent/apps/crm` y `docker run --rm -p 127.0.0.1:3000:3000 -e DATUM_URL -e DATUM_API_KEY crm` (consulta de `/api/estadisticas` y `/api/vuelos` contra Datum).
-  - Evidencia: commit `9567994` (registrado bajo el slug `aerolinea-reservas-whatsapp`, no bajo `dashboard-aerolinea-crm`); cliente migrado a Datum v2 (`X-Api-Key`, `/collections/{c}/records`), 372 vuelos leídos.
+  - Evidencia: commit `9567994` (registrado bajo el slug `aerolinea-reservas-whatsapp`, no bajo `dashboard-aerolinea-crm`); cliente migrado a Datum v2 (`X-Api-Key`, `/collections/{c}/records`), vuelos del seed leídos.
 
 ---
 
@@ -70,11 +70,11 @@
 
 ## 5. Definition of Done (DoD) Gate
 - [x] Todas las tareas están marcadas como completadas (`[x]`).
-- [ ] Todos los criterios EARS de `requirements.md` pasan las pruebas asociadas: REQ-01 a REQ-05 con 47 pruebas verdes (2026-10-16); REQ-06 se verifica por comando, sin test `node:test` versionado (divergencia declarada).
+- [ ] Todos los criterios EARS de `requirements.md` pasan las pruebas asociadas: REQ-01 a REQ-05 con la suite de `apps/crm` verde; REQ-06 se verifica por comando, sin test `node:test` versionado (divergencia declarada).
 - [x] La estructura de archivos coincide con el mapeo de `design.md` §5.
-- [x] Los tests unitarios y de integración de `apps/crm` pasan (47 verdes); el E2E con Docker Compose lo cubre la integración de `apps/infrastructure`.
+- [x] Los tests unitarios y de integración de `apps/crm` pasan; el E2E con Docker Compose lo cubre la integración de `apps/infrastructure`.
 - [ ] La fila del spec en el `INDEX.md` de specs (`.makia/docs/specs/apps/crm/INDEX.md`) está sincronizada con el `Estado global` de `summary.md`.
-- [ ] AUDIT pendiente (lo ejecuta el DEPLOY).
+- [x] AUDIT ejecutado: ciclo 2, `PASA_CON_OBSERVACIONES` (2026-10-17); ver `audit.md`.
 
 ---
 

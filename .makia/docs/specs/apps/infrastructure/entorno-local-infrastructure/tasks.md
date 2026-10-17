@@ -24,7 +24,7 @@
 - [x] **Task 1.4: Habilitación de arranque (fin de línea LF, plantilla `.env.example` y exclusión de `.env`)** `[REQ-2.1, REQ-2.2, REQ-2.4, REQ-3.1, REQ-3.2, REQ-3.3]` `[DESIGN §4.1, §5, §7.2, §8.1]`
   - Archivos: `apps/infrastructure/.gitattributes`, `apps/infrastructure/.env.example`, `apps/infrastructure/.gitignore`
   - Depende de: ninguna.
-  - Verificación: `git check-ignore -v apps/infrastructure/.env` (devuelve la regla de `apps/infrastructure/.gitignore`) y `git ls-files --eol` (ningún archivo `.sh`, `.yaml`, `.yml`, `.js` ni `Dockerfile` con `i/crlf`); revisión de `.env.example` (solo nombres de variable; traen valor únicamente los puertos 3000/3001, `PAY_PUBLIC_URL` y `PAGO_NOTIFICACION_URL`, ninguno sensible).
+  - Verificación: `git check-ignore -v apps/infrastructure/.env` (devuelve la regla de `apps/infrastructure/.gitignore`) y `git ls-files --eol` (ningún archivo `.sh`, `.yaml`, `.yml`, `.js` ni `Dockerfile` con `i/crlf`); revisión de `.env.example` (solo nombres de variable; traen valor únicamente los puertos 3000/3001, `PAY_PUBLIC_URL`, `CRM_PUBLIC_URL` y `PAGO_NOTIFICACION_URL`, ninguno sensible).
   - Evidencia: commit 1087e5d; resultados de TEST 2026-10-16 (salida 0): `.env` ignorado por `apps/infrastructure/.gitignore`; `git ls-files --eol` 54 archivos, 0 con `i/crlf` (53 en el E2E: cambió el conjunto de archivos versionados, no es un fallo); `.env.example` sin valores sensibles. Historial: `git log --grep="^makia(entorno-local-infrastructure):"`.
 
 ### Phase 2: Compose y README
@@ -55,7 +55,7 @@
     - `CONTRACT.sha256` idéntico y `sha256sum -c` OK en `apps/agent`, `apps/pay` y `apps/crm` (REQ-4.1, REQ-4.2).
     - `crm` y `pay` en `healthy` tras `docker compose up` (REQ-1.2); `agent-cli` no arranca sin el perfil `tools` (REQ-1.3).
     - Reverificación independiente por canal sandbox de WhatsApp (`jelou test send`): total COP 2.483.000, aprobar con PNR, rechazar con asientos libres, expiración con asientos libres, duplicada con DUPLICADO.
-    - Datos de prueba eliminados; seed en 6 rutas, 12 temporadas, 12 parámetros y 372 vuelos.
+    - Datos de prueba eliminados; seed con su contenido base.
     - Commits relacionados bajo el identificador de la idea: 53c12b6, 5e31321, 6691ac5, 1d3cc35, 289e60f, d257860, 631350d. Historial del spec: `git log --grep="^makia(entorno-local-infrastructure):"`.
     - **NO verificado:** (1) mensaje real desde un teléfono (falta agregar el teléfono como probador del sandbox); (2) la mascota se cotiza solo en la ida; (3) respuestas 503 y 422 al notificar muy tarde una ejecución inactiva; (4) la señal de reanudación al agente viaja como texto; (5) el E2E no está automatizado como script versionado.
 
@@ -74,8 +74,8 @@
 ## 5. Definition of Done (DoD) Gate
 - [x] Todas las tareas están marcadas como completadas (`[x]`).
 - [ ] Todos los criterios EARS de `requirements.md` pasan las pruebas asociadas. REQ-01 a REQ-04 verificados por comando; REQ-05 en divergencia (E2E manual, sin script versionado ni envío real desde un teléfono).
-- [x] La estructura de archivos coincide con el mapeo de `design.md` (los 5 archivos de §5).
-- [ ] Todos los tests unitarios, de integración y E2E pasan sin advertencias críticas. No hay suite automatizada en esta unidad; los comandos de verificación terminaron con salida 0 y el E2E manual quedó registrado. AUDIT pendiente (lo ejecuta el DEPLOY).
+- [x] La estructura de archivos coincide con el mapeo de `design.md` (los archivos y carpetas de §5).
+- [ ] Todos los tests unitarios, de integración y E2E pasan sin advertencias críticas. No hay suite automatizada en esta unidad; los comandos de verificación terminaron con salida 0 y el E2E manual quedó registrado. AUDIT ejecutado: ciclo 1, `PASA_CON_OBSERVACIONES` (2026-10-17).
 - [x] La fila del spec en el `INDEX.md` de specs (`.makia/docs/specs/<categoría>/INDEX.md`) está sincronizada con el `Estado global` de `summary.md`.
 
 ---

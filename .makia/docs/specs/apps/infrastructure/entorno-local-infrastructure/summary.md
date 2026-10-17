@@ -6,7 +6,7 @@
 
 | Estado global | Última actualización |
 |:---:|:---:|
-| `En progreso` | `2026-10-17` |
+| `Completado` | `2026-10-17` |
 
 ## Objetivo
 
@@ -19,11 +19,9 @@ El USUARIO levanta el dashboard y la pasarela de pago simulada con un comando, s
 | Phase 1: Habilitación de arranque | `Completado` |
 | Phase 2: Compose y README | `Completado` |
 | Phase 4: Arranque e integración | `Completado` |
-| AUDIT (pendiente del DEPLOY) | `Pendiente` |
+| AUDIT | `Hecho — PASA_CON_OBSERVACIONES` |
 
 **Progreso global:** `100%` (4 de 4 tareas completadas)
-
-El estado global sigue en `En progreso` porque el AUDIT, que ejecuta el DEPLOY, está pendiente.
 
 ## Qué puede hacer ya el usuario / Qué falta
 
@@ -31,7 +29,7 @@ El estado global sigue en `En progreso` porque el AUDIT, que ejecuta el DEPLOY, 
 - [x] Usar el CLI de Jelou (`agent-cli`) bajo demanda con el perfil `tools`, sin que arranque por defecto.
 - [x] Recorrido E2E verificado con evidencia: reserva de ida y vuelta aprobada (PNR, asientos vendidos), rechazada (asientos libres), expirada (asientos libres, el agente avisa) y notificación duplicada sin efecto; dashboard coherente con las reservas emitidas.
 - [x] Fin de línea LF en los archivos versionados y hash del contrato idéntico en `apps/agent`, `apps/pay` y `apps/crm`.
-- [ ] AUDIT del spec (lo ejecuta el DEPLOY).
+- [x] AUDIT del DEPLOY.
 - [x] Aprobación del USUARIO de `requirements.md` (2026-10-17).
 - [ ] E2E automatizado como script versionado: hoy la evidencia es manual.
 - [ ] Mensaje real desde un teléfono por WhatsApp: solo se verificó el canal sandbox (falta agregar el teléfono como probador).

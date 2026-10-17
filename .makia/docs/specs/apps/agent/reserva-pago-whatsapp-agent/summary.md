@@ -6,7 +6,7 @@
 
 | Estado global | Última actualización |
 |:---:|:---:|
-| `En progreso` | `2026-10-17` |
+| `Completado` | `2026-10-17` |
 
 ## Objetivo
 
@@ -19,11 +19,11 @@ Permite que un cliente de la aerolínea DEMO reserve un vuelo nacional de ida o 
 | Phase 1: Contratos y datos | `Completado` |
 | Phase 2: Implementación sin credenciales | `Completado` |
 | Phase 3: Datum en vivo | `Completado` |
-| AUDIT (pendiente del DEPLOY) | `Pendiente` |
+| AUDIT | `Hecho — PASA_CON_OBSERVACIONES` |
 
 **Progreso global:** `100%` (14 de 14 tareas completadas)
 
-El 100% mide solo las tareas del plan; el spec sigue `En progreso` porque el AUDIT, que ejecuta el DEPLOY, aún no se ha realizado.
+El 100% mide solo las tareas del plan.
 
 ## Qué puede hacer ya el usuario / Qué falta
 
@@ -33,8 +33,8 @@ El 100% mide solo las tareas del plan; el spec sigue `En progreso` porque el AUD
 - [x] Crear la transacción de pago con enlace de pago, reserva en PENDIENTE_PAGO y PNR único.
 - [x] Pago aprobado: asientos vendidos y PNR confirmado en el mismo chat (verificado de extremo a extremo con el canal sandbox).
 - [x] Pago rechazado o expirado: asientos liberados y aviso al cliente sin reintentar el pago (verificado de extremo a extremo; notificación duplicada sin efecto).
-- [x] Cargar los datos base (6 rutas, 12 temporadas, 12 parámetros, 372 vuelos) de forma repetible y comprobar que las colecciones coinciden con el diseño publicado.
-- [ ] AUDIT del DEPLOY.
+- [x] Cargar los datos base (rutas, temporadas, parámetros y vuelos base) de forma repetible y comprobar que las colecciones coinciden con el diseño publicado.
+- [x] AUDIT del DEPLOY.
 - [x] Aprobación del USUARIO de `requirements.md` (2026-10-17).
 - [ ] Prueba con un mensaje real desde un teléfono (hasta ahora solo el canal sandbox).
 - [ ] REQ-09 (confirmación en el chat) y REQ-10 (entrega del enlace por WhatsApp) sin prueba automatizada; solo evidencia manual.

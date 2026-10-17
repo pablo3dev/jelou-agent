@@ -19,7 +19,7 @@ La aerolínea vende asientos por un canal conversacional y no tiene forma de ver
 
 ## Objetivos y criterios de éxito
 
-- **Objetivo 1:** el operador identifica en una sola consulta cuántos asientos se han vendido y qué porcentaje de ocupación tiene cada vuelo y cada destino. Éxito: los contadores del panel coinciden con las reservas emitidas y los asientos vendidos de los 372 vuelos del calendario.
+- **Objetivo 1:** el operador identifica en una sola consulta cuántos asientos se han vendido y qué porcentaje de ocupación tiene cada vuelo y cada destino. Éxito: los contadores del panel coinciden con las reservas emitidas y los asientos vendidos de todos los vuelos del calendario vigente.
 - **Objetivo 2:** el operador ve para cualquier vuelo el estado de sus 174 asientos y las estadísticas globales de ventas. Éxito: el mapa muestra exactamente 174 asientos con su clase y estado efectivo, y las estadísticas cuadran con los contadores por vuelo.
 - **Objetivo 3:** el panel es inocuo para el negocio. Éxito: ninguna operación modifica datos y ninguna respuesta incluye datos personales ni el identificador interno de retención de un asiento.
 
@@ -38,6 +38,9 @@ La aerolínea vende asientos por un canal conversacional y no tiene forma de ver
   - Ventas agregadas por vuelo y por destino.
   - Mapa de los 174 asientos de un vuelo con clase, salida de emergencia y estado efectivo.
   - Estadísticas: ingresos, vendidos, ocupación, reservas por estado y rutas destacadas.
+  - Ventas con gráfica de asientos vendidos por periodo (día, semana o mes) y detalle por vuelo con pestañas y buscador.
+  - Widget de selección de asientos compartible por enlace.
+  - Tema visual claro u oscuro.
   - Operación en solo lectura y sin datos personales de pasajeros.
   - Servicio disponible en un puerto configurable, con comprobación de salud y cabeceras de seguridad.
   - Consumo, sin desvío, del contrato de datos de la capacidad de reservas.
@@ -84,8 +87,14 @@ La aerolínea vende asientos por un canal conversacional y no tiene forma de ver
 - **REQ-1.6 (Comportamiento Condicional / Basado en Estado):**
   - `MIENTRAS` un asiento tenga una retención vigente (RN-08)
   - `EL SISTEMA DEBE` no contarlo como vendido, de modo que no suma a los asientos vendidos ni a la ocupación.
+- **REQ-1.7 (Flujo Principal / Basado en Eventos):**
+  - `CUANDO` el operador abre la vista Ventas
+  - `EL SISTEMA DEBE` dibujar una gráfica de línea de los asientos vendidos agrupados por periodo, con granularidad seleccionable día, semana (inicio en lunes) o mes, resaltando los picos de ventas y mostrando por periodo los vuelos con ventas y el vuelo con más vendidos.
+- **REQ-1.8 (Flujo Principal / Basado en Eventos):**
+  - `CUANDO` el operador elige la pestaña Todos, Con ventas o Sin ventas del detalle por vuelo, o escribe palabras clave en el buscador
+  - `EL SISTEMA DEBE` mostrar solo los vuelos que cumplen la pestaña y contienen todas las palabras (sin distinguir mayúsculas ni tildes) en su identificador, ruta o fecha, mostrar el número de vuelos de cada pestaña, ordenar «Con ventas» por vendidos descendente e informar cuando no hay resultados. La pestaña y el texto se conservan al refrescar los datos.
 
-**Verificación:** `apps/crm/tests/api.test.js` («GET /api/vuelos calcula contadores y ocupacion con holds vencidos como LIBRE», «GET /api/vuelos aplica filtros ruta, desde y hasta», «GET /api/ventas/por-vuelo», «GET /api/ventas/por-destino agrega vendidos y ocupacion»); `apps/crm/tests/frontend.test.js` («filtros y orden de vuelos»).
+**Verificación:** `apps/crm/tests/api.test.js` («GET /api/vuelos calcula contadores y ocupacion con holds vencidos como LIBRE», «GET /api/vuelos aplica filtros ruta, desde y hasta», «GET /api/ventas/por-vuelo», «GET /api/ventas/por-destino agrega vendidos y ocupacion»); `apps/crm/tests/frontend.test.js` («filtros y orden de vuelos», «ventas: pestanas con/sin ventas y buscador por palabra clave», «ventas: agrupa por dia/semana/mes y detecta picos»).
 
 ### REQ-02: Mapa de asientos
 - **Historia de Usuario:**
@@ -106,8 +115,16 @@ La aerolínea vende asientos por un canal conversacional y no tiene forma de ver
   - `EL SISTEMA DEBE` responder que no fue encontrado, sin devolver un mapa.
 - **REQ-2.5 (Comportamiento Siempre Activo / Ubicuo):**
   - `EL SISTEMA DEBE` no exponer en ninguna respuesta el identificador interno de retención de los asientos (RN-18).
+- **REQ-2.6 (Flujo Principal / Basado en Eventos):**
+  - `CUANDO` el operador o un pasajero abre el enlace `#/asientos/<vuelo>/<n>` (compartido desde el chat; `<n>` opcional)
+  - `EL SISTEMA DEBE` mostrar el mapa del vuelo como widget de selección, con los asientos LIBRE elegibles y los demás estados no elegibles, el contador de elegidos, y un botón que copia la lista de elegidos al portapapeles en orden natural fila-letra (p. ej. `8A 8B 12C`).
+- **REQ-2.7 (Comportamiento Condicional / Basado en Estado):**
+  - `MIENTRAS` `<n>` sea un entero mayor o igual que 1
+  - `EL SISTEMA DEBE` limitar la selección a `<n>` asientos, con un máximo de 9, y avisar al superarlo; sin `<n>` válido no fija límite.
+- **REQ-2.8 (Comportamiento Siempre Activo / Ubicuo):**
+  - `EL SISTEMA DEBE` mantener la selección solo como estado local de la página, sin escribir datos, y retirar de la selección todo asiento que deje de estar LIBRE al refrescar.
 
-**Verificación:** `apps/crm/tests/api.test.js` («mapa canonico: 174 asientos, clases y exit row», «GET /api/vuelos/:id/asientos devuelve 174 asientos ...», «... responde 404 si no existe», «ningun endpoint filtra hold_token»); `apps/crm/tests/frontend.test.js` (layout de 174 asientos, bloques 2+2 y 3+3, salida de emergencia en filas 13-14, coincidencia con la respuesta del servicio).
+**Verificación:** `apps/crm/tests/api.test.js` («mapa canonico: 174 asientos, clases y exit row», «GET /api/vuelos/:id/asientos devuelve 174 asientos ...», «... responde 404 si no existe», «ningun endpoint filtra hold_token»); `apps/crm/tests/frontend.test.js` (layout de 174 asientos, bloques 2+2 y 3+3, salida de emergencia en filas 13-14, coincidencia con la respuesta del servicio, «hash del widget de asientos: vuelo y limite de seleccion», «asientos elegidos se copian en orden natural fila-letra»).
 
 ### REQ-03: Estadísticas
 - **Historia de Usuario:**
@@ -127,8 +144,10 @@ La aerolínea vende asientos por un canal conversacional y no tiene forma de ver
   - `EL SISTEMA DEBE` presentar las rutas destacadas.
 - **REQ-3.4 (Comportamiento Siempre Activo / Ubicuo):**
   - `EL SISTEMA DEBE` formatear los montos en pesos colombianos (COP), los enteros y los porcentajes según el idioma elegido (español es-CO o inglés en-US).
+- **REQ-3.5 (Comportamiento Siempre Activo / Ubicuo):**
+  - `EL SISTEMA DEBE` ofrecer un tema visual claro y otro oscuro, alternable por el operador desde la barra superior, recordar la elección en el navegador y, sin elección guardada, usar la preferencia de color del sistema (oscuro si no hay preferencia por claro).
 
-**Verificación:** `apps/crm/tests/api.test.js` («GET /api/estadisticas»); `apps/crm/tests/frontend.test.js` («formateadores COP, enteros y porcentaje», «contadores por estado y por clase con el mapa de fixtures»).
+**Verificación:** `apps/crm/tests/api.test.js` («GET /api/estadisticas»); `apps/crm/tests/frontend.test.js` («formateadores COP, enteros y porcentaje», «contadores por estado y por clase con el mapa de fixtures», «tema: preferencia guardada o la del sistema»).
 
 ### REQ-04: Solo lectura y privacidad
 - **Historia de Usuario:**

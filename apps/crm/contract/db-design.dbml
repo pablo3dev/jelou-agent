@@ -109,20 +109,20 @@ Table parametros {
 }
 
 Table vuelos {
-  id text [pk, note: 'Id físico en Datum y vuelo_id que ve el agente: <ruta sin guion en minúsculas><fecha sin guiones>, p. ej. bogmde20261201']
+  id text [pk, note: 'Id físico en Datum y vuelo_id que ve el agente: <ruta sin guion en minúsculas><fecha sin guiones> para el vuelo del horario base, p. ej. bogmde20261201; <ruta><fecha><hhmm> para los demás horarios de la misma fecha']
   ruta_id text [not null, note: 'Id lógico de ruta, p. ej. BOG-MDE (enum RutaId del contrato); id físico de la ruta = minúsculas sin guion']
   fecha date [not null, note: 'Fecha de salida del vuelo']
-  hora_salida time [not null, note: 'Fija en 07:00']
+  hora_salida time [not null, note: 'Hora de salida; distingue varios vuelos de la misma ruta y fecha']
   mapa_asientos json [not null, note: 'Inventario operativo del vuelo: clave = código de asiento, valor = {estado, pnr, hold_token, hold_expira}']
   version int [not null, note: 'contador incrementado en cada escritura del mapa']
 
   indexes {
-    (ruta_id, fecha) [unique]
+    (ruta_id, fecha, hora_salida) [unique]
   }
 
   Note: '''
-  Aeronave Boeing 737-8 MAX, 174 asientos por vuelo. Un vuelo por ruta y día.
-  Ventana: fecha entre 2026-12-01 y 2027-01-31 inclusive (62 días x 6 rutas = 372 vuelos). hora_salida = 07:00.
+  Aeronave Boeing 737-8 MAX, 174 asientos por vuelo. Una ruta puede tener varios vuelos por fecha, distinguidos por hora_salida.
+  Ventana: fecha entre 2026-12-01 y 2027-01-31 inclusive.
 
   mapa_asientos (JSON, único inventario de asientos; no existe tabla normalizada de asientos en la PoC):
   - Clave: código "<fila><letra>", p. ej. "12A". Solo estas 174 claves, ninguna adicional.
@@ -137,7 +137,7 @@ Table vuelos {
   - BLOQUEADO: sin pnr ni hold.
   - hold_token es un identificador operativo opaco; no se expone fuera del backend.
 
-  Concurrencia: Datum no ofrece transacciones ni compare-and-set (la cabecera If-Match se ignora en el servidor). Cualquier cambio sobre mapa_asientos es lectura-modificación-escritura del JSON completo (PATCH fusiona campos); la integridad frente a escrituras concurrentes no la garantiza el almacén y la PoC usa write-then-verify con `version`. La unicidad de (ruta_id, fecha) se garantiza por el id determinista del vuelo (PK única y atómica).
+  Concurrencia: Datum no ofrece transacciones ni compare-and-set (la cabecera If-Match se ignora en el servidor). Cualquier cambio sobre mapa_asientos es lectura-modificación-escritura del JSON completo (PATCH fusiona campos); la integridad frente a escrituras concurrentes no la garantiza el almacén y la PoC usa write-then-verify con `version`. La unicidad de (ruta_id, fecha, hora_salida) se garantiza por el id determinista del vuelo (PK única y atómica).
   Camino de producción: una fila por asiento con id determinista <vuelo><asiento> y POST como reclamo atómico (la PK única rechaza el segundo con 400 validation_not_unique).
   '''
 }
@@ -210,7 +210,8 @@ Table equipaje {
   - tipo CABINA: medidas y pesos nulos; precio_cop = 0. Sin costo y sin medidas.
   - tipo BODEGA: medidas y pesos presentes; precio_cop >= 0.
   - trayecto REGRESO solo si la reserva tiene vuelo de regreso.
-  - Piezas BODEGA por pasajero: máximo parametros.max_piezas_bodega_pasajero (1).
+  - Piezas BODEGA por pasajero y trayecto: máximo parametros.max_piezas_bodega_pasajero (1).
+  - Por pasajero y trayecto se persiste a lo sumo una fila BODEGA y una CABINA (hasta 4 filas por pasajero en ida y vuelta).
   - BODEGA: largo_cm + ancho_cm + alto_cm <= parametros.max_lineal_bodega_cm (158); peso_real_kg <= parametros.max_peso_bodega_kg (32).
   - peso_volumetrico_kg es el valor derivado con parametros.divisor_volumetrico (6000).
   - precio_cop BODEGA lo calcula la aplicación con parámetros y temporada del mes del trayecto; la fórmula no forma parte del esquema.
@@ -223,7 +224,7 @@ Table mascotas {
   reserva_id text [not null, note: 'Ref a reservas.id']
   especie text [not null, note: 'Catálogo de especies no definido en la especificación']
   peso_kg decimal(5,2) [not null]
-  precio_cop integer [not null, note: 'COP enteros, con temporada aplicada según el trayecto']
+  precio_cop integer [not null, note: 'COP enteros, con temporada del vuelo del trayecto elegido para la mascota (el trayecto no se persiste)']
 
   Note: '''
   Invariantes:
@@ -231,7 +232,7 @@ Table mascotas {
   - pasajero_id pertenece a reserva_id (mascotas.reserva_id = pasajeros.reserva_id del pasajero).
   - Mascotas por reserva: máximo parametros.max_mascotas_reserva (1).
   - peso_kg <= parametros.peso_max_mascota_kg (8).
-  - precio_cop se calcula con parametros.tarifa_mascota_cop y la temporada del mes de viaje; la fórmula no forma parte del esquema.
+  - precio_cop se calcula con parametros.tarifa_mascota_cop y la temporada del mes del vuelo del trayecto (IDA o REGRESO) elegido para la mascota; ese trayecto es dato de la cotización y no tiene columna; la fórmula no forma parte del esquema.
   '''
 }
 

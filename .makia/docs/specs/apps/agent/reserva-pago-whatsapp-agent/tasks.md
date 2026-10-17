@@ -88,7 +88,7 @@ Convenciones de este documento:
   - Depende de: 2.6, 2.8, 3.1
   - Verificación: manual en vivo: `DATABASE_ID=<id> bash migrations/apply.sh` dentro del contenedor del CLI, despliegue de las 7 functions y publicación del workflow; la reanudación se comprobó en el E2E.
   - Evidencia: commits `7ab2770` y `924a983`; E2E manual `1d3cc35`, `289e60f`, `d257860`, `631350d`.
-- [x] **Task 3.3: Carga del seed en Datum (6 rutas, 12 temporadas, 12 parámetros, 372 vuelos)** `[REQ-11]` `[DESIGN §3.2, §7.2]`
+- [x] **Task 3.3: Carga del seed en Datum (rutas, temporadas, parámetros y vuelos base)** `[REQ-11]` `[DESIGN §3.2, §7.2]`
   - Archivos: `seed/seed.mjs`, `seed/cargar.mjs`
   - Depende de: 2.7, 3.2
   - Verificación: manual en vivo: ejecutar la carga y luego `node seed.mjs --verificar`; una segunda ejecución no duplica. Sin commit propio.
@@ -118,7 +118,7 @@ Convenciones de este documento:
 - [x] Todos los tests unitarios, de integración y E2E pasan sin advertencias críticas (110 Deno, 18 seed y 9 contract verdes el 2026-10-16; E2E manual en WhatsApp).
 - [x] La fila del spec en el `INDEX.md` de specs (`.makia/docs/specs/<categoría>/INDEX.md`) está sincronizada con el `Estado global` de `summary.md` (ambos en `En progreso`).
 
-AUDIT pendiente (lo ejecuta el DEPLOY).
+- [x] AUDIT ejecutado: ciclo 2, `PASA_CON_OBSERVACIONES` (2026-10-17); ver `audit.md`.
 
 ---
 

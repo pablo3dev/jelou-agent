@@ -25,10 +25,11 @@
 6. [Reglas de negocio](#-reglas-de-negocio)
 7. [Uso de la plataforma Jelou](#-uso-de-la-plataforma-jelou)
 8. [Estructura del repositorio](#-estructura-del-repositorio)
-9. [Puesta en marcha](#-puesta-en-marcha)
-10. [Pruebas end-to-end](#-pruebas-end-to-end)
-11. [Seguridad y privacidad](#-seguridad-y-privacidad)
-12. [Limitaciones y próximos pasos](#-limitaciones-y-próximos-pasos)
+9. [Modelo de datos](#-modelo-de-datos)
+10. [Puesta en marcha](#-puesta-en-marcha)
+11. [Pruebas end-to-end](#-pruebas-end-to-end)
+12. [Seguridad y privacidad](#-seguridad-y-privacidad)
+13. [Limitaciones y próximos pasos](#-limitaciones-y-próximos-pasos)
 
 ---
 
@@ -322,6 +323,111 @@ Las validan las functions, nunca el prompt.
 │   ├── e2e/                    # Pruebas end-to-end con video
 │   └── infrastructure/         # Docker Compose, guía de migración de cuenta y docs/ (capturas y distribución del Boeing 737-8 MAX)
 └── README.md
+```
+
+---
+
+## 🗄️ Modelo de datos
+
+Datum (PocketBase) es la única base de datos del proyecto: todas las tablas viven allí como colecciones y no hay otra base ni caché. La fuente del esquema es [`db-design.dbml`](.makia/docs/specs/apps/agent/reserva-pago-whatsapp-agent/db-design.dbml); el diagrama lo resume. `temporada` y `parametros` son tablas de consulta sin relaciones: las leen las functions al calcular precios y aplicar reglas. Los asientos no tienen tabla propia: el inventario es el JSON `mapa_asientos` de cada vuelo.
+
+```mermaid
+erDiagram
+    rutas ||--o{ vuelos : "tiene"
+    vuelos ||--o{ reservas : "ida"
+    vuelos |o--o{ reservas : "regreso"
+    reservas ||--|{ pasajeros : "incluye"
+    pasajeros ||--o{ equipaje : "lleva"
+    reservas ||--o{ equipaje : "agrupa"
+    pasajeros ||--o{ mascotas : "viaja con"
+    reservas ||--o{ mascotas : "agrupa"
+    reservas ||--o{ transacciones : "se paga con"
+    transacciones ||--o{ eventos_pago : "registra"
+
+    rutas {
+        text id PK
+        char origen
+        char destino
+        integer tarifa_base_cop
+    }
+
+    temporada {
+        integer mes PK
+        decimal multiplicador
+    }
+
+    parametros {
+        clave_parametro clave PK
+        integer valor
+    }
+
+    vuelos {
+        text id PK
+        text ruta_id FK
+        date fecha
+        time hora_salida
+        json mapa_asientos
+        int version
+    }
+
+    reservas {
+        text id PK
+        char pnr UK
+        estado_reserva estado
+        text vuelo_ida_id FK
+        text vuelo_regreso_id FK
+        timestamp hold_expira
+        int total_cop
+    }
+
+    pasajeros {
+        text id PK
+        text reserva_id FK
+        text nombre
+        text documento
+        integer edad
+        text asiento_ida
+        text asiento_regreso
+    }
+
+    equipaje {
+        text id PK
+        text pasajero_id FK
+        text reserva_id FK
+        tipo_equipaje tipo
+        sentido_trayecto trayecto
+        integer largo_cm
+        integer ancho_cm
+        integer alto_cm
+        decimal peso_real_kg
+        decimal peso_volumetrico_kg
+        integer precio_cop
+    }
+
+    mascotas {
+        text id PK
+        text pasajero_id FK
+        text reserva_id FK
+        text especie
+        decimal peso_kg
+        integer precio_cop
+    }
+
+    transacciones {
+        text id PK
+        text reserva_id FK
+        estado_transaccion estado
+        timestamp expira_at
+        text execution_id
+        text ultimo_evento
+    }
+
+    eventos_pago {
+        text id PK
+        text transaccion_id FK
+        text id_evento UK
+        estado_transaccion estado
+    }
 ```
 
 ---

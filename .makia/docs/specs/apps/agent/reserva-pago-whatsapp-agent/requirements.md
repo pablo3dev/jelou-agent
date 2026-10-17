@@ -23,7 +23,7 @@ El cliente necesita reservar un vuelo nacional por WhatsApp sin salir de la conv
 - **Objetivo 1:** un cliente completa por WhatsApp una reserva de ida y vuelta (con equipaje, mascota y asientos) y recibe su PNR en el mismo chat cuando el pago es aprobado.
 - **Objetivo 2:** ningún asiento queda vendido sin pago aprobado: un pago rechazado o vencido deja los asientos libres y la conversación informa el resultado.
 - **Objetivo 3:** el total que ve el cliente es el calculado por el servidor con las tarifas, la temporada y los parámetros vigentes, redondeado por línea a pesos enteros.
-- **Objetivo 4:** los datos base (6 rutas, 12 temporadas, 12 parámetros y 372 vuelos con 174 asientos cada uno) se cargan de forma repetible y las colecciones de la base coinciden con el diseño publicado.
+- **Objetivo 4:** los datos base (rutas, temporadas, parámetros y vuelos con 174 asientos cada uno; los vuelos se generan por ruta, fecha de la ventana y horario) se cargan de forma repetible y las colecciones de la base coinciden con el diseño publicado.
 
 ---
 
@@ -60,8 +60,8 @@ El cliente necesita reservar un vuelo nacional por WhatsApp sin salir de la conv
 - **RN-01 Tarifa:** tarifa plana por pasajero y trayecto: BOG-MDE y MDE-BOG 350000; BOG-CLO y CLO-BOG 380000; BOG-CTG y CTG-BOG 420000 (COP), multiplicada por el multiplicador de temporada del mes de la fecha de viaje del trayecto. Valores DEMO, parametrizables.
 - **RN-02 Temporada:** multiplicador 1.30 para los meses 1, 6, 7 y 12; 1.00 para el resto. Se aplica a pasaje, equipaje y mascota según el mes de la fecha del vuelo de cada trayecto, no según la fecha de compra.
 - **RN-03 Equipaje de cabina:** sin costo y sin medidas.
-- **RN-04 Equipaje de bodega:** medidas largo, ancho y alto en cm y peso en kg. `cobrable_kg = ceil(max(peso_kg, L*A*H/6000))`; `precio = max(cargo mínimo, cobrable_kg * tarifa por kg) * multiplicador de temporada`, con tarifa por kg 12000 y cargo mínimo 40000 (valores DEMO). Límites: L+A+H <= 158 cm (supuesto de interpretación DEMO), peso <= 32 kg y 1 pieza de bodega por pasajero.
-- **RN-05 Mascota:** máximo 1 por reserva; peso <= 8 kg; viaja en cabina y no ocupa asiento. Precio: 150000 por el multiplicador de temporada. Aplicación en el regreso: ver la divergencia abierta en REQ-04.
+- **RN-04 Equipaje de bodega:** medidas largo, ancho y alto en cm y peso en kg. `cobrable_kg = ceil(max(peso_kg, L*A*H/6000))`; `precio = max(cargo mínimo, cobrable_kg * tarifa por kg) * multiplicador de temporada`, con tarifa por kg 12000 y cargo mínimo 40000 (valores DEMO). Límites: L+A+H <= 158 cm (supuesto de interpretación DEMO), peso <= 32 kg y 1 pieza de bodega por pasajero y trayecto (una de ida y una de regreso).
+- **RN-05 Mascota:** máximo 1 por reserva; peso <= 8 kg; viaja en cabina y no ocupa asiento. Precio: 150000 por el multiplicador de temporada del vuelo del trayecto en que viaja. Se cobra una sola vez, en el trayecto que elige el cliente (`IDA` por defecto o `REGRESO`).
 - **RN-06 Asientos:** formato `12A 12B` o `12A,12B`, validado en el servidor: formato, existencia en el mapa del vuelo, estado LIBRE y cantidad igual al número de pasajeros. La salida de emergencia (filas 13 y 14) solo admite pasajeros de 15 años o más. Aeronave: Boeing 737-8 MAX, 174 asientos; Premium filas 1 a 3 (letras A, C, D, F), Extended filas 4 a 7 (A a F), Economy filas 8 a 30 (A a F).
 - **RN-07 Pago:** monto = suma de pasajes (ida y, si aplica, vuelta) + equipaje + mascota. Cada línea (pasaje por pasajero y trayecto, equipaje, mascota) se redondea a COP entero (mitad hacia arriba) y el monto es la suma de líneas ya redondeadas.
 - **RN-08 Hold de asientos:** dura 15 minutos. Un hold es válido solo si el asiento está RETENIDO y su vencimiento es posterior a ahora. Un hold vencido equivale a LIBRE, por lectura.
@@ -88,10 +88,10 @@ El cliente necesita reservar un vuelo nacional por WhatsApp sin salir de la conv
   - `EL SISTEMA DEBE` aceptar solo los 6 trayectos de RN-01 y entre 1 y 9 pasajeros (RN-15).
 - **REQ-1.2 (Evento, solo ida):**
   - `CUANDO` el cliente indica trayecto y fecha de ida dentro de la ventana de RN-14
-  - `EL SISTEMA DEBE` devolver el vuelo de ese día con su salida, sus asientos libres y la temporada aplicable.
+  - `EL SISTEMA DEBE` devolver todos los vuelos de ese día (puede haber varios, con distinta hora de salida), cada uno con su salida, sus asientos libres, la tarifa con la temporada aplicable y, si el CRM está configurado, el enlace `mapa_url` al mapa de asientos.
 - **REQ-1.3 (Evento, ida y vuelta):**
   - `CUANDO` el cliente indica además una fecha de regreso
-  - `EL SISTEMA DEBE` devolver también el vuelo del regreso, que recorre la ruta inversa, con una fecha igual o posterior a la de ida.
+  - `EL SISTEMA DEBE` devolver también los vuelos del regreso, que recorren la ruta inversa, con una fecha igual o posterior a la de ida.
 - **REQ-1.4 (Estado):**
   - `MIENTRAS` un asiento tenga un hold vencido `CUANDO` se cuenten los asientos libres de un vuelo
   - `EL SISTEMA DEBE` contarlo como libre.
@@ -135,7 +135,7 @@ El cliente necesita reservar un vuelo nacional por WhatsApp sin salir de la conv
   - `CUANDO` el cliente declara equipaje de bodega con medidas y peso
   - `EL SISTEMA DEBE` calcular los kilos cobrables, el precio con el cargo mínimo y la temporada del trayecto (RN-04) y devolverlos al cliente.
 - **REQ-3.3 (Excepción):**
-  - `SI` L+A+H supera 158 cm, el peso supera 32 kg, se declara más de 1 pieza de bodega por pasajero o las entradas no son válidas `CUANDO` el cliente declara la bodega
+  - `SI` L+A+H supera 158 cm, el peso supera 32 kg, se declara más de 1 pieza de bodega por pasajero y trayecto o las entradas no son válidas `CUANDO` el cliente declara la bodega
   - `EL SISTEMA DEBE` rechazar la entrada explicando el límite incumplido.
 
 **Verificación:** `equipaje-calcular/logica_test.ts` (6 tests); `lib/precios_test.ts` «peso volumetrico», «bodega: minimo...», «bodega: limites...» y «bodega: entradas invalidas».
@@ -151,14 +151,17 @@ El cliente necesita reservar un vuelo nacional por WhatsApp sin salir de la conv
   - `EL SISTEMA DEBE` aceptar como máximo 1 mascota por reserva, con peso de hasta 8 kg, en cabina y sin asiento asignado (RN-05).
 - **REQ-4.2 (Evento):**
   - `CUANDO` el cliente declara una mascota válida
-  - `EL SISTEMA DEBE` cobrar 150000 por el multiplicador de temporada del vuelo de ida e incluirlo en el total.
+  - `EL SISTEMA DEBE` cobrar 150000 por el multiplicador de temporada del vuelo del trayecto elegido para la mascota (`IDA` por defecto o `REGRESO`), en una única línea `MASCOTA` con ese trayecto, e incluirlo en el total.
+- **REQ-4.4 (Excepción):**
+  - `SI` la mascota se declara en el trayecto `REGRESO` `CUANDO` la reserva no tiene vuelo de regreso
+  - `EL SISTEMA DEBE` rechazar la cotización con el motivo.
 - **REQ-4.3 (Excepción):**
   - `SI` se solicita una segunda mascota en la reserva o el peso excede 8 kg `CUANDO` el cliente la declara
   - `EL SISTEMA DEBE` rechazar la entrada con el motivo.
 
-**Divergencia (abierta, decisión del USUARIO pendiente):** la regla vigente en el código cobra la mascota UNA sola vez por reserva, solo en el trayecto de ida y con la temporada del vuelo de ida; el regreso no la cobra. RN-05 dice "1 por reserva" y que la temporada se aplica según el mes de cada trayecto, pero no precisa si la mascota se cobra también en el regreso. Hasta que el USUARIO decida, rige el comportamiento descrito en REQ-4.2.
+**Decisión (aprobada por el USUARIO el 2026-10-17, código as-built):** la mascota se cobra por trayecto elegido: una sola línea `MASCOTA` por reserva, en `IDA` o `REGRESO`, con la temporada del vuelo de ese trayecto. El trayecto es dato de la cotización y de la entrada de `cotizar` y `transaccion-crear`; la tabla `mascotas` no lo persiste (solo `precio_cop`).
 
-**Verificación:** `lib/precios_test.ts` «mascota: <= 8 kg, 1 por reserva, 150000 x temporada»; `cotizar/logica_test.ts` «entrada: ... mascota <= 8 kg ...» y «reglas de negocio -> ErrorNegocio (400)». La divergencia del cobro en el regreso no tiene test porque la regla no está definida.
+**Verificación:** `lib/precios_test.ts` «mascota: <= 8 kg, 1 por reserva, 150000 x temporada»; `cotizar/logica_test.ts` «entrada: ... mascota <= 8 kg ...» y «reglas de negocio -> ErrorNegocio (400)».
 
 ### REQ-05: Asientos
 - **Historia de Usuario:**
@@ -291,7 +294,9 @@ El cliente necesita reservar un vuelo nacional por WhatsApp sin salir de la conv
 #### Criterios de Aceptación y Comportamiento del Sistema (Sintaxis EARS)
 - **REQ-11.1 (Evento):**
   - `CUANDO` se ejecuta la carga base
-  - `EL SISTEMA DEBE` crear 6 rutas, 12 filas de temporada, 12 parámetros y 372 vuelos (uno diario por trayecto, 07:00) cada uno con 174 asientos LIBRE.
+  - `EL SISTEMA DEBE` crear las rutas, las filas de temporada, los parámetros y los vuelos (por cada ruta, cada fecha de la ventana y cada horario definido en el seed), cada vuelo con 174 asientos LIBRE e id determinista según el domain-model.
+- **REQ-11.4 (Ubicuo):**
+  - `EL SISTEMA DEBE` mantener `seed/demo.mjs` como carga opcional de datos DEMO (reservas, pasajeros, equipaje, mascotas, pagos y mapas) fuera del seed base, que se niega a correr si ya hay reservas suficientes salvo `--force`.
 - **REQ-11.2 (Ubicuo):**
   - `EL SISTEMA DEBE` ser idempotente por clave natural: una segunda ejecución no duplica filas.
 - **REQ-11.3 (Ubicuo):**
@@ -348,7 +353,6 @@ El cliente necesita reservar un vuelo nacional por WhatsApp sin salir de la conv
 - **Riesgo residual aceptado (DEMO):** la base no ofrece escritura atómica; dos escrituras concurrentes sobre el mismo vuelo pueden provocar una venta doble. Se mitiga con escritura y verificación (3 intentos) y se acepta solo con tráfico bajo.
 
 ### Divergencias vigentes
-- **Mascota en el regreso (REQ-04):** abierta; la regla vigente cobra la mascota una sola vez, en el trayecto de ida. Decisión del USUARIO pendiente.
 - **Registro de firma inválida (REQ-07):** se registra en el log de la function, no como fila de eventos de pago. Interpretación vigente de observabilidad.
 - **Confirmación en el chat (REQ-09):** sin test automatizado; verificada con evidencia manual de extremo a extremo.
 - **Enlace de pago en el chat (REQ-10):** la construcción del enlace tiene test; su entrega por WhatsApp se verificó manualmente.
