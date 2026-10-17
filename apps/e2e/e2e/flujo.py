@@ -253,7 +253,7 @@ def recorrer_crm(pest: Pestanas, esc: Escenario, paso: Paso) -> None:
         paso(f"CRM vuelos: filtro {v.ruta_ida}", vu)
         scroll(vu, 2)
 
-    # Mapa: el vuelo de la reserva, con scroll sobre el fuselaje.
+    # Mapa: los vuelos de ida y de regreso de la reserva, con scroll sobre el fuselaje (asientos libres y reservados).
     with pest.abrir("crm_mapa") as m:
         m.goto(ir("mapa"))
         mostrar(m)
@@ -262,6 +262,11 @@ def recorrer_crm(pest: Pestanas, esc: Escenario, paso: Paso) -> None:
         paso("CRM mapa: vuelo de la reserva", m)
         scroll(m, 4, 500)
         paso("CRM mapa: asientos ocupados y libres", m)
+        m.locator("#sel-vuelo").select_option(v.vuelo_regreso)
+        pausa()
+        paso("CRM mapa: vuelo de regreso de la reserva", m)
+        scroll(m, 4, 500)
+        paso("CRM mapa: asientos del regreso ocupados y libres", m)
 
     # Ventas: 2 s en pantalla, scroll y clic en el vuelo para abrir su mapa.
     with pest.abrir("crm_ventas") as ve:
