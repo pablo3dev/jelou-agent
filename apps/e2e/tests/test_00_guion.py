@@ -81,6 +81,13 @@ def test_medidas_llegan_en_un_mensaje_aparte_del_formato():
     assert (a.tipo, a.valor) == ("decir", "50x35x25 cm, 15 kg")
 
 
+def test_pregunta_de_bodega_sin_nombre_sigue_el_orden_de_los_pasajeros():
+    st = Estado(esc_varias())
+    assert decidir("🧳 ¿Lleva maleta de bodega el pasajero 1?", st).valor == "Sí"
+    assert decidir("🧳 ¿Lleva maleta de bodega el pasajero 2?", st).valor == "Sí"
+    assert decidir("🧳 ¿Lleva maleta de bodega el pasajero 3?", st).valor == "No"
+
+
 def test_mensaje_no_previsto_corta_en_vez_de_escribir_continuar():
     with pytest.raises(GuionDetenido):
         decidir("Tuve un inconveniente raro, ¿puedes repetirlo?", Estado(esc_una()))

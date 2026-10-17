@@ -46,6 +46,7 @@ class Estado:
     probado: set[str] = field(default_factory=set)
     maleta_actual: Pasajero | None = None
     asiento_ida_enviado: bool = False
+    pregunta_idx: int = 0  # siguiente pasajero al que se le pregunta por la bodega
     ultima: tuple | None = None  # (mensaje, tipo, valor) de la accion anterior
 
     def __post_init__(self) -> None:
@@ -75,8 +76,10 @@ def _decidir(texto: str, st: Estado) -> Accion:
     if "qué equipaje" in t or "que equipaje" in t:
         return Accion("elegir", f"Equipaje: {esc.equipaje} (botones)", esc.equipaje)
     q = texto[texto.rfind("¿"):].lower() if "¿" in texto else t  # la pregunta pendiente (el aviso previo puede nombrar a otro pasajero)
-    if re.search(r"lleva (una )?(maleta|equipaje)( de bodega)?\?", q) and "tramo" not in q:
-        p = _pasajero_en(q, esc) or esc.pasajeros[min(st.pregunta_idx, len(esc.pasajeros) - 1)]
+    if re.search(r"lleva (una |la )?(maleta|equipaje)", q) and "?" in q and "tramo" not in q:
+        n = re.search(r"pasajero (\d)", q)
+        p = _pasajero_en(q, esc) or (esc.pasajeros[int(n.group(1)) - 1] if n and int(n.group(1)) <= len(esc.pasajeros) else None) \
+            or esc.pasajeros[min(st.pregunta_idx, len(esc.pasajeros) - 1)]
         st.pregunta_idx = esc.pasajeros.index(p) + 1
         if p.bodega:
             st.maleta_actual = p
