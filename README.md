@@ -383,7 +383,6 @@ Los detalles (variables, errores frecuentes, pruebas offline del guion) están e
 | Modelo Haiku | A veces añade el nombre del pasajero tras recibir sus datos, o repite texto tras un mensaje interactivo |
 | Pregunta de bodega por pasajero (Sí/No) | Se descartó la versión por pasajero: Haiku no la seguía de forma estable; se usa una lista «¿Quién lleva maleta?» |
 | Expiración de la conversación | Es corta (10 min) para no heredar historial de corridas previas; debe revisarse antes de producción junto con la retención de asientos |
-| Cobertura e2e | Los escenarios `una_persona` y `flujo_por_mal` deben volver a correrse con el flujo final |
 | Fuera de alcance | Cancelaciones, cambios de vuelo y check-in |
 
 ---
