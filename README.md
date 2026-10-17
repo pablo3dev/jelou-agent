@@ -21,13 +21,14 @@
 2. [Qué hace el agente](#-qué-hace-el-agente)
 3. [Arquitectura](#-arquitectura)
 4. [Flujo de la conversación](#-flujo-de-la-conversación)
-5. [Reglas de negocio](#-reglas-de-negocio)
-6. [Uso de la plataforma Jelou](#-uso-de-la-plataforma-jelou)
-7. [Estructura del repositorio](#-estructura-del-repositorio)
-8. [Puesta en marcha](#-puesta-en-marcha)
-9. [Pruebas end-to-end](#-pruebas-end-to-end)
-10. [Seguridad y privacidad](#-seguridad-y-privacidad)
-11. [Limitaciones y próximos pasos](#-limitaciones-y-próximos-pasos)
+5. [CRM de operación](#-crm-de-operación)
+6. [Reglas de negocio](#-reglas-de-negocio)
+7. [Uso de la plataforma Jelou](#-uso-de-la-plataforma-jelou)
+8. [Estructura del repositorio](#-estructura-del-repositorio)
+9. [Puesta en marcha](#-puesta-en-marcha)
+10. [Pruebas end-to-end](#-pruebas-end-to-end)
+11. [Seguridad y privacidad](#-seguridad-y-privacidad)
+12. [Limitaciones y próximos pasos](#-limitaciones-y-próximos-pasos)
 
 ---
 
@@ -192,6 +193,65 @@ stateDiagram-v2
     Rechazada --> [*]: asientos liberados
     Expirada --> [*]: asientos liberados
 ```
+
+---
+
+## 🖥️ CRM de operación
+
+El CRM es un panel **de solo lectura** (español e inglés, tema claro y oscuro, actualización automática cada 15 s) para ver en vivo lo que vende el agente: ocupación, reservas por estado, ingresos y el mapa de asientos de cada vuelo. Las capturas usan datos de demostración (`apps/agent/seed/demo.mjs`).
+
+### Resumen
+
+Indicadores globales, ocupación por destino, reservas por estado, ventas por fecha y rutas más vendidas.
+
+<div align="center">
+  <img src="docs/capturas/resumen-claro.webp" alt="Resumen, tema claro" width="620">
+</div>
+
+### Vuelos
+
+Los 1.116 vuelos con filtros por ruta y fechas, columnas ordenables y barra de ocupación.
+
+<table>
+  <tr>
+    <th align="center">Tema claro</th>
+    <th align="center">Tema oscuro</th>
+  </tr>
+  <tr>
+    <td><img src="docs/capturas/vuelos-claro.webp" alt="Vuelos, tema claro" width="460"></td>
+    <td><img src="docs/capturas/vuelos-oscuro.webp" alt="Vuelos, tema oscuro" width="460"></td>
+  </tr>
+</table>
+
+### Mapa de asientos
+
+Boeing 737-8 MAX de 174 asientos por clase, con filas de salida de emergencia y el estado de cada asiento (libre, retenido, vendido o bloqueado).
+
+<table>
+  <tr>
+    <th align="center">Tema claro</th>
+    <th align="center">Tema oscuro</th>
+  </tr>
+  <tr>
+    <td><img src="docs/capturas/mapa-claro.webp" alt="Mapa de asientos, tema claro" width="460"></td>
+    <td><img src="docs/capturas/mapa-oscuro.webp" alt="Mapa de asientos, tema oscuro" width="460"></td>
+  </tr>
+</table>
+
+### Ventas
+
+Gráfica por periodo (día, semana o mes) con los picos marcados, y el detalle por vuelo con pestañas *Todos / Con ventas / Sin ventas* y buscador por palabra clave.
+
+<table>
+  <tr>
+    <th align="center">Tema claro</th>
+    <th align="center">Tema oscuro</th>
+  </tr>
+  <tr>
+    <td><img src="docs/capturas/ventas-claro.webp" alt="Ventas, tema claro" width="460"></td>
+    <td><img src="docs/capturas/ventas-oscuro.webp" alt="Ventas, tema oscuro" width="460"></td>
+  </tr>
+</table>
 
 ---
 
