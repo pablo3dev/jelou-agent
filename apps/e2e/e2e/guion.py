@@ -46,6 +46,7 @@ class Estado:
     probado: set[str] = field(default_factory=set)
     maleta_actual: Pasajero | None = None
     asiento_ida_enviado: bool = False
+    elegidos: list[Pasajero] = field(default_factory=list)  # pasajeros ya elegidos en la lista de bodega
     pregunta_idx: int = 0  # siguiente pasajero al que se le pregunta por la bodega
     ultima: tuple | None = None  # (mensaje, tipo, valor) de la accion anterior
 
@@ -75,8 +76,14 @@ def _decidir(texto: str, st: Estado) -> Accion:
         return Accion("elegir", "Resumen y confirmacion (botones)", "Confirmar y pagar")
     if "qué equipaje" in t or "que equipaje" in t:
         return Accion("elegir", f"Equipaje: {esc.equipaje} (botones)", esc.equipaje)
-    if re.search(r"qui[eé]n(es)? (m[aá]s )?lleva", t) or "elige quién lleva" in t:
-        raise GuionDetenido(f"El agente uso el flujo viejo (lista de quien lleva maleta) en vez de preguntar por pasajero: {texto}")
+    if re.search(r"qui[eé]n(es)? (m[aá]s )?lleva", t):  # lista: una fila por pasajero y, al final, "Nadie más, continuar"
+        faltan = [p for p in esc.pasajeros if p.bodega and p not in st.elegidos]
+        if faltan:
+            p = faltan[0]
+            st.elegidos.append(p)
+            st.maleta_actual = p
+            return Accion("elegir", f"Quien lleva maleta de bodega: {corto(p.nombre)} (lista)", corto(p.nombre), prefijo=True)
+        return Accion("elegir", "Nadie mas lleva bodega (ultima fila de la lista)", "Nadie más, continuar")
     q = texto[texto.rfind("¿"):].lower() if "¿" in texto else t  # la pregunta pendiente (el aviso previo puede nombrar a otro pasajero)
     if re.search(r"lleva (una |la )?(maleta|equipaje)", q) and "?" in q and "tramo" not in q:
         n = re.search(r"pasajero (\d)", q)

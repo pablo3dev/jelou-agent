@@ -44,7 +44,7 @@ const etapas = {
 };
 for (const [k, re] of Object.entries(etapas)) ok(re.test(prompt), `el prompt no cubre: ${k}`);
 // Frases que el guion e2e (apps/e2e/e2e/guion.py) espera del agente: si cambian, hay que actualizar ambos.
-for (const f of ["lleva maleta de bodega?", "Solo regreso", "mascota.trayecto", "¿En qué tramo viaja la maleta de", "lista de trayectos"]) ok(prompt.includes(f), `el prompt perdio una frase que usa el e2e: ${f}`);
+for (const f of ["Quién lleva maleta de bodega", "Solo regreso", "mascota.trayecto", "tramo lleva la maleta", "lista de trayectos"]) ok(prompt.includes(f), `el prompt perdio una frase que usa el e2e: ${f}`);
 
 if (fallos.length) { console.error("FALLOS:\n- " + fallos.join("\n- ")); process.exit(1); }
 console.log(`OK: workflow.json valido; tools=${tools.length} existen en functions/; sin secretos; prompt cubre ${Object.keys(etapas).length} chequeos y ${esperadas.length} tools.`);

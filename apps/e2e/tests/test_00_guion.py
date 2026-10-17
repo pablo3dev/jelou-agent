@@ -151,6 +151,12 @@ def test_datos_de_los_escenarios_son_fijos_entre_corridas():
     assert all(len(p.nombre.split()) == 2 for e in a for p in e.pasajeros)  # nombre y apellido, como los muestra la lista
 
 
-def test_lista_vieja_de_quien_lleva_maleta_corta_sin_escribir():
-    with pytest.raises(GuionDetenido):
-        decidir("👥 ¿Quién lleva maleta de bodega?", Estado(esc_varias()))
+def test_lista_de_quien_lleva_maleta_y_nadie_mas():
+    st = Estado(esc_varias())
+    assert decidir("👥 ¿Quién lleva maleta de bodega?", st).valor == "Gilma"
+    assert decidir("¿En qué tramo lleva la maleta Gilma? 🧳", st).valor == "Ida y regreso"
+    assert decidir("Maleta de Gilma: largo, ancho, alto en cm y peso en kg 🧳", st).valor == "50x35x25 cm, 15 kg"
+    assert decidir("👥 ¿Quién más lleva maleta de bodega?", st).valor == "Javier"
+    assert decidir("¿En qué tramo lleva la maleta Javier? 🧳", st).valor == "Solo regreso"
+    assert decidir("Maleta de Javier: largo, ancho, alto en cm y peso en kg 🧳", st).valor == "43x39x20 cm, 8 kg"
+    assert decidir("👥 ¿Quién más lleva maleta de bodega?", st).valor == "Nadie más, continuar"
