@@ -50,6 +50,11 @@ def _falla_de_sistema(respuesta: str) -> None:
         raise AssertionError(f"El agente reporta una falla de sus herramientas: {respuesta[:200]}")
 
 
+def corto(nombre: str) -> str:
+    """Las filas de las listas llevan el nombre abreviado por el agente: se busca por las dos primeras palabras."""
+    return " ".join(nombre.split()[:2])
+
+
 def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
     v = esc.viaje
     paso = Paso(esc, wa)
@@ -152,10 +157,14 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
             paso(f"Equipaje: {esc.equipaje} (botones)")
             ultimo = elige(esc.equipaje)
         elif re.search(r"qui[eé]n( m[aá]s)? lleva", t):
-            paso("Quienes llevan bodega (lista de nombres)")
-            sig = next(p for p in pendientes_bodega if p.nombre not in elegidos_lista)
-            elegidos_lista.append(sig.nombre)
-            ultimo = elige(sig.nombre[:15], prefijo=True)
+            quedan = [p for p in esc.pasajeros if p.bodega and p.nombre not in elegidos_lista]
+            if quedan:
+                paso("Quienes llevan bodega (lista de nombres)")
+                elegidos_lista.append(quedan[0].nombre)
+                ultimo = elige(corto(quedan[0].nombre), prefijo=True)
+            else:
+                paso("Nadie mas lleva bodega (ultima fila de la lista)")
+                ultimo = elige("Nadie más, continuar")
         elif "alguien más" in t or "alguien mas" in t:
             paso("Alguien mas lleva bodega? (botones)")
             quedan = len(elegidos_lista) < len(pendientes_bodega)
@@ -196,7 +205,7 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
             ultimo = di(f"{esc.mascota.peso_kg} kg")
         elif esc.mascota and "nombre de quién" in t:
             paso("Dueño de la mascota (lista)")
-            ultimo = elige(esc.pasajeros[esc.mascota.dueno].nombre[:15], prefijo=True)
+            ultimo = elige(corto(esc.pasajeros[esc.mascota.dueno].nombre), prefijo=True)
         elif "asiento" in t and "regreso" in t and asiento_ida_enviado:
             paso("Asientos de regreso (widget del CRM + copiar + pegar)")
             ultimo = di(elegir_en_widget(enlace_mapa(v.vuelo_regreso), [p.asiento_regreso for p in esc.pasajeros]))
