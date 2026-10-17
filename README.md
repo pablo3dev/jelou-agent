@@ -181,6 +181,21 @@ sequenceDiagram
     A-->>C: Confirmación con PNR, o aviso de rechazo o vencimiento
 ```
 
+### Así se ve en WhatsApp
+
+A la izquierda, el resumen con el detalle de la cotización y los botones nativos. A la derecha, la confirmación, el enlace de pago y la reserva emitida cuando la pasarela notifica el pago.
+
+<table>
+  <tr>
+    <th align="center">Resumen y confirmación</th>
+    <th align="center">Pago y reserva emitida</th>
+  </tr>
+  <tr>
+    <td><img src="docs/capturas/chat-resumen.webp" alt="Resumen de la reserva en WhatsApp con los botones Confirmar y pagar, Cambiar asientos y Cancelar" width="400"></td>
+    <td><img src="docs/capturas/chat-pago.webp" alt="Conversación de WhatsApp con el enlace de pago, el pago confirmado y el PNR" width="400"></td>
+  </tr>
+</table>
+
 ### Estados de una reserva
 
 ```mermaid
