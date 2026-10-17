@@ -20,6 +20,7 @@ export const Mascota = z.object({ // RN-05
   pasajero_indice: z.number().int().min(0).max(8),
   especie: z.string().min(1).max(50),
   peso_kg: z.number().positive().max(8),
+  trayecto: z.enum(["IDA", "REGRESO"]).default("IDA"), // tramo en que viaja la mascota; una sola por reserva
 });
 
 export const PasajeroEntrada = z.object({

@@ -43,6 +43,19 @@ Deno.test("ida y vuelta con equipaje y mascota: líneas por concepto y total", a
   assertEquals(r.total_cop, 1313000);
 });
 
+Deno.test("mascota de regreso: línea en REGRESO con la temporada del vuelo de regreso", async () => {
+  const r = await ejecutar(
+    entrada.parse({
+      vuelo_ida_id: "v-ida-dic",
+      vuelo_regreso_id: "v-reg-dic",
+      pasajeros: [{ edad: 30 }],
+      mascota: { pasajero_indice: 0, especie: "perro", peso_kg: 6, trayecto: "REGRESO" },
+    }),
+    dep(),
+  );
+  assertEquals(r.lineas.filter((l) => l.concepto === "MASCOTA").map((l) => l.trayecto), ["REGRESO"]);
+});
+
 Deno.test("el total es la suma de las líneas ya redondeadas (RN-07)", async () => {
   const r = await ejecutar(entrada.parse({ vuelo_ida_id: "v-ida-ene31", pasajeros: [{ edad: 30 }, { edad: 30 }, { edad: 30 }] }), dep());
   assertEquals(r.total_cop, r.lineas.reduce((a, l) => a + l.monto_cop, 0));
@@ -54,6 +67,11 @@ Deno.test("reglas de negocio -> ErrorNegocio (400)", async () => {
   await assertRejects(() => caso({ vuelo_ida_id: "nope" }), ErrorNegocio, "Vuelo no encontrado");
   await assertRejects(() => caso({ vuelo_regreso_id: "v-ida-ene31" }), ErrorNegocio, "ruta inversa");
   await assertRejects(() => caso({ pasajeros: [{ edad: 30, bodega_regreso: chica }] }), ErrorNegocio, "no hay vuelo de regreso");
+  await assertRejects(
+    () => caso({ mascota: { pasajero_indice: 0, especie: "gato", peso_kg: 4, trayecto: "REGRESO" } }),
+    ErrorNegocio,
+    "no hay vuelo de regreso",
+  );
   await assertRejects(
     () => caso({ mascota: { pasajero_indice: 3, especie: "gato", peso_kg: 4 } }),
     ErrorNegocio,

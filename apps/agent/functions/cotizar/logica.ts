@@ -41,6 +41,7 @@ export async function ejecutar(input: z.infer<typeof entrada>, dep: { datum: Dat
   if (sinRegreso) throw new ErrorNegocio("Hay equipaje de regreso pero no hay vuelo de regreso");
   const m = input.mascota;
   if (m && m.pasajero_indice >= input.pasajeros.length) throw new ErrorNegocio("pasajero_indice de la mascota fuera de rango");
+  if (m?.trayecto === "REGRESO" && !regreso) throw new ErrorNegocio("La mascota viaja de regreso pero no hay vuelo de regreso");
 
   const trayectos = [
     { nombre: "IDA" as const, vuelo: ida, bodega: (p: typeof input.pasajeros[number]) => p.bodega_ida },
@@ -61,10 +62,11 @@ export async function ejecutar(input: z.infer<typeof entrada>, dep: { datum: Dat
     }
   });
   if (m) {
-    // Supuesto: la temporada de la mascota es la del vuelo de ida (el draft no fija el trayecto; línea única).
-    const r = precioMascota(m.peso_kg, params, multiplicadorDeFecha(ida.fecha, cat.temporada));
+    // La temporada de la mascota es la del vuelo del tramo en que viaja (IDA por defecto); línea única.
+    const vueloMascota = m.trayecto === "REGRESO" && regreso ? regreso : ida;
+    const r = precioMascota(m.peso_kg, params, multiplicadorDeFecha(vueloMascota.fecha, cat.temporada));
     if (!r.ok) throw new ErrorNegocio(r.error);
-    lineas.push({ concepto: "MASCOTA", trayecto: "IDA", pasajero_indice: m.pasajero_indice, monto_cop: r.precio_cop });
+    lineas.push({ concepto: "MASCOTA", trayecto: m.trayecto, pasajero_indice: m.pasajero_indice, monto_cop: r.precio_cop });
   }
   return { lineas, total_cop: totalCop(lineas.map((l) => l.monto_cop)) };
 }

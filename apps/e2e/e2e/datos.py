@@ -48,6 +48,7 @@ class Pasajero:
     asiento_ida: str = ""
     asiento_regreso: str = ""
     bodega: tuple[int, int, int, int] | None = None  # largo, ancho, alto (cm), peso (kg)
+    bodega_tramo: str = "Solo ida"  # boton que elige: Solo ida | Solo regreso | Ida y regreso
 
 
 @dataclass
@@ -55,6 +56,7 @@ class Mascota:
     especie: str
     peso_kg: int
     dueno: int  # indice del pasajero
+    tramo: str = "Ida"  # boton que elige: Ida | Regreso
 
 
 @dataclass
@@ -132,10 +134,13 @@ def una_persona(fk: Faker, datum: Datum, v: Viaje) -> Escenario:
 
 
 def varias_personas(fk: Faker, datum: Datum, v: Viaje) -> Escenario:
-    """3 pasajeros: lista de nombres para elegir quienes llevan bodega (2 de 3), sin mascota. Pago aprobado."""
+    """3 pasajeros, una maleta por tramo distinto: 1 de bodega en la ida, 2 en el regreso, y una mascota que viaja de regreso. Pago aprobado."""
     e = Escenario("varias_personas", v, _pasajeros(fk, datum, v, 3), "Cabina y bodega", pago="aprobar")
-    for i in random.sample(range(3), 2):
-        e.pasajeros[i].bodega = _maleta()
+    tramos = ["Solo ida", "Solo regreso", "Solo regreso"]
+    random.shuffle(tramos)
+    for p, t in zip(e.pasajeros, tramos):
+        p.bodega, p.bodega_tramo = _maleta(), t
+    e.mascota = Mascota("Perro", random.randint(3, 7), random.randrange(3), "Regreso")
     return e
 
 

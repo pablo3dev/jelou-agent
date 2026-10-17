@@ -138,6 +138,7 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
     pendientes_bodega = [p for p in esc.pasajeros if p.bodega]
     elegidos_lista: list[str] = []
     probado: set[str] = set()
+    maleta_actual = esc.pasajeros[0]
     asiento_ida_enviado = False
     ultimo = log[-1]
     for _ in range(MAX_TURNOS):
@@ -159,9 +160,13 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
             paso("Alguien mas lleva bodega? (botones)")
             quedan = len(elegidos_lista) < len(pendientes_bodega)
             ultimo = elige("Sí" if quedan else "No, seguimos")
-        elif "tramo" in t and "bodega" in t and "cuesta" not in t and "COP" not in t:  # la pregunta, no el precio ya calculado
-            paso("Tramo de la bodega (botones)")
-            ultimo = elige("Solo ida")
+        elif "tramo" in t and "mascota" in t and "?" in t:
+            paso(f"Tramo de la mascota: {esc.mascota.tramo if esc.mascota else 'Ida'} (botones)")
+            ultimo = elige(esc.mascota.tramo if esc.mascota else "Ida")
+        elif "tramo" in t and ("bodega" in t or "maleta" in t) and "?" in t and "cuesta" not in t and "COP" not in t:  # la pregunta, no el precio ya calculado
+            dueno_maleta = next((q for q in esc.pasajeros if q.bodega and q.nombre.split()[0].lower() in t), maleta_actual)
+            paso(f"Tramo de la maleta de {dueno_maleta.nombre.split()[0]}: {dueno_maleta.bodega_tramo} (botones)")
+            ultimo = elige(dueno_maleta.bodega_tramo)
         elif pendientes_bodega and any(k in t for k in ("largo", "medidas", "alto")) and "kg" in t:
             if "bodega_excedida" in esc.errores and "bodega" not in probado:
                 probado.add("bodega")
@@ -170,7 +175,7 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
                 ultimo = di(f"{lo}x{an}x{al} cm, {kg} kg")
                 assert not ENLACE.search(ultimo), "El agente acepto una maleta fuera de limites"
                 continue
-            p = pendientes_bodega.pop(0)
+            p = maleta_actual = pendientes_bodega.pop(0)
             lo, an, al, kg = p.bodega
             paso(f"Medidas y peso de la maleta de {p.nombre.split()[0]}")
             ultimo = di(f"{lo}x{an}x{al} cm, {kg} kg")
