@@ -64,6 +64,7 @@ Abre Chrome (perfil `.profile/`) en el chat del agente: menú ⋮ → **Eliminar
 | `UnicodeEncodeError` al redirigir la salida a un archivo | La consola de Windows usa cp1252; `tests/conftest.py` fuerza UTF-8. |
 | `WinError 10051` hacia Datum | Corte de red momentáneo; el cliente reintenta la conexión 3 veces. |
 | El agente responde «error de autorización» | Las tools envían un secreto que la function rechaza (`401 Invalid API key`); revisa el secreto `JELOU_FN_TOKEN` de la organización. |
+| El agente dice «problema en nuestro sistema» y no hay ejecuciones de la tool en `logs chat` | Las tools no tienen publicada la versión que el agente referencia (`1.0.0`): `tool versions <slug>` vacío. Publica con `tool publish <slug> --version 1.0.0` en cada una y republica el proyecto. |
 
 ## Riesgo con WhatsApp
 

@@ -20,58 +20,70 @@ tools:
     envelopeHash: "sha256:e4fddb34a3565f322a37d84a9206d524aad8b4601e73d0e3e30f7d8b8398305a"
     hash: "sha256:bc8634bf18b080bf64898084ce0058ab46ed64f665f1186c30555485484e065a"
     lastPulledAt: "2026-10-17T04:44:49.299Z"
+    latestVersion: 1.0.0
     metaHash: "sha256:6fc8c0428134baf0fc08c5aff1a80e6fb9cf644270d915fcb1d15e7bbb3f3ae0"
     name: asientos-validar-retener
     ownership: OWNED
     toolId: 8900
+    versionIndex: 1
     workflowId: 72740
   cotizar:
     contractHash: "sha256:956aedfe6817ebc6a4ca76f5c4885ee75b15bf98976d70b2c13e12b22b0a41d3"
     envelopeHash: "sha256:176545c7f1e029dc1155d143dfe0924c2d11accdce8df5ea280610326ba1c0b8"
     hash: "sha256:fd0cb39c01eac554bdc57cd578954ca6e152d4a51b69c0d680712ff58e371d89"
     lastPulledAt: "2026-10-17T04:44:53.950Z"
+    latestVersion: 1.0.0
     metaHash: "sha256:fab283c97c0185090d8a8c8b91d52414bef6570e9ae6e19ee55f522ed33e9ea0"
     name: cotizar
     ownership: OWNED
     toolId: 8901
+    versionIndex: 1
     workflowId: 72741
   equipaje-calcular:
     contractHash: "sha256:c6d5012bcaf1d6141a6a8e0f711ecdb7bf630807e39da6e0739bbe6aafc02e18"
     envelopeHash: "sha256:46854ba45b5ef77a2c4c86784764ec0001de95e0bdcd8cc7d3e21b9712141e1b"
     hash: "sha256:504a899a272847afc401ee269f3d1af689cd6b62a6fa027e378a5709e923f8bd"
     lastPulledAt: "2026-10-17T04:44:58.620Z"
+    latestVersion: 1.0.0
     metaHash: "sha256:3736fcb4939b615546d0f9a269e30d7953a4d08474f408e6f8c6226ba4b026b1"
     name: equipaje-calcular
     ownership: OWNED
     toolId: 8902
+    versionIndex: 1
     workflowId: 72742
   rutas-listar:
     contractHash: "sha256:2f959b8e1421f77f27e1932367e21132a3f16f4859ee7eeef0b35971074bfd57"
     envelopeHash: "sha256:549eeb97ea6827667a9a7576c53c6553b82bd54990bf6078138e216998d9f4d3"
     hash: "sha256:7eefe356d4507eefded5f528f9979d8930bf58a99e7d66a43aa05659af5cafa7"
     lastPulledAt: "2026-10-17T04:45:03.945Z"
+    latestVersion: 1.0.0
     metaHash: "sha256:36d82806b959b1414768044521e97fd03beab53130f57929f3e193905884a311"
     name: rutas-listar
     ownership: OWNED
     toolId: 8903
+    versionIndex: 1
     workflowId: 72743
   transaccion-crear:
     contractHash: "sha256:e6c0e5a2273f089512ebbc4d71914230e67dac6a3380ddb602dd4ff7ec1fc670"
     envelopeHash: "sha256:6dc6e22da3d49e1ffc7a44896365bbdea558bdeca54970ff0abcde034b9de145"
     hash: "sha256:b1904417cbf345cb40c2402b7deb1815dbb17a702db801b78a6af523ba686671"
     lastPulledAt: "2026-10-17T04:45:08.611Z"
+    latestVersion: 1.0.0
     metaHash: "sha256:62abc601037fe2ff6edac9a855412fb1767765f5c6834438c957b301e1e2b6e2"
     name: transaccion-crear
     ownership: OWNED
     toolId: 8904
+    versionIndex: 1
     workflowId: 72744
   vuelos-buscar:
     contractHash: "sha256:7cf9d35652e8f03debe7f8921a0d2b1a7793cacda3c462f1d681a28ace575238"
     envelopeHash: "sha256:16766670061090fdce75fbad5a7956ad570ee09ce2226bad599a42792f0108bb"
     hash: "sha256:cddbb8f196dabf79b85e7131582923608cb240f22a92410daf8111981246e929"
     lastPulledAt: "2026-10-17T04:45:13.358Z"
+    latestVersion: 1.0.0
     metaHash: "sha256:f1a584bfaa8e1e2a759d05d4319f567bae4ab686dd727dd4135d8162496ba432"
     name: vuelos-buscar
     ownership: OWNED
     toolId: 8905
+    versionIndex: 1
     workflowId: 72745
