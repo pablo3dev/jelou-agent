@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.js eol=lf
+Dockerfile eol=lf
+*.sh eol=lf
+*.yaml eol=lf

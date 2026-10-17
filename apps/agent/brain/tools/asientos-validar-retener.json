@@ -1,0 +1,186 @@
+{
+  "toolId": 8900,
+  "workflowId": 72740,
+  "toolName": "asientos-validar-retener",
+  "toolDescription": "Valida y retiene 15 minutos los asientos elegidos; devuelve hold_token",
+  "triggerType": "DEFAULT",
+  "ownership": "OWNED",
+  "inputs": [
+    {
+      "name": "payload",
+      "id": "fhzbE8lk1Qg-SJgg83RNy",
+      "displayName": "payload",
+      "description": "Cuerpo JSON (texto) para asientos-validar-retener. JSON: {\"vuelo_ida_id\":\"..\",\"vuelo_regreso_id\":\"..\" (opcional),\"edades\":[30,12],\"asientos_ida\":\"12A 12B\",\"asientos_regreso\":\"14A 14B\" (opcional)}",
+      "type": "STRING",
+      "required": true,
+      "defaultValue": null,
+      "configuration": null,
+      "position": 0
+    }
+  ],
+  "outputs": [
+    {
+      "name": "respuesta",
+      "id": "wGh6ZynGB6RQENaRDDAEk",
+      "displayName": "respuesta",
+      "description": "JSON {ok,status,data} con la respuesta de la function (errores de negocio incluidos en data)",
+      "type": "SUCCESS",
+      "required": false,
+      "schema": null,
+      "position": 0
+    }
+  ],
+  "nodes": [
+    {
+      "id": "9QNfwKVTD-fu9jHakhXVn",
+      "type": "CODE",
+      "title": "Respuesta con error",
+      "position": [
+        1360,
+        50
+      ],
+      "configuration": {
+        "title": "Respuesta con error",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "DbiCu42RqFupxbfETqIVT",
+      "title": "Start",
+      "type": "START",
+      "position": [
+        818,
+        338
+      ]
+    },
+    {
+      "id": "IideIcUhLoJUpuwXIVWlo",
+      "type": "CODE",
+      "title": "Respuesta",
+      "position": [
+        1360,
+        410
+      ],
+      "configuration": {
+        "title": "Respuesta",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "N_CooZOGOPAaQcPMUZuLm",
+      "type": "END",
+      "title": "Fin con error",
+      "position": [
+        1780,
+        410
+      ],
+      "configuration": {
+        "outputId": "wGh6ZynGB6RQENaRDDAEk"
+      }
+    },
+    {
+      "id": "ngNdpKtXh-dv0bYvswI-L",
+      "type": "CODE",
+      "title": "Leer entrada",
+      "position": [
+        520,
+        50
+      ],
+      "configuration": {
+        "title": "Leer entrada",
+        "content": "var raw = \"{}\"; try { raw = $input.get(\"payload\"); } catch (e) { raw = \"{}\"; }\n$context.set(\"cuerpo\", typeof raw === \"string\" ? raw : JSON.stringify(raw));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "vFFeNPzawyGRWGN1Vm-WD",
+      "type": "END",
+      "title": "Fin",
+      "position": [
+        1780,
+        50
+      ],
+      "configuration": {
+        "outputId": "wGh6ZynGB6RQENaRDDAEk"
+      }
+    },
+    {
+      "id": "W49nQve-f_FAKnfAQH9pe",
+      "type": "HTTP",
+      "title": "POST asientos-validar-retener",
+      "position": [
+        940,
+        50
+      ],
+      "configuration": {
+        "title": "POST asientos-validar-retener",
+        "method": "POST",
+        "url": "https://aerolinea-reservas-b5dfca.fn.jelou.ai/asientos-validar-retener",
+        "output": "resp",
+        "headers": [
+          {
+            "id": "h1",
+            "key": "Authorization",
+            "value": "Bearer {{$secret.JELOU_FN_TOKEN}}",
+            "enabled": true
+          },
+          {
+            "id": "h2",
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "body": {
+          "type": "application/json",
+          "content": "{{$context.cuerpo}}",
+          "enabled": true
+        },
+        "settings": {
+          "sslCertificate": true,
+          "timeout": 30000
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "_DYfmdaTnYp2C6onhvZrk",
+      "sourceId": "IideIcUhLoJUpuwXIVWlo",
+      "targetId": "vFFeNPzawyGRWGN1Vm-WD",
+      "branch": "success"
+    },
+    {
+      "id": "_SWcrfquL_ZtmCnIUNKjU",
+      "sourceId": "W49nQve-f_FAKnfAQH9pe",
+      "targetId": "IideIcUhLoJUpuwXIVWlo",
+      "branch": "success"
+    },
+    {
+      "id": "17lG8qKwIrmaJoCNxTk5X",
+      "sourceId": "DbiCu42RqFupxbfETqIVT",
+      "targetId": "ngNdpKtXh-dv0bYvswI-L",
+      "branch": "default"
+    },
+    {
+      "id": "gyzVXw9tWTs5qW5iDqZ2U",
+      "sourceId": "9QNfwKVTD-fu9jHakhXVn",
+      "targetId": "N_CooZOGOPAaQcPMUZuLm",
+      "branch": "success"
+    },
+    {
+      "id": "jKEyiWuHnxkflatJ38erA",
+      "sourceId": "W49nQve-f_FAKnfAQH9pe",
+      "targetId": "9QNfwKVTD-fu9jHakhXVn",
+      "branch": "failed"
+    },
+    {
+      "id": "qmCIA3Aedlozvi8Hn5O86",
+      "sourceId": "ngNdpKtXh-dv0bYvswI-L",
+      "targetId": "W49nQve-f_FAKnfAQH9pe",
+      "branch": "success"
+    }
+  ]
+}

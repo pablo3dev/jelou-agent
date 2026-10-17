@@ -1,0 +1,7 @@
+.env
+.venv/
+.profile/
+.state/
+artifacts/
+__pycache__/
+.pytest_cache/

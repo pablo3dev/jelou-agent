@@ -1,0 +1,7 @@
+{
+  "$schema": "https://jelou.ai/schemas/jelou.json",
+  "function": "aerolinea-reservas",
+  "id": "func_01m53ws12qe5d9j6p2r2zk917k",
+  "organizationId": "01M53VRM6J35J0J6X8J39V9566",
+  "entrypoint": "index.ts"
+}

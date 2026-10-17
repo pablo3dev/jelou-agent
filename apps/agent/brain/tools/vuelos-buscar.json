@@ -1,0 +1,186 @@
+{
+  "toolId": 8905,
+  "workflowId": 72745,
+  "toolName": "vuelos-buscar",
+  "toolDescription": "Busca vuelos de ida y regreso con asientos libres y tarifa por pasajero",
+  "triggerType": "DEFAULT",
+  "ownership": "OWNED",
+  "inputs": [
+    {
+      "name": "payload",
+      "id": "YFlFobqHD8-F775zYtW9I",
+      "displayName": "payload",
+      "description": "Cuerpo JSON (texto) para vuelos-buscar. JSON: {\"ruta_id\":\"BOG-MDE\",\"fecha_ida\":\"2026-12-10\",\"fecha_regreso\":\"2026-12-20\" (opcional),\"pasajeros\":2}",
+      "type": "STRING",
+      "required": true,
+      "defaultValue": null,
+      "configuration": null,
+      "position": 0
+    }
+  ],
+  "outputs": [
+    {
+      "name": "respuesta",
+      "id": "ha4a9GzkcDbFvWcLe3el0",
+      "displayName": "respuesta",
+      "description": "JSON {ok,status,data} con la respuesta de la function (errores de negocio incluidos en data)",
+      "type": "SUCCESS",
+      "required": true,
+      "schema": null,
+      "position": 0
+    }
+  ],
+  "nodes": [
+    {
+      "id": "6kmxq5vsCpewyM6zuwPUh",
+      "type": "HTTP",
+      "title": "POST vuelos-buscar",
+      "position": [
+        940,
+        50
+      ],
+      "configuration": {
+        "title": "POST vuelos-buscar",
+        "method": "POST",
+        "url": "https://aerolinea-reservas-b5dfca.fn.jelou.ai/vuelos-buscar",
+        "output": "resp",
+        "headers": [
+          {
+            "id": "h1",
+            "key": "Authorization",
+            "value": "Bearer {{$secret.JELOU_FN_TOKEN}}",
+            "enabled": true
+          },
+          {
+            "id": "h2",
+            "key": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "body": {
+          "type": "application/json",
+          "content": "{{$context.cuerpo}}",
+          "enabled": true
+        },
+        "settings": {
+          "sslCertificate": true,
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "C2Z1a3aSKXutqp8-hXF-A",
+      "type": "CODE",
+      "title": "Respuesta con error",
+      "position": [
+        1360,
+        50
+      ],
+      "configuration": {
+        "title": "Respuesta con error",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "f-p7A_F3VNc-5yjnWLX0k",
+      "type": "CODE",
+      "title": "Respuesta",
+      "position": [
+        1360,
+        410
+      ],
+      "configuration": {
+        "title": "Respuesta",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "f9Q8l6pPM_bZPxenFo6bR",
+      "type": "CODE",
+      "title": "Leer entrada",
+      "position": [
+        520,
+        50
+      ],
+      "configuration": {
+        "title": "Leer entrada",
+        "content": "var raw = \"{}\"; try { raw = $input.get(\"payload\"); } catch (e) { raw = \"{}\"; }\n$context.set(\"cuerpo\", typeof raw === \"string\" ? raw : JSON.stringify(raw));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "hofj5_guqshiN-He8yB40",
+      "type": "END",
+      "title": "Fin",
+      "position": [
+        1780,
+        50
+      ],
+      "configuration": {
+        "outputId": "ha4a9GzkcDbFvWcLe3el0"
+      }
+    },
+    {
+      "id": "jkmUYjFtiE3QCc278-5m_",
+      "title": "Start",
+      "type": "START",
+      "position": [
+        818,
+        338
+      ]
+    },
+    {
+      "id": "u-chR9OC0a-Aeep6Dq6YU",
+      "type": "END",
+      "title": "Fin con error",
+      "position": [
+        1780,
+        410
+      ],
+      "configuration": {
+        "outputId": "ha4a9GzkcDbFvWcLe3el0"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "FVVnuPYec2mSqaa9uQiQl",
+      "sourceId": "jkmUYjFtiE3QCc278-5m_",
+      "targetId": "f9Q8l6pPM_bZPxenFo6bR",
+      "branch": "default"
+    },
+    {
+      "id": "gRu9ZilrL-EOEf0Squsys",
+      "sourceId": "f-p7A_F3VNc-5yjnWLX0k",
+      "targetId": "hofj5_guqshiN-He8yB40",
+      "branch": "success"
+    },
+    {
+      "id": "ID7ByGhcfMpeAA6vjGbMs",
+      "sourceId": "C2Z1a3aSKXutqp8-hXF-A",
+      "targetId": "u-chR9OC0a-Aeep6Dq6YU",
+      "branch": "success"
+    },
+    {
+      "id": "J5k0yvteaz0gtv2CdOzJa",
+      "sourceId": "6kmxq5vsCpewyM6zuwPUh",
+      "targetId": "C2Z1a3aSKXutqp8-hXF-A",
+      "branch": "failed"
+    },
+    {
+      "id": "JfOIdE7JqAZ0ImLy6nKP8",
+      "sourceId": "f9Q8l6pPM_bZPxenFo6bR",
+      "targetId": "6kmxq5vsCpewyM6zuwPUh",
+      "branch": "success"
+    },
+    {
+      "id": "rtvV_8_kgvOSiSLurWeZU",
+      "sourceId": "6kmxq5vsCpewyM6zuwPUh",
+      "targetId": "f-p7A_F3VNc-5yjnWLX0k",
+      "branch": "success"
+    }
+  ]
+}

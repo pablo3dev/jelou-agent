@@ -1,0 +1,17 @@
+[project]
+name = "e2e-reservas"
+version = "0.1.0"
+description = "Prueba E2E del flujo WhatsApp -> pago -> CRM (datos dinamicos con Faker, verificacion en Datum)"
+requires-python = ">=3.12"
+dependencies = [
+  "playwright==1.49.1",
+  "faker==33.1.0",
+  "httpx==0.28.1",
+  "python-dotenv==1.0.1",
+  "pytest==8.3.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-s -v"
+markers = ["wa: usa WhatsApp Web real (riesgo de bloqueo; leer README)"]

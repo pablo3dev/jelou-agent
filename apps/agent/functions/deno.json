@@ -1,0 +1,9 @@
+{
+  "tasks": {
+    "test": "deno test --allow-read --allow-env --allow-net"
+  },
+  "imports": {
+    "@jelou/functions": "jsr:@jelou/functions@1.5.0",
+    "zod": "npm:zod@^4.6.2"
+  }
+}

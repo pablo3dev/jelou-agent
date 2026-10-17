@@ -1,0 +1,285 @@
+// db-design.dbml — aerolinea-reservas-whatsapp (idea)
+// Esquema relacional lógico de la aerolínea DEMO. Vive en Jelou Datum (colecciones de tablas).
+// Datum v2 es PocketBase: direccionamiento por colección (/collections/{colección}/records) y filtros
+// (filter, sort, fields, page/perPage) SÍ existen; sigue sin haber transacciones ni compare-and-set.
+// Tipos lógicos: enum -> select(maxSelect=1), ref -> text, int -> number(onlyInt), decimal -> number,
+// date/timestamp -> date, time/char/text -> text, json -> json.
+// Ids físicos: el id de fila admite solo [a-z0-9] (sin guiones ni mayúsculas) y la PK es única y atómica
+// (un id repetido en POST => 400 validation_not_unique). No se pueden crear otros índices únicos, por lo
+// que los `unique` declarados abajo se garantizan por id determinista o por código de aplicación.
+
+Enum estado_reserva {
+  PENDIENTE_PAGO
+  EMITIDA
+  PAGO_RECHAZADO
+  EXPIRADA
+  CANCELADA
+}
+
+Enum estado_transaccion {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  EXPIRADA
+}
+
+Enum estado_asiento {
+  LIBRE
+  RETENIDO
+  VENDIDO
+  BLOQUEADO
+}
+
+Enum tipo_equipaje {
+  BODEGA
+  CABINA
+}
+
+Enum sentido_trayecto {
+  IDA
+  REGRESO
+}
+
+Enum clave_parametro {
+  tarifa_kg_bodega_cop
+  cargo_minimo_bodega_cop
+  divisor_volumetrico
+  max_lineal_bodega_cm
+  max_peso_bodega_kg
+  tarifa_mascota_cop
+  peso_max_mascota_kg
+  max_mascotas_reserva
+  hold_minutos
+  edad_min_exit_row
+  max_pasajeros
+  max_piezas_bodega_pasajero
+}
+
+Table rutas {
+  id text [pk, note: 'Id físico en Datum: <origen><destino> en minúsculas sin guion, p. ej. bogmde. Id lógico derivado (el que ve el agente): <origen>-<destino>, p. ej. BOG-MDE']
+  origen char(3) [not null, note: 'Código IATA de 3 letras']
+  destino char(3) [not null, note: 'Código IATA de 3 letras']
+  tarifa_base_cop integer [not null, note: 'Tarifa plana por pasajero y trayecto, COP enteros, antes de temporada']
+
+  indexes {
+    (origen, destino) [unique]
+  }
+
+  Note: '''
+  Invariantes:
+  - Exactamente 6 filas: BOG-MDE, MDE-BOG, BOG-CLO, CLO-BOG, BOG-CTG, CTG-BOG.
+  - origen != destino.
+  - id lógico = origen || '-' || destino (BOG-MDE); id físico = lower(origen || destino) (bogmde); unicidad de (origen, destino) por id determinista.
+  - La bidireccionalidad se modela con una fila por sentido (cada par inverso existe como dos filas).
+  - tarifa_base_cop es la tarifa base; el multiplicador de temporada se aplica en el cálculo, no se guarda aquí.
+  '''
+}
+
+Table temporada {
+  mes integer [pk, note: 'Mes del año, 1 a 12. Id físico en Datum: mes01..mes12']
+  multiplicador decimal(3,2) [not null, note: '1.30 o 1.00']
+
+  Note: '''
+  Invariantes:
+  - Exactamente 12 filas, una por mes (mes entre 1 y 12).
+  - multiplicador = 1.30 para los meses 1, 6, 7 y 12; 1.00 para el resto.
+  - Se aplica a pasaje, equipaje y mascotas según el mes de la fecha de viaje de cada trayecto (vuelos.fecha), no según la fecha de compra.
+  '''
+}
+
+Table parametros {
+  clave clave_parametro [pk, note: 'Id físico en Datum: la clave sin guiones bajos, p. ej. tarifakgbodegacop']
+  valor integer [not null]
+
+  Note: '''
+  Parámetros comerciales y operativos en clave-valor. Exactamente una fila por valor de clave_parametro (12 filas).
+  Valores fijados en la especificación:
+  - divisor_volumetrico = 6000
+  - max_lineal_bodega_cm = 158
+  - max_peso_bodega_kg = 32
+  - peso_max_mascota_kg = 8
+  - max_mascotas_reserva = 1
+  - hold_minutos = 15
+  - edad_min_exit_row = 15
+  - max_pasajeros = 9
+  - max_piezas_bodega_pasajero = 1
+  Sin valor especificado: tarifa_kg_bodega_cop, cargo_minimo_bodega_cop, tarifa_mascota_cop.
+  Todas las tarifas están en COP enteros.
+  '''
+}
+
+Table vuelos {
+  id text [pk, note: 'Id físico en Datum y vuelo_id que ve el agente: <ruta sin guion en minúsculas><fecha sin guiones>, p. ej. bogmde20261201']
+  ruta_id text [not null, note: 'Id lógico de ruta, p. ej. BOG-MDE (enum RutaId del contrato); id físico de la ruta = minúsculas sin guion']
+  fecha date [not null, note: 'Fecha de salida del vuelo']
+  hora_salida time [not null, note: 'Fija en 07:00']
+  mapa_asientos json [not null, note: 'Inventario operativo del vuelo: clave = código de asiento, valor = {estado, pnr, hold_token, hold_expira}']
+  version int [not null, note: 'contador incrementado en cada escritura del mapa']
+
+  indexes {
+    (ruta_id, fecha) [unique]
+  }
+
+  Note: '''
+  Aeronave Boeing 737-8 MAX, 174 asientos por vuelo. Un vuelo por ruta y día.
+  Ventana: fecha entre 2026-12-01 y 2027-01-31 inclusive (62 días x 6 rutas = 372 vuelos). hora_salida = 07:00.
+
+  mapa_asientos (JSON, único inventario de asientos; no existe tabla normalizada de asientos en la PoC):
+  - Clave: código "<fila><letra>", p. ej. "12A". Solo estas 174 claves, ninguna adicional.
+  - Filas 1–3 (Premium): letras A, C, D, F (12 asientos).
+  - Filas 4–7 (Extended): letras A–F (24 asientos).
+  - Filas 8–30 (Economy): letras A–F (138 asientos).
+  - Filas 13 y 14 son exit row. Es un atributo derivado de la fila, no una columna del mapa.
+  - Valor: { estado: estado_asiento, pnr: char(6) | null, hold_token: text | null, hold_expira: timestamp | null }.
+  - LIBRE: pnr, hold_token y hold_expira nulos.
+  - RETENIDO: hold con expiración. hold_token y hold_expira presentes; hold_expira = instante de creación del hold + parametros.hold_minutos.
+  - VENDIDO: pnr presente, con el valor de reservas.pnr de la reserva que lo vendió.
+  - BLOQUEADO: sin pnr ni hold.
+  - hold_token es un identificador operativo opaco; no se expone fuera del backend.
+
+  Concurrencia: Datum no ofrece transacciones ni compare-and-set (la cabecera If-Match se ignora en el servidor). Cualquier cambio sobre mapa_asientos es lectura-modificación-escritura del JSON completo (PATCH fusiona campos); la integridad frente a escrituras concurrentes no la garantiza el almacén y la PoC usa write-then-verify con `version`. La unicidad de (ruta_id, fecha) se garantiza por el id determinista del vuelo (PK única y atómica).
+  Camino de producción: una fila por asiento con id determinista <vuelo><asiento> y POST como reclamo atómico (la PK única rechaza el segundo con 400 validation_not_unique).
+  '''
+}
+
+Table reservas {
+  id text [pk, note: 'Id autogenerado por Datum']
+  pnr char(6) [not null, note: 'Código de reserva: 6 caracteres de [A-Z2-9], sin O, I, 0 ni 1']
+  estado estado_reserva [not null]
+  vuelo_ida_id text [not null, note: 'Ref a vuelos.id']
+  vuelo_regreso_id text [note: 'Ref a vuelos.id; nulo en reservas solo de ida']
+  hold_expira timestamp [not null, note: 'Vencimiento de la retención y de la transacción: creación + parametros.hold_minutos']
+  total_cop int [not null, note: 'suma de líneas redondeadas (pasajes, equipaje, mascotas); persistido para CRM']
+
+  indexes {
+    pnr [unique]
+  }
+
+  Note: '''
+  Invariantes:
+  - pnr: 6 caracteres de [A-Z2-9] sin O, I, 0 ni 1. Único en la tabla. La validación de formato es responsabilidad de la aplicación.
+  - vuelo_regreso_id nulo en reservas solo de ida.
+  - Si vuelo_regreso_id existe, la ruta del vuelo de regreso es la inversa de la ruta del vuelo de ida (origen y destino intercambiados).
+  - Pasajeros de la reserva: entre 1 y parametros.max_pasajeros (9).
+  - Los asientos asignados a pasajeros (pasajeros.asiento_ida / asiento_regreso) existen como claves en el mapa_asientos del vuelo correspondiente.
+  - Estados: estado_reserva.
+  '''
+}
+
+Table pasajeros {
+  id text [pk, note: 'Id autogenerado por Datum']
+  reserva_id text [not null, note: 'Ref a reservas.id']
+  nombre text [not null]
+  documento text [not null, note: 'Dato personal. No se registra en logs ni se devuelve si no es necesario']
+  edad integer [not null, note: 'Edad en años cumplidos']
+  asiento_ida text [note: 'Código de asiento en el vuelo de ida, p. ej. 12A; nulo si no hay asiento asignado']
+  asiento_regreso text [note: 'Código de asiento en el vuelo de regreso; nulo si no hay asiento asignado o no hay regreso']
+
+  indexes {
+    (reserva_id, asiento_ida) [unique]
+    (reserva_id, asiento_regreso) [unique]
+  }
+
+  Note: '''
+  Invariantes:
+  - Pertenece a exactamente una reserva (reserva_id).
+  - asiento_regreso solo puede tener valor si reservas.vuelo_regreso_id existe.
+  - Un mismo asiento no se repite entre pasajeros de la misma reserva en el mismo trayecto (índices únicos).
+  - El código de asiento debe existir en el mapa_asientos del vuelo del trayecto (filas 1–30, letras válidas según la clase de la fila).
+  - Si asiento_ida o asiento_regreso está en fila 13 o 14 (exit row), edad >= parametros.edad_min_exit_row (15).
+  - documento es dato personal: se trata como PII.
+  '''
+}
+
+Table equipaje {
+  id text [pk, note: 'Id autogenerado por Datum']
+  pasajero_id text [not null, note: 'Ref a pasajeros.id']
+  reserva_id text [not null, note: 'Ref a reservas.id']
+  tipo tipo_equipaje [not null]
+  trayecto sentido_trayecto [not null]
+  largo_cm integer [note: 'Solo BODEGA']
+  ancho_cm integer [note: 'Solo BODEGA']
+  alto_cm integer [note: 'Solo BODEGA']
+  peso_real_kg decimal(6,2) [note: 'Solo BODEGA']
+  peso_volumetrico_kg decimal(6,2) [note: 'Solo BODEGA. (largo_cm * ancho_cm * alto_cm) / parametros.divisor_volumetrico']
+  precio_cop integer [not null, note: '0 para CABINA']
+
+  Note: '''
+  Invariantes:
+  - equipaje.reserva_id = pasajeros.reserva_id del pasajero indicado en pasajero_id.
+  - tipo CABINA: medidas y pesos nulos; precio_cop = 0. Sin costo y sin medidas.
+  - tipo BODEGA: medidas y pesos presentes; precio_cop >= 0.
+  - trayecto REGRESO solo si la reserva tiene vuelo de regreso.
+  - Piezas BODEGA por pasajero: máximo parametros.max_piezas_bodega_pasajero (1).
+  - BODEGA: largo_cm + ancho_cm + alto_cm <= parametros.max_lineal_bodega_cm (158); peso_real_kg <= parametros.max_peso_bodega_kg (32).
+  - peso_volumetrico_kg es el valor derivado con parametros.divisor_volumetrico (6000).
+  - precio_cop BODEGA lo calcula la aplicación con parámetros y temporada del mes del trayecto; la fórmula no forma parte del esquema.
+  '''
+}
+
+Table mascotas {
+  id text [pk, note: 'Id autogenerado por Datum']
+  pasajero_id text [not null, note: 'Ref a pasajeros.id']
+  reserva_id text [not null, note: 'Ref a reservas.id']
+  especie text [not null, note: 'Catálogo de especies no definido en la especificación']
+  peso_kg decimal(5,2) [not null]
+  precio_cop integer [not null, note: 'COP enteros, con temporada aplicada según el trayecto']
+
+  Note: '''
+  Invariantes:
+  - No ocupa asiento: no referencia vuelos ni mapa_asientos.
+  - pasajero_id pertenece a reserva_id (mascotas.reserva_id = pasajeros.reserva_id del pasajero).
+  - Mascotas por reserva: máximo parametros.max_mascotas_reserva (1).
+  - peso_kg <= parametros.peso_max_mascota_kg (8).
+  - precio_cop se calcula con parametros.tarifa_mascota_cop y la temporada del mes de viaje; la fórmula no forma parte del esquema.
+  '''
+}
+
+Table transacciones {
+  id text [pk, note: 'Id autogenerado por Datum al crear el registro (campo id de la respuesta del POST); transaccion-crear la crea en PENDIENTE']
+  reserva_id text [not null, note: 'Ref a reservas.id']
+  estado estado_transaccion [not null, default: 'PENDIENTE']
+  expira_at timestamp [not null, note: 'Igual a reservas.hold_expira: creación + parametros.hold_minutos']
+  execution_id text [note: 'executionId de Brain Studio para reanudar la ejecución; nulo mientras no exista']
+  ultimo_evento text [note: 'id_evento del último evento aplicado: <transaccion_id>:<estado>; nulo sin eventos']
+
+  Note: '''
+  Invariantes:
+  - Transición de estado solo desde PENDIENTE: PENDIENTE -> APROBADA | RECHAZADA | EXPIRADA. Desde cualquier otro estado no hay transición.
+  - expira_at = reservas.hold_expira de su reserva; ambos = instante de creación + parametros.hold_minutos (15).
+  - Si ultimo_evento no es nulo, corresponde a un registro de eventos_pago de esta transacción y su estado coincide con estado.
+  - La sesión de conversación no se modela aquí: vive en la memoria de Brain Studio.
+  - Idempotencia de eventos de pago: ver eventos_pago.
+  '''
+}
+
+Table eventos_pago {
+  id text [pk, note: 'Id físico en Datum: <transaccion_id><estado en minúsculas>, p. ej. abc123def456ghiaprobada']
+  transaccion_id text [not null, note: 'Ref a transacciones.id']
+  id_evento text [not null, note: 'Formato <transaccion_id>:<ESTADO>; se conserva tal cual aunque el id físico sea distinto']
+  estado estado_transaccion [not null, note: 'Estado al que llevó el evento']
+
+  indexes {
+    id_evento [unique]
+  }
+
+  Note: '''
+  Idempotencia de eventos de pago.
+  - id_evento = transaccion_id || ':' || estado. Único en la tabla.
+  - estado coincide con el sufijo de id_evento.
+  - Un evento solo se registra si transiciona la transacción desde PENDIENTE a estado.
+  - Idempotencia atómica por id determinista: el id físico es <transaccion_id><estado en minúsculas>, así que registrar el evento es un POST con ese id y la PK única rechaza el duplicado (400 validation_not_unique), además del campo id_evento.
+  - Procedimiento: registrar el evento antes de aplicar el efecto; un duplicado (id ya existente) no vuelve a aplicar el efecto.
+  '''
+}
+
+Ref: vuelos.ruta_id > rutas.id
+Ref: reservas.vuelo_ida_id > vuelos.id
+Ref: reservas.vuelo_regreso_id > vuelos.id
+Ref: pasajeros.reserva_id > reservas.id
+Ref: equipaje.pasajero_id > pasajeros.id
+Ref: equipaje.reserva_id > reservas.id
+Ref: mascotas.pasajero_id > pasajeros.id
+Ref: mascotas.reserva_id > reservas.id
+Ref: transacciones.reserva_id > reservas.id
+Ref: eventos_pago.transaccion_id > transacciones.id

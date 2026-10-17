@@ -1,0 +1,12 @@
+{
+  "name": "aerolinea-seed",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test",
+    "seed": "node seed.mjs",
+    "dry-run": "node seed.mjs --dry-run",
+    "verificar": "node seed.mjs --verificar"
+  }
+}
