@@ -1,90 +1,77 @@
 lockfileVersion: 7
-brain: 01M52R2AZCJGWP3WNHTHGG98BG
+brain: 01M53VRMR5PEXHW4454JGBBZMC
 engine:
   name: workflow-core
-  resolvedAt: "2026-10-16T20:37:47.527Z"
+  resolvedAt: "2026-10-17T02:57:55.379Z"
   selectedBy: default
 workflows:
   workflows/mi-primer-workflow.whatsapp.json:
     channel: WHATSAPP
     default: true
     description: "Mi primer workflow"
-    hash: "sha256:baa5110c2f0759c7f31fc243d3671ad294193bca2fd1c10a26375c80559da2b1"
-    lastPulledAt: "2026-10-17T02:34:27.347Z"
+    hash: "sha256:6ec70387abbe206a68de72fce743cb63304b6946a7a29370bab2c30541ddcddd"
+    lastPulledAt: "2026-10-17T03:06:06.738Z"
     name: "Mi primer workflow"
-    publishedHash: "sha256:baa5110c2f0759c7f31fc243d3671ad294193bca2fd1c10a26375c80559da2b1"
-    skillId: 52773
-    workflowId: 72673
+    skillId: 52813
+    workflowId: 72739
 tools:
   asientos-validar-retener:
     contractHash: "sha256:ab9cdea3288a9d6d664392598e6ef35b7f5437e8dc1297369fd1fb8482e9d27f"
     envelopeHash: "sha256:e4fddb34a3565f322a37d84a9206d524aad8b4601e73d0e3e30f7d8b8398305a"
-    hash: "sha256:78ad84edc29b886fc82d0b8285594f89489ffcdbef75a4cfa412bbe6318184fa"
-    lastPulledAt: "2026-10-16T20:50:06.097Z"
-    latestVersion: 1.0.0
+    hash: "sha256:dc3172400694c718189c95eb1b0223a5d5e5ca5a8a3b169cf4c2f3c23c89d34e"
+    lastPulledAt: "2026-10-17T03:08:53.826Z"
     metaHash: "sha256:6fc8c0428134baf0fc08c5aff1a80e6fb9cf644270d915fcb1d15e7bbb3f3ae0"
     name: asientos-validar-retener
     ownership: OWNED
-    toolId: 8883
-    versionIndex: 1
-    workflowId: 72712
+    toolId: 8900
+    workflowId: 72740
   cotizar:
-    contractHash: "sha256:734be45bbf4b82778da39bfb89beac624fb670278dba312f9a4182e2e01af939"
-    envelopeHash: "sha256:678ff1a7bd4dd08b1de286a4be9b347af9b29dea10d684dd3eb7cb9af75c93da"
-    hash: "sha256:d990a95f2aa81beb36902fb5061eb21de36b76b42bf5ac8297fa3165bee7375b"
-    lastPulledAt: "2026-10-16T20:49:59.440Z"
-    latestVersion: 1.0.0
+    contractHash: "sha256:956aedfe6817ebc6a4ca76f5c4885ee75b15bf98976d70b2c13e12b22b0a41d3"
+    envelopeHash: "sha256:176545c7f1e029dc1155d143dfe0924c2d11accdce8df5ea280610326ba1c0b8"
+    hash: "sha256:d215603db261b627a8308f8526e422386afd1b1e9f51a2539dc043afe83ac579"
+    lastPulledAt: "2026-10-17T03:09:01.830Z"
     metaHash: "sha256:fab283c97c0185090d8a8c8b91d52414bef6570e9ae6e19ee55f522ed33e9ea0"
     name: cotizar
     ownership: OWNED
-    toolId: 8885
-    versionIndex: 1
-    workflowId: 72714
+    toolId: 8901
+    workflowId: 72741
   equipaje-calcular:
-    contractHash: "sha256:7c0673a6e3fc6f191e93f8477221739f9f0c8a0b475cf9a56abb184c8940f71c"
-    envelopeHash: "sha256:68da4b8670c2ae6c36103e84c8db826f74c3a2ca42e158d3ec273b2150ca8482"
-    hash: "sha256:96585dd13e038850946ed4122b5c6544cbe535989e0cf561ceebbe179ac99ebe"
-    lastPulledAt: "2026-10-16T20:49:53.269Z"
-    latestVersion: 1.0.0
+    contractHash: "sha256:c6d5012bcaf1d6141a6a8e0f711ecdb7bf630807e39da6e0739bbe6aafc02e18"
+    envelopeHash: "sha256:46854ba45b5ef77a2c4c86784764ec0001de95e0bdcd8cc7d3e21b9712141e1b"
+    hash: "sha256:9fb307f7b4988724fb5c5474ad9d19e6f91fa71f36c6c67b819e0b4bf3004997"
+    lastPulledAt: "2026-10-17T03:09:09.594Z"
     metaHash: "sha256:3736fcb4939b615546d0f9a269e30d7953a4d08474f408e6f8c6226ba4b026b1"
     name: equipaje-calcular
     ownership: OWNED
-    toolId: 8887
-    versionIndex: 1
-    workflowId: 72716
+    toolId: 8902
+    workflowId: 72742
   rutas-listar:
-    contractHash: "sha256:175825edab270f60633e011dc1610f40361e583778101fc7facc0e9d8348c079"
-    envelopeHash: "sha256:ea2994ec4d58c829fe11797875145813c3fde6bc2547398be51312554f22f063"
-    hash: "sha256:b432bd9340f9bc9037532f9f9efa3b8ed08054c41b5365769763e79ead2e89ff"
-    lastPulledAt: "2026-10-16T20:49:40.452Z"
-    latestVersion: 1.0.0
+    contractHash: "sha256:2f959b8e1421f77f27e1932367e21132a3f16f4859ee7eeef0b35971074bfd57"
+    envelopeHash: "sha256:549eeb97ea6827667a9a7576c53c6553b82bd54990bf6078138e216998d9f4d3"
+    hash: "sha256:d46949021e1b7f56770f2461f995d11207566d36a18eb32d3354de850c9febb4"
+    lastPulledAt: "2026-10-17T03:09:18.517Z"
     metaHash: "sha256:36d82806b959b1414768044521e97fd03beab53130f57929f3e193905884a311"
     name: rutas-listar
     ownership: OWNED
-    toolId: 8884
-    versionIndex: 1
-    workflowId: 72713
+    toolId: 8903
+    workflowId: 72743
   transaccion-crear:
-    contractHash: "sha256:d9edeb6b3fdca55bebde0de93c12ba56cfd3e4b8b0e8842d2aefd3e3506f0369"
-    envelopeHash: "sha256:4db07ba075c1e3e65968ea3d51265729f6b1a1de3119223b2c9115d1b3a24c2c"
-    hash: "sha256:4af445d53a1c566655c8b6e3107a6bf793c9e8c559962eda90cf868acee6a46d"
-    lastPulledAt: "2026-10-16T20:50:12.445Z"
-    latestVersion: 1.0.0
+    contractHash: "sha256:e6c0e5a2273f089512ebbc4d71914230e67dac6a3380ddb602dd4ff7ec1fc670"
+    envelopeHash: "sha256:6dc6e22da3d49e1ffc7a44896365bbdea558bdeca54970ff0abcde034b9de145"
+    hash: "sha256:02d81d0115cfd78d2dd7daabfecfd485915b7aba13dbd3da39949975588ab1be"
+    lastPulledAt: "2026-10-17T03:09:27.564Z"
     metaHash: "sha256:62abc601037fe2ff6edac9a855412fb1767765f5c6834438c957b301e1e2b6e2"
     name: transaccion-crear
     ownership: OWNED
-    toolId: 8886
-    versionIndex: 1
-    workflowId: 72715
+    toolId: 8904
+    workflowId: 72744
   vuelos-buscar:
-    contractHash: "sha256:e13da94ac9fbfc945c24851c374e4923989483bf1565f1a7037aebdc0133d28a"
-    envelopeHash: "sha256:d9abc60c464e92453bee647d4499a3a00d71bc8a00fbe855d84919d93d9e5ff0"
-    hash: "sha256:b3ffa6880bef655e56c0d6aa4f4e2ecb1407fbf8b5b8508a035c9a5d2fd573ba"
-    lastPulledAt: "2026-10-16T20:49:46.891Z"
-    latestVersion: 1.0.0
+    contractHash: "sha256:7cf9d35652e8f03debe7f8921a0d2b1a7793cacda3c462f1d681a28ace575238"
+    envelopeHash: "sha256:16766670061090fdce75fbad5a7956ad570ee09ce2226bad599a42792f0108bb"
+    hash: "sha256:4f240a5751a46a82c21beb6b6b67c3555cadd56058c2409599bd08a43bc2d991"
+    lastPulledAt: "2026-10-17T03:09:36.415Z"
     metaHash: "sha256:f1a584bfaa8e1e2a759d05d4319f567bae4ab686dd727dd4135d8162496ba432"
     name: vuelos-buscar
     ownership: OWNED
-    toolId: 8882
-    versionIndex: 1
-    workflowId: 72711
+    toolId: 8905
+    workflowId: 72745

@@ -1,6 +1,6 @@
 {
-  "toolId": 8886,
-  "workflowId": 72715,
+  "toolId": 8904,
+  "workflowId": 72744,
   "toolName": "transaccion-crear",
   "toolDescription": "Crea la reserva pendiente y su transaccion de pago; devuelve PNR, total y enlace de pago",
   "triggerType": "DEFAULT",
@@ -8,7 +8,7 @@
   "inputs": [
     {
       "name": "payload",
-      "id": "wGUhYYNqKlJ6qmnF7CD4z",
+      "id": "Ai8o8ryGfGbtBLxibzUfF",
       "displayName": "payload",
       "description": "Cuerpo JSON (texto) para transaccion-crear. JSON: {\"hold_token\":\"..\",\"vuelo_ida_id\":\"..\",\"vuelo_regreso_id\":\"..\" (opcional),\"pasajeros\":[{\"nombre\":\"..\",\"documento\":\"..\",\"edad\":30,\"cabina\":true,\"bodega_ida\":{..},\"bodega_regreso\":{..},\"asiento_ida\":\"12A\",\"a",
       "type": "STRING",
@@ -21,15 +21,30 @@
   "outputs": [
     {
       "name": "respuesta",
-      "id": "fs8g1MgYgSVyQiWsazEIC",
+      "id": "pxN18EJWARLvL5_3Jk2tL",
       "displayName": "respuesta",
       "description": "JSON {ok,status,data} con la respuesta de la function (errores de negocio incluidos en data)",
-      "type": "SUCCESS"
+      "type": "SUCCESS",
+      "required": true,
+      "schema": null,
+      "position": 0
     }
   ],
   "nodes": [
     {
-      "id": "5X2GmQub_wcWCVesgptoK",
+      "id": "1oIQvRnQqq5KIEeDRWaRJ",
+      "type": "END",
+      "title": "Fin",
+      "position": [
+        1780,
+        50
+      ],
+      "configuration": {
+        "outputId": "pxN18EJWARLvL5_3Jk2tL"
+      }
+    },
+    {
+      "id": "48H1g1oxnd0gnYFf1KTt6",
       "type": "CODE",
       "title": "Respuesta",
       "position": [
@@ -43,21 +58,7 @@
       }
     },
     {
-      "id": "hl-Q2nRO5YZYdfugmw-Ln",
-      "type": "CODE",
-      "title": "Leer entrada",
-      "position": [
-        520,
-        50
-      ],
-      "configuration": {
-        "title": "Leer entrada",
-        "content": "var raw = \"{}\"; try { raw = $input.get(\"payload\"); } catch (e) { raw = \"{}\"; }\n$context.set(\"cuerpo\", typeof raw === \"string\" ? raw : JSON.stringify(raw));",
-        "memoryVersion": "v2"
-      }
-    },
-    {
-      "id": "K6zO8KYm6En9XxXvNsA40",
+      "id": "hmIbCUmf7G3OcnxjLSxUO",
       "type": "CODE",
       "title": "Respuesta con error",
       "position": [
@@ -71,19 +72,21 @@
       }
     },
     {
-      "id": "klz0EEqszBJUAtSO8v8bL",
-      "type": "END",
-      "title": "Fin con error",
+      "id": "l_b84Naixy4JKav7Sf1dy",
+      "type": "CODE",
+      "title": "Leer entrada",
       "position": [
-        1780,
-        410
+        520,
+        50
       ],
       "configuration": {
-        "outputId": "fs8g1MgYgSVyQiWsazEIC"
+        "title": "Leer entrada",
+        "content": "var raw = \"{}\"; try { raw = $input.get(\"payload\"); } catch (e) { raw = \"{}\"; }\n$context.set(\"cuerpo\", typeof raw === \"string\" ? raw : JSON.stringify(raw));",
+        "memoryVersion": "v2"
       }
     },
     {
-      "id": "UgOlHIqEhMCIOy2SZUKgU",
+      "id": "UnjfNht2LLhNxIjOHZqWr",
       "type": "HTTP",
       "title": "POST transaccion-crear",
       "position": [
@@ -93,7 +96,7 @@
       "configuration": {
         "title": "POST transaccion-crear",
         "method": "POST",
-        "url": "https://aerolinea-reservas.fn.jelou.ai/transaccion-crear",
+        "url": "https://aerolinea-reservas-b5dfca.fn.jelou.ai/transaccion-crear",
         "output": "resp",
         "headers": [
           {
@@ -121,62 +124,62 @@
       }
     },
     {
-      "id": "VG17gxKt_vr3pqXhfhYGp",
-      "type": "END",
-      "title": "Fin",
-      "position": [
-        1780,
-        50
-      ],
-      "configuration": {
-        "outputId": "fs8g1MgYgSVyQiWsazEIC"
-      }
-    },
-    {
-      "id": "VnFSVIkghHtZ85ey0GzOh",
+      "id": "VoTl-nAmHGJK4UqeKGhr0",
       "title": "Start",
       "type": "START",
       "position": [
         818,
         338
       ]
+    },
+    {
+      "id": "waR7qQvHi2tQ5_aO-WrZB",
+      "type": "END",
+      "title": "Fin con error",
+      "position": [
+        1780,
+        410
+      ],
+      "configuration": {
+        "outputId": "pxN18EJWARLvL5_3Jk2tL"
+      }
     }
   ],
   "edges": [
     {
-      "id": "0XOqGihhBXJi8vqAfHblW",
-      "sourceId": "VnFSVIkghHtZ85ey0GzOh",
-      "targetId": "hl-Q2nRO5YZYdfugmw-Ln",
+      "id": "BmyhIpvJJfiud8LAZm_9O",
+      "sourceId": "UnjfNht2LLhNxIjOHZqWr",
+      "targetId": "48H1g1oxnd0gnYFf1KTt6",
+      "branch": "success"
+    },
+    {
+      "id": "hopJEmgWU87NeyWDGAX5S",
+      "sourceId": "VoTl-nAmHGJK4UqeKGhr0",
+      "targetId": "l_b84Naixy4JKav7Sf1dy",
       "branch": "default"
     },
     {
-      "id": "5PW0sqNdKMQ_2OTEQloyy",
-      "sourceId": "UgOlHIqEhMCIOy2SZUKgU",
-      "targetId": "K6zO8KYm6En9XxXvNsA40",
+      "id": "mKCUGjr_tPJVdXAowplK8",
+      "sourceId": "48H1g1oxnd0gnYFf1KTt6",
+      "targetId": "1oIQvRnQqq5KIEeDRWaRJ",
+      "branch": "success"
+    },
+    {
+      "id": "nOWTyO2KTR7Dvs9IWRorF",
+      "sourceId": "UnjfNht2LLhNxIjOHZqWr",
+      "targetId": "hmIbCUmf7G3OcnxjLSxUO",
       "branch": "failed"
     },
     {
-      "id": "Es-Ki4kx4Fp__rjHJsgCY",
-      "sourceId": "K6zO8KYm6En9XxXvNsA40",
-      "targetId": "klz0EEqszBJUAtSO8v8bL",
+      "id": "TU9XxmkqWJutzeet8fw1H",
+      "sourceId": "hmIbCUmf7G3OcnxjLSxUO",
+      "targetId": "waR7qQvHi2tQ5_aO-WrZB",
       "branch": "success"
     },
     {
-      "id": "iKIL_VMdne32NPwThTHQ5",
-      "sourceId": "UgOlHIqEhMCIOy2SZUKgU",
-      "targetId": "5X2GmQub_wcWCVesgptoK",
-      "branch": "success"
-    },
-    {
-      "id": "iShWdk68A08OHb76i8z25",
-      "sourceId": "hl-Q2nRO5YZYdfugmw-Ln",
-      "targetId": "UgOlHIqEhMCIOy2SZUKgU",
-      "branch": "success"
-    },
-    {
-      "id": "vq02NaIgbLqdKhESgYO0T",
-      "sourceId": "5X2GmQub_wcWCVesgptoK",
-      "targetId": "VG17gxKt_vr3pqXhfhYGp",
+      "id": "ZuoOunAf8j37Ge11uGpAL",
+      "sourceId": "l_b84Naixy4JKav7Sf1dy",
+      "targetId": "UnjfNht2LLhNxIjOHZqWr",
       "branch": "success"
     }
   ]

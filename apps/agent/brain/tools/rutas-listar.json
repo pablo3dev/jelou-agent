@@ -1,6 +1,6 @@
 {
-  "toolId": 8884,
-  "workflowId": 72713,
+  "toolId": 8903,
+  "workflowId": 72743,
   "toolName": "rutas-listar",
   "toolDescription": "Lista las rutas disponibles con origen, destino y tarifa base",
   "triggerType": "DEFAULT",
@@ -9,76 +9,18 @@
   "outputs": [
     {
       "name": "respuesta",
-      "id": "6eb1xJt924w1MwaRifHCA",
+      "id": "2t6HpE2hJHIEzaWzWBE6Q",
       "displayName": "respuesta",
       "description": "JSON {ok,status,data} con la respuesta de la function (errores de negocio incluidos en data)",
-      "type": "SUCCESS"
+      "type": "SUCCESS",
+      "required": true,
+      "schema": null,
+      "position": 0
     }
   ],
   "nodes": [
     {
-      "id": "61Y2JMOHTPPQyXooq9ri7",
-      "type": "CODE",
-      "title": "Leer entrada",
-      "position": [
-        520,
-        50
-      ],
-      "configuration": {
-        "title": "Leer entrada",
-        "content": "$context.set(\"cuerpo\", \"{}\");",
-        "memoryVersion": "v2"
-      }
-    },
-    {
-      "id": "BcHdq7TGm2NntCoVBhSzd",
-      "type": "CODE",
-      "title": "Respuesta",
-      "position": [
-        1360,
-        410
-      ],
-      "configuration": {
-        "title": "Respuesta",
-        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
-        "memoryVersion": "v2"
-      }
-    },
-    {
-      "id": "DNvwh6B03ErETA6hyu2mO",
-      "type": "END",
-      "title": "Fin con error",
-      "position": [
-        1780,
-        410
-      ],
-      "configuration": {
-        "outputId": "6eb1xJt924w1MwaRifHCA"
-      }
-    },
-    {
-      "id": "GHFue03C_Brm_PyKMx7zj",
-      "title": "Start",
-      "type": "START",
-      "position": [
-        818,
-        338
-      ]
-    },
-    {
-      "id": "TxSM9Bk0yixjLDDYRHyR-",
-      "type": "END",
-      "title": "Fin",
-      "position": [
-        1780,
-        50
-      ],
-      "configuration": {
-        "outputId": "6eb1xJt924w1MwaRifHCA"
-      }
-    },
-    {
-      "id": "uai70NbdIngKxdJ77xZ5e",
+      "id": "--IAS3h6bPyiJRza9gm2X",
       "type": "HTTP",
       "title": "POST rutas-listar",
       "position": [
@@ -88,7 +30,7 @@
       "configuration": {
         "title": "POST rutas-listar",
         "method": "POST",
-        "url": "https://aerolinea-reservas.fn.jelou.ai/rutas-listar",
+        "url": "https://aerolinea-reservas-b5dfca.fn.jelou.ai/rutas-listar",
         "output": "resp",
         "headers": [
           {
@@ -116,7 +58,40 @@
       }
     },
     {
-      "id": "yuCG5-8kzZrSfAb5iM5Z8",
+      "id": "3Y7sgPWnxYGFkp_aeIsmk",
+      "title": "Start",
+      "type": "START",
+      "position": [
+        818,
+        338
+      ]
+    },
+    {
+      "id": "6xHN7OKMKExjuSa8fI_bG",
+      "type": "END",
+      "title": "Fin con error",
+      "position": [
+        1780,
+        410
+      ],
+      "configuration": {
+        "outputId": "2t6HpE2hJHIEzaWzWBE6Q"
+      }
+    },
+    {
+      "id": "b8ZcNaJp1tB6EBAshkBQO",
+      "type": "END",
+      "title": "Fin",
+      "position": [
+        1780,
+        50
+      ],
+      "configuration": {
+        "outputId": "2t6HpE2hJHIEzaWzWBE6Q"
+      }
+    },
+    {
+      "id": "FzCUNGOShd9XNF-UYynX4",
       "type": "CODE",
       "title": "Respuesta con error",
       "position": [
@@ -128,44 +103,72 @@
         "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
         "memoryVersion": "v2"
       }
+    },
+    {
+      "id": "lRPEdwPbsaJmbvGdv0jV6",
+      "type": "CODE",
+      "title": "Respuesta",
+      "position": [
+        1360,
+        410
+      ],
+      "configuration": {
+        "title": "Respuesta",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "RoUvPlHfbFcTUeEUB3BLw",
+      "type": "CODE",
+      "title": "Leer entrada",
+      "position": [
+        520,
+        50
+      ],
+      "configuration": {
+        "title": "Leer entrada",
+        "content": "$context.set(\"cuerpo\", \"{}\");",
+        "memoryVersion": "v2"
+      }
     }
   ],
   "edges": [
     {
-      "id": "EsrjEfT7RmbiYvbWSnhdJ",
-      "sourceId": "uai70NbdIngKxdJ77xZ5e",
-      "targetId": "yuCG5-8kzZrSfAb5iM5Z8",
+      "id": "27Hlqv2pXy4MN-RTqKMvj",
+      "sourceId": "--IAS3h6bPyiJRza9gm2X",
+      "targetId": "FzCUNGOShd9XNF-UYynX4",
       "branch": "failed"
     },
     {
-      "id": "Kp_HiWvI0osIl1JVZBUet",
-      "sourceId": "uai70NbdIngKxdJ77xZ5e",
-      "targetId": "BcHdq7TGm2NntCoVBhSzd",
+      "id": "6ZuuA2sMEE_Sxo2y2xBBQ",
+      "sourceId": "FzCUNGOShd9XNF-UYynX4",
+      "targetId": "6xHN7OKMKExjuSa8fI_bG",
       "branch": "success"
     },
     {
-      "id": "lbHCHDdd_PMIvEkMWImZB",
-      "sourceId": "GHFue03C_Brm_PyKMx7zj",
-      "targetId": "61Y2JMOHTPPQyXooq9ri7",
+      "id": "LgW9QyXa7OzihIiKkQp7d",
+      "sourceId": "RoUvPlHfbFcTUeEUB3BLw",
+      "targetId": "--IAS3h6bPyiJRza9gm2X",
+      "branch": "success"
+    },
+    {
+      "id": "Rsj4EGarOeHctzYH2a-Ok",
+      "sourceId": "--IAS3h6bPyiJRza9gm2X",
+      "targetId": "lRPEdwPbsaJmbvGdv0jV6",
+      "branch": "success"
+    },
+    {
+      "id": "t7oiqC7_h-LbzhcCd-MXs",
+      "sourceId": "lRPEdwPbsaJmbvGdv0jV6",
+      "targetId": "b8ZcNaJp1tB6EBAshkBQO",
+      "branch": "success"
+    },
+    {
+      "id": "VpQwUqTOXR3SAYf1wiJHH",
+      "sourceId": "3Y7sgPWnxYGFkp_aeIsmk",
+      "targetId": "RoUvPlHfbFcTUeEUB3BLw",
       "branch": "default"
-    },
-    {
-      "id": "LNzOr7RCfauQw0TBZzYI3",
-      "sourceId": "BcHdq7TGm2NntCoVBhSzd",
-      "targetId": "TxSM9Bk0yixjLDDYRHyR-",
-      "branch": "success"
-    },
-    {
-      "id": "RZPnKvMDf28B9ql9eBgTz",
-      "sourceId": "61Y2JMOHTPPQyXooq9ri7",
-      "targetId": "uai70NbdIngKxdJ77xZ5e",
-      "branch": "success"
-    },
-    {
-      "id": "ThD-YyRb02LNTz1bJ9pX1",
-      "sourceId": "yuCG5-8kzZrSfAb5iM5Z8",
-      "targetId": "DNvwh6B03ErETA6hyu2mO",
-      "branch": "success"
     }
   ]
 }

@@ -1,56 +1,11 @@
 {
-  "workflowId": 72673,
+  "workflowId": 72739,
   "workflowName": "Aerolinea reservas",
   "workflowDescription": "Agente de reservas de vuelos por WhatsApp con pago (PoC)",
   "workflowDefault": true,
   "nodes": [
     {
-      "id": "aB8Ht_oGuGVT-tQ4K19FT",
-      "type": "CHANNEL_MESSAGE",
-      "title": "Cierre",
-      "position": [
-        1594,
-        338
-      ],
-      "configuration": {
-        "messages": [
-          {
-            "id": "tmp_cierre-m",
-            "type": "text",
-            "text": "Gracias por volar con nosotros."
-          }
-        ]
-      }
-    },
-    {
-      "id": "AT7H7SYqK3N1j6zIc9nyc",
-      "title": "Start",
-      "type": "START",
-      "position": [
-        818,
-        338
-      ]
-    },
-    {
-      "id": "nOcdeACG3Cch52ypHLmKx",
-      "type": "CHANNEL_MESSAGE",
-      "title": "Sesion expirada",
-      "position": [
-        1594,
-        688
-      ],
-      "configuration": {
-        "messages": [
-          {
-            "id": "tmp_expirada-m",
-            "type": "text",
-            "text": "Cerre esta conversacion por inactividad. Escribeme cuando quieras y retomamos."
-          }
-        ]
-      }
-    },
-    {
-      "id": "ouh77Lyk04zkfNrYih_B2",
+      "id": "ES9DF9NIlkxwr8yoUAMgX",
       "type": "AI_TASK",
       "title": "Agente de reservas",
       "position": [
@@ -208,25 +163,70 @@
           "description": "Termina cuando el cliente recibio la confirmacion final (PNR) o el aviso de pago rechazado o vencido, o si pide dejar la reserva. No envies despedida: el siguiente paso la envia."
         }
       }
+    },
+    {
+      "id": "IbhsEg2AKnTs7sBGis1rR",
+      "type": "CHANNEL_MESSAGE",
+      "title": "Sesion expirada",
+      "position": [
+        1594,
+        688
+      ],
+      "configuration": {
+        "messages": [
+          {
+            "id": "tmp_expirada-m",
+            "type": "text",
+            "text": "Cerre esta conversacion por inactividad. Escribeme cuando quieras y retomamos."
+          }
+        ]
+      }
+    },
+    {
+      "id": "LEhC9CKKc71dOjUSdeMer",
+      "title": "Start",
+      "type": "START",
+      "position": [
+        818,
+        338
+      ]
+    },
+    {
+      "id": "SNtDG2RXEF1I1ycU15oTq",
+      "type": "CHANNEL_MESSAGE",
+      "title": "Cierre",
+      "position": [
+        1594,
+        338
+      ],
+      "configuration": {
+        "messages": [
+          {
+            "id": "tmp_cierre-m",
+            "type": "text",
+            "text": "Gracias por volar con nosotros."
+          }
+        ]
+      }
     }
   ],
   "edges": [
     {
-      "id": "1M1igO2cSk5HWukZNYEQs",
-      "sourceId": "AT7H7SYqK3N1j6zIc9nyc",
-      "targetId": "ouh77Lyk04zkfNrYih_B2",
+      "id": "bgS4vIO1yxCgUR2UEm0e2",
+      "sourceId": "LEhC9CKKc71dOjUSdeMer",
+      "targetId": "ES9DF9NIlkxwr8yoUAMgX",
       "branch": "default"
     },
     {
-      "id": "40Ei8F52Be87Z3NMvM0Of",
-      "sourceId": "ouh77Lyk04zkfNrYih_B2",
-      "targetId": "nOcdeACG3Cch52ypHLmKx",
+      "id": "kAbXuDqUn2JFXLQ1iD380",
+      "sourceId": "ES9DF9NIlkxwr8yoUAMgX",
+      "targetId": "IbhsEg2AKnTs7sBGis1rR",
       "branch": "expire"
     },
     {
-      "id": "dC9esOUCQTHQAyDZDzchK",
-      "sourceId": "ouh77Lyk04zkfNrYih_B2",
-      "targetId": "aB8Ht_oGuGVT-tQ4K19FT",
+      "id": "Ryswx3Fu6COL0jD3OXJ1w",
+      "sourceId": "ES9DF9NIlkxwr8yoUAMgX",
+      "targetId": "SNtDG2RXEF1I1ycU15oTq",
       "branch": "success"
     }
   ]

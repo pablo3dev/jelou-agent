@@ -3,7 +3,7 @@
 // Sin credenciales: el token es el secreto de organizacion {{$secret.JELOU_FN_INVOKE_KEY}}.
 import { readFileSync, writeFileSync } from "node:fs";
 
-const FN_URL = process.env.FUNCTIONS_URL ?? "https://aerolinea-reservas.fn.jelou.ai";
+const FN_URL = process.env.FUNCTIONS_URL ?? "https://aerolinea-reservas-b5dfca.fn.jelou.ai";
 const TOOLS = {
   "rutas-listar": { sinEntrada: true, desc: "" },
   "vuelos-buscar": { desc: 'JSON: {"ruta_id":"BOG-MDE","fecha_ida":"2026-12-10","fecha_regreso":"2026-12-20" (opcional),"pasajeros":2}' },

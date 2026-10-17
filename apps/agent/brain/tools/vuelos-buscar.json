@@ -1,6 +1,6 @@
 {
-  "toolId": 8882,
-  "workflowId": 72711,
+  "toolId": 8905,
+  "workflowId": 72745,
   "toolName": "vuelos-buscar",
   "toolDescription": "Busca vuelos de ida y regreso con asientos libres y tarifa por pasajero",
   "triggerType": "DEFAULT",
@@ -8,38 +8,31 @@
   "inputs": [
     {
       "name": "payload",
+      "id": "YFlFobqHD8-F775zYtW9I",
       "displayName": "payload",
       "description": "Cuerpo JSON (texto) para vuelos-buscar. JSON: {\"ruta_id\":\"BOG-MDE\",\"fecha_ida\":\"2026-12-10\",\"fecha_regreso\":\"2026-12-20\" (opcional),\"pasajeros\":2}",
       "type": "STRING",
-      "required": true
+      "required": true,
+      "defaultValue": null,
+      "configuration": null,
+      "position": 0
     }
   ],
   "outputs": [
     {
       "name": "respuesta",
-      "id": "f0eAFSxgiU4OZ5qTKSaim",
+      "id": "ha4a9GzkcDbFvWcLe3el0",
       "displayName": "respuesta",
       "description": "JSON {ok,status,data} con la respuesta de la function (errores de negocio incluidos en data)",
-      "type": "SUCCESS"
+      "type": "SUCCESS",
+      "required": true,
+      "schema": null,
+      "position": 0
     }
   ],
   "nodes": [
     {
-      "id": "CdzrKiRVZFS7QdIaMcmzl",
-      "type": "CODE",
-      "title": "Respuesta con error",
-      "position": [
-        1360,
-        50
-      ],
-      "configuration": {
-        "title": "Respuesta con error",
-        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
-        "memoryVersion": "v2"
-      }
-    },
-    {
-      "id": "eA0UgfF1kQdZbDeRyGlUe",
+      "id": "6kmxq5vsCpewyM6zuwPUh",
       "type": "HTTP",
       "title": "POST vuelos-buscar",
       "position": [
@@ -49,7 +42,7 @@
       "configuration": {
         "title": "POST vuelos-buscar",
         "method": "POST",
-        "url": "https://aerolinea-reservas.fn.jelou.ai/vuelos-buscar",
+        "url": "https://aerolinea-reservas-b5dfca.fn.jelou.ai/vuelos-buscar",
         "output": "resp",
         "headers": [
           {
@@ -77,7 +70,21 @@
       }
     },
     {
-      "id": "eJZ5CJs-Qd5NaI7Ht6jGF",
+      "id": "C2Z1a3aSKXutqp8-hXF-A",
+      "type": "CODE",
+      "title": "Respuesta con error",
+      "position": [
+        1360,
+        50
+      ],
+      "configuration": {
+        "title": "Respuesta con error",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "f-p7A_F3VNc-5yjnWLX0k",
       "type": "CODE",
       "title": "Respuesta",
       "position": [
@@ -91,40 +98,7 @@
       }
     },
     {
-      "id": "RZFylCVMyQMqQYVBfmb5R",
-      "title": "Start",
-      "type": "START",
-      "position": [
-        818,
-        338
-      ]
-    },
-    {
-      "id": "tmp_end1",
-      "type": "END",
-      "title": "Fin",
-      "position": [
-        1780,
-        50
-      ],
-      "configuration": {
-        "outputId": "f0eAFSxgiU4OZ5qTKSaim"
-      }
-    },
-    {
-      "id": "tmp_end2",
-      "type": "END",
-      "title": "Fin con error",
-      "position": [
-        1780,
-        410
-      ],
-      "configuration": {
-        "outputId": "f0eAFSxgiU4OZ5qTKSaim"
-      }
-    },
-    {
-      "id": "tmp_in",
+      "id": "f9Q8l6pPM_bZPxenFo6bR",
       "type": "CODE",
       "title": "Leer entrada",
       "position": [
@@ -136,43 +110,76 @@
         "content": "var raw = \"{}\"; try { raw = $input.get(\"payload\"); } catch (e) { raw = \"{}\"; }\n$context.set(\"cuerpo\", typeof raw === \"string\" ? raw : JSON.stringify(raw));",
         "memoryVersion": "v2"
       }
+    },
+    {
+      "id": "hofj5_guqshiN-He8yB40",
+      "type": "END",
+      "title": "Fin",
+      "position": [
+        1780,
+        50
+      ],
+      "configuration": {
+        "outputId": "ha4a9GzkcDbFvWcLe3el0"
+      }
+    },
+    {
+      "id": "jkmUYjFtiE3QCc278-5m_",
+      "title": "Start",
+      "type": "START",
+      "position": [
+        818,
+        338
+      ]
+    },
+    {
+      "id": "u-chR9OC0a-Aeep6Dq6YU",
+      "type": "END",
+      "title": "Fin con error",
+      "position": [
+        1780,
+        410
+      ],
+      "configuration": {
+        "outputId": "ha4a9GzkcDbFvWcLe3el0"
+      }
     }
   ],
   "edges": [
     {
-      "id": "1H00j1Ot5yfej3OJrfAr3",
-      "sourceId": "RZFylCVMyQMqQYVBfmb5R",
-      "targetId": "tmp_in",
+      "id": "FVVnuPYec2mSqaa9uQiQl",
+      "sourceId": "jkmUYjFtiE3QCc278-5m_",
+      "targetId": "f9Q8l6pPM_bZPxenFo6bR",
       "branch": "default"
     },
     {
-      "id": "1MG8HIBd7FE7IRcM86Pgf",
-      "sourceId": "eA0UgfF1kQdZbDeRyGlUe",
-      "targetId": "eJZ5CJs-Qd5NaI7Ht6jGF",
+      "id": "gRu9ZilrL-EOEf0Squsys",
+      "sourceId": "f-p7A_F3VNc-5yjnWLX0k",
+      "targetId": "hofj5_guqshiN-He8yB40",
       "branch": "success"
     },
     {
-      "id": "2WM0dKf-fAoY5AQ8ZvPQY",
-      "sourceId": "CdzrKiRVZFS7QdIaMcmzl",
-      "targetId": "tmp_end2",
+      "id": "ID7ByGhcfMpeAA6vjGbMs",
+      "sourceId": "C2Z1a3aSKXutqp8-hXF-A",
+      "targetId": "u-chR9OC0a-Aeep6Dq6YU",
       "branch": "success"
     },
     {
-      "id": "CCUWDQud9Dgm1oaijRvie",
-      "sourceId": "eA0UgfF1kQdZbDeRyGlUe",
-      "targetId": "CdzrKiRVZFS7QdIaMcmzl",
+      "id": "J5k0yvteaz0gtv2CdOzJa",
+      "sourceId": "6kmxq5vsCpewyM6zuwPUh",
+      "targetId": "C2Z1a3aSKXutqp8-hXF-A",
       "branch": "failed"
     },
     {
-      "id": "mBUgRVtzaV2yF62Z59NSO",
-      "sourceId": "eJZ5CJs-Qd5NaI7Ht6jGF",
-      "targetId": "tmp_end1",
+      "id": "JfOIdE7JqAZ0ImLy6nKP8",
+      "sourceId": "f9Q8l6pPM_bZPxenFo6bR",
+      "targetId": "6kmxq5vsCpewyM6zuwPUh",
       "branch": "success"
     },
     {
-      "id": "ZE6J0MyVBHeTRLSdnKT9-",
-      "sourceId": "tmp_in",
-      "targetId": "eA0UgfF1kQdZbDeRyGlUe",
+      "id": "rtvV_8_kgvOSiSLurWeZU",
+      "sourceId": "6kmxq5vsCpewyM6zuwPUh",
+      "targetId": "f-p7A_F3VNc-5yjnWLX0k",
       "branch": "success"
     }
   ]

@@ -4,7 +4,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 const destino = process.argv[2] ?? "brain/workflows/mi-primer-workflow.whatsapp.json";
-const FN_URL = process.env.FUNCTIONS_URL ?? "https://aerolinea-reservas.fn.jelou.ai";
+const FN_URL = process.env.FUNCTIONS_URL ?? "https://aerolinea-reservas-b5dfca.fn.jelou.ai";
 const previo = JSON.parse(readFileSync(destino, "utf8"));
 const instructions = readFileSync("workflow/agent.prompt.md", "utf8");
 // Sin pausa por tool: con action "pause" la plataforma pausa justo tras la tool y el mensaje con el enlace de pago nunca se entrega.

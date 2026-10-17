@@ -1,6 +1,6 @@
 {
-  "toolId": 8887,
-  "workflowId": 72716,
+  "toolId": 8902,
+  "workflowId": 72742,
   "toolName": "equipaje-calcular",
   "toolDescription": "Calcula peso volumetrico, kilos cobrables y precio de una pieza de equipaje de bodega",
   "triggerType": "DEFAULT",
@@ -8,36 +8,31 @@
   "inputs": [
     {
       "name": "payload",
+      "id": "eZNUhhWs4ZnyUizG2nBNO",
       "displayName": "payload",
       "description": "Cuerpo JSON (texto) para equipaje-calcular. JSON: {\"vuelo_id\":\"<vuelo_id>\",\"bodega\":{\"largo_cm\":60,\"ancho_cm\":40,\"alto_cm\":30,\"peso_kg\":20}}",
       "type": "STRING",
-      "required": true
+      "required": true,
+      "defaultValue": null,
+      "configuration": null,
+      "position": 0
     }
   ],
   "outputs": [
     {
       "name": "respuesta",
-      "id": "42psZxzDB_DiOnjiPMEGe",
+      "id": "ka4hOhrCkIdwdGN653wLs",
       "displayName": "respuesta",
       "description": "JSON {ok,status,data} con la respuesta de la function (errores de negocio incluidos en data)",
-      "type": "SUCCESS"
+      "type": "SUCCESS",
+      "required": true,
+      "schema": null,
+      "position": 0
     }
   ],
   "nodes": [
     {
-      "id": "1aQCdWgeILoW-M68u5B53",
-      "type": "END",
-      "title": "Fin con error",
-      "position": [
-        1780,
-        410
-      ],
-      "configuration": {
-        "outputId": "42psZxzDB_DiOnjiPMEGe"
-      }
-    },
-    {
-      "id": "5JIVIJaNE6MzPJxnTydC0",
+      "id": "47s_KTEslhDbaUAHMIabV",
       "type": "CODE",
       "title": "Respuesta",
       "position": [
@@ -51,7 +46,68 @@
       }
     },
     {
-      "id": "he4ilAhZcM44ptObNpcV6",
+      "id": "4Hj-h1t_pycMvkRqXdJ10",
+      "type": "END",
+      "title": "Fin con error",
+      "position": [
+        1780,
+        410
+      ],
+      "configuration": {
+        "outputId": "ka4hOhrCkIdwdGN653wLs"
+      }
+    },
+    {
+      "id": "4NFtsm1IVtVoQC3BXm4RQ",
+      "type": "CODE",
+      "title": "Respuesta con error",
+      "position": [
+        1360,
+        50
+      ],
+      "configuration": {
+        "title": "Respuesta con error",
+        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "gJtm6o1WTccVIiGwa_Tdn",
+      "title": "Start",
+      "type": "START",
+      "position": [
+        818,
+        338
+      ]
+    },
+    {
+      "id": "IQxON0JJr1gdV4o9tEppO",
+      "type": "END",
+      "title": "Fin",
+      "position": [
+        1780,
+        50
+      ],
+      "configuration": {
+        "outputId": "ka4hOhrCkIdwdGN653wLs"
+      }
+    },
+    {
+      "id": "kYr2dNecCBgRrU7ZdFBcS",
+      "type": "CODE",
+      "title": "Leer entrada",
+      "position": [
+        520,
+        50
+      ],
+      "configuration": {
+        "title": "Leer entrada",
+        "content": "var raw = \"{}\"; try { raw = $input.get(\"payload\"); } catch (e) { raw = \"{}\"; }\n$context.set(\"cuerpo\", typeof raw === \"string\" ? raw : JSON.stringify(raw));",
+        "memoryVersion": "v2"
+      }
+    },
+    {
+      "id": "YsqEDzjPkZzp52bSmopUy",
       "type": "HTTP",
       "title": "POST equipaje-calcular",
       "position": [
@@ -61,7 +117,7 @@
       "configuration": {
         "title": "POST equipaje-calcular",
         "method": "POST",
-        "url": "https://aerolinea-reservas.fn.jelou.ai/equipaje-calcular",
+        "url": "https://aerolinea-reservas-b5dfca.fn.jelou.ai/equipaje-calcular",
         "output": "resp",
         "headers": [
           {
@@ -87,93 +143,44 @@
           "timeout": 30000
         }
       }
-    },
-    {
-      "id": "hIh1WeeYq6PDqwOcr1kLp",
-      "type": "CODE",
-      "title": "Respuesta con error",
-      "position": [
-        1360,
-        50
-      ],
-      "configuration": {
-        "title": "Respuesta con error",
-        "content": "var r = $context.get(\"resp\") || {};\nvar st = Number(r.status) || 0;\n$output.set(\"respuesta\", JSON.stringify({ ok: st >= 200 && st < 300, status: st, data: r.data === undefined ? null : r.data }));",
-        "memoryVersion": "v2"
-      }
-    },
-    {
-      "id": "iDXxbT_es4U8nO8s-NHhJ",
-      "type": "CODE",
-      "title": "Leer entrada",
-      "position": [
-        520,
-        50
-      ],
-      "configuration": {
-        "title": "Leer entrada",
-        "content": "var raw = \"{}\"; try { raw = $input.get(\"payload\"); } catch (e) { raw = \"{}\"; }\n$context.set(\"cuerpo\", typeof raw === \"string\" ? raw : JSON.stringify(raw));",
-        "memoryVersion": "v2"
-      }
-    },
-    {
-      "id": "wudHNgVF5djl9PDihcHcA",
-      "type": "END",
-      "title": "Fin",
-      "position": [
-        1780,
-        50
-      ],
-      "configuration": {
-        "outputId": "42psZxzDB_DiOnjiPMEGe"
-      }
-    },
-    {
-      "id": "zBqthun7mwJohnQdD7One",
-      "title": "Start",
-      "type": "START",
-      "position": [
-        818,
-        338
-      ]
     }
   ],
   "edges": [
     {
-      "id": "2SQGgmDralG62kk0CP8AA",
-      "sourceId": "5JIVIJaNE6MzPJxnTydC0",
-      "targetId": "wudHNgVF5djl9PDihcHcA",
+      "id": "23E1mhuWBkNdE5BkBEd6f",
+      "sourceId": "47s_KTEslhDbaUAHMIabV",
+      "targetId": "IQxON0JJr1gdV4o9tEppO",
       "branch": "success"
     },
     {
-      "id": "8oyP3ovlkOeLG4KnHD-VP",
-      "sourceId": "iDXxbT_es4U8nO8s-NHhJ",
-      "targetId": "he4ilAhZcM44ptObNpcV6",
+      "id": "OFHqJCs2cOxst24Gd-e1R",
+      "sourceId": "YsqEDzjPkZzp52bSmopUy",
+      "targetId": "47s_KTEslhDbaUAHMIabV",
       "branch": "success"
     },
     {
-      "id": "iLQNqhUMEq3_ssurAlcN9",
-      "sourceId": "zBqthun7mwJohnQdD7One",
-      "targetId": "iDXxbT_es4U8nO8s-NHhJ",
-      "branch": "default"
-    },
-    {
-      "id": "L7BaR1Dz6alnZzesOvaX1",
-      "sourceId": "hIh1WeeYq6PDqwOcr1kLp",
-      "targetId": "1aQCdWgeILoW-M68u5B53",
+      "id": "q3YT_bIdRpZJ7xu4TJ0AJ",
+      "sourceId": "4NFtsm1IVtVoQC3BXm4RQ",
+      "targetId": "4Hj-h1t_pycMvkRqXdJ10",
       "branch": "success"
     },
     {
-      "id": "uoG_JdCRZtdOOjr0tVJje",
-      "sourceId": "he4ilAhZcM44ptObNpcV6",
-      "targetId": "5JIVIJaNE6MzPJxnTydC0",
-      "branch": "success"
-    },
-    {
-      "id": "VbrVgtvA3HgmUNZuAE8Il",
-      "sourceId": "he4ilAhZcM44ptObNpcV6",
-      "targetId": "hIh1WeeYq6PDqwOcr1kLp",
+      "id": "s6mTFUhRnZgidLF5FN0FD",
+      "sourceId": "YsqEDzjPkZzp52bSmopUy",
+      "targetId": "4NFtsm1IVtVoQC3BXm4RQ",
       "branch": "failed"
+    },
+    {
+      "id": "X7bNHFy3qcQ0KWZ7NsKap",
+      "sourceId": "kYr2dNecCBgRrU7ZdFBcS",
+      "targetId": "YsqEDzjPkZzp52bSmopUy",
+      "branch": "success"
+    },
+    {
+      "id": "z1gr8bQzMXUet_l3AH3VN",
+      "sourceId": "gJtm6o1WTccVIiGwa_Tdn",
+      "targetId": "kYr2dNecCBgRrU7ZdFBcS",
+      "branch": "default"
     }
   ]
 }

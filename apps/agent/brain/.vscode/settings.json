@@ -5,6 +5,12 @@
         "tools/*.json"
       ],
       "url": "./tools/.schema.json"
+    },
+    {
+      "fileMatch": [
+        "workflows/*.json"
+      ],
+      "url": "./workflows/.schema.json"
     }
   ]
 }
