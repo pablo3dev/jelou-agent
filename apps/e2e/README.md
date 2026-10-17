@@ -13,7 +13,7 @@ uv sync
 uv run pytest
 ```
 
-La primera vez se abre Chrome con el perfil `.profile/` (propio, gitignoreado): escanea el QR de WhatsApp Web; la prueba espera hasta 5 min. Las siguientes corridas reutilizan la sesión. Abre en pestañas WhatsApp, pasarela y las 4 vistas del CRM. Pausa de 3 s (`E2E_PAUSA_S`) tras cada acción y tras cada respuesta del chat. Capturas en `artifacts/`.
+La primera vez se abre Chrome con el perfil `.profile/` (propio, gitignoreado): escanea el QR de WhatsApp Web; la prueba espera hasta 5 min. Las siguientes corridas reutilizan la sesión. Abre en pestañas WhatsApp, pasarela y las 4 vistas del CRM. Pausa de 1 s (`E2E_PAUSA_S`; la espera a que el agente termine de responder es de al menos 2 s) tras cada acción y tras cada respuesta del chat. Capturas en `artifacts/`.
 
 ## Escenarios
 
@@ -68,4 +68,4 @@ Abre Chrome (perfil `.profile/`) en el chat del agente: menú ⋮ → **Eliminar
 
 ## Riesgo con WhatsApp
 
-WhatsApp prohíbe clientes automatizados no oficiales; el riesgo de restricción de la cuenta existe aunque el volumen sea bajo. Mitigaciones incluidas: perfil dedicado, tipeo con retardo, pausas de 3 s, tope de mensajes por corrida (`E2E_MAX_MENSAJES`), cooldown entre corridas (`E2E_COOLDOWN_MIN`) y un solo escenario por corrida. Usa un número de pruebas, no tu cuenta principal.
+WhatsApp prohíbe clientes automatizados no oficiales; el riesgo de restricción de la cuenta existe aunque el volumen sea bajo. Mitigaciones incluidas: perfil dedicado, tipeo con retardo, pausas de 1 s, tope de mensajes por corrida (`E2E_MAX_MENSAJES`), cooldown entre corridas (`E2E_COOLDOWN_MIN`) y un solo escenario por corrida. Usa un número de pruebas, no tu cuenta principal.

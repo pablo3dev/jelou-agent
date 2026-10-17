@@ -74,14 +74,14 @@ class Chat:
         pausa()
 
     def esperar_respuesta(self, antes: int, timeout_s: int = 120) -> list[str]:
-        """Espera mensajes nuevos del bot y a que dejen de llegar (PAUSA_S sin cambios)."""
+        """Espera mensajes nuevos del bot y a que dejen de llegar (PAUSA_S sin cambios, minimo 2 s)."""
         fin = time.time() + timeout_s
         while self.contar() <= antes:
             if time.time() > fin:
                 raise TimeoutError("El agente no respondio")
             time.sleep(1)
         estable, ultimo = 0.0, self.contar()
-        while estable < PAUSA_S and time.time() < fin:
+        while estable < max(PAUSA_S, 2) and time.time() < fin:  # al menos 2 s sin mensajes nuevos: evita leer una respuesta a medias
             time.sleep(1)
             n = self.contar()
             estable = estable + 1 if n == ultimo else 0
