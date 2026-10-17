@@ -26,7 +26,7 @@ VIDEO = env("E2E_VIDEO", "false").lower() == "true"  # un video por pestana en a
 VIDEO_ALTO = int(env("E2E_VIDEO_ALTO", "1080"))  # 1080 (1920x1080) o 720 (1280x720)
 PAUSA_S = float(env("E2E_PAUSA_S", "1"))
 MAX_MENSAJES = int(env("E2E_MAX_MENSAJES", "45"))
-COOLDOWN_MIN = int(env("E2E_COOLDOWN_MIN", "10"))
+COOLDOWN_MIN = int(env("E2E_COOLDOWN_MIN", "11"))
 PERFIL = RAIZ / ".profile"
 ESTADO = RAIZ / ".state"
 ARTEFACTOS = RAIZ / "artifacts"
