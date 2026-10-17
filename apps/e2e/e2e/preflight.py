@@ -80,6 +80,10 @@ def ejecutar() -> None:
 
     st, co = post("cotizar", {"vuelo_ida_id": vid, "vuelo_regreso_id": vrid, "pasajeros": [{"edad": 30}, {"edad": 12}]})
     r.ok("cotizar 200", st == 200, f"status {st} {str(co)[:120]}")
+    st, co = post("cotizar", {"vuelo_ida_id": vid, "vuelo_regreso_id": vrid, "pasajeros": [{"edad": 30}],
+                              "mascota": {"pasajero_indice": 0, "especie": "perro", "peso_kg": 5, "trayecto": "REGRESO"}})
+    lm = [l for l in (co or {}).get("lineas", []) if l.get("concepto") == "MASCOTA"] if isinstance(co, dict) else []
+    r.ok("cotizar mascota de regreso: linea MASCOTA en REGRESO", st == 200 and [l.get("trayecto") for l in lm] == ["REGRESO"], f"status {st} {lm}")
 
     # Escrituras: solo entradas invalidas; se espera error de negocio (4xx distinto de 401), nunca 401/5xx.
     st, _ = post("asientos-validar-retener", {"vuelo_ida_id": vid, "edades": [30], "asientos_ida": "99Z"})
