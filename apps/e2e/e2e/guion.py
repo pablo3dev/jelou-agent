@@ -12,6 +12,19 @@ from .datos import Escenario, Pasajero
 ENLACE = re.compile(r"https?://\S+/(?:pay|pagar)/([A-Za-z0-9_-]+)")
 
 
+def _pasajero_en(texto: str, esc: Escenario, con_bodega: bool = False, pendientes: list | None = None):
+    """Pasajero cuyo primer nombre aparece en el texto (el que aparece mas tarde, que es el de la pregunta)."""
+    t = texto.lower()
+    mejor, pos = None, -1
+    for p in esc.pasajeros:
+        if (con_bodega and not p.bodega) or (pendientes is not None and p not in pendientes):
+            continue
+        k = t.rfind(p.nombre.split()[0].lower())
+        if k > pos:
+            mejor, pos = p, k
+    return mejor
+
+
 def corto(nombre: str) -> str:
     """Las filas de las listas llevan el nombre abreviado por el agente (nombre y apellido, o solo dos palabras): se busca por el primer nombre."""
     return nombre.split()[0]
@@ -30,7 +43,6 @@ class Accion:
 class Estado:
     esc: Escenario
     pendientes_bodega: list[Pasajero] = field(default_factory=list)
-    elegidos_lista: list[str] = field(default_factory=list)
     probado: set[str] = field(default_factory=set)
     maleta_actual: Pasajero | None = None
     asiento_ida_enviado: bool = False
@@ -38,7 +50,7 @@ class Estado:
 
     def __post_init__(self) -> None:
         self.pendientes_bodega = [p for p in self.esc.pasajeros if p.bodega]
-        self.maleta_actual = self.esc.pasajeros[0]
+        self.maleta_actual = self.pendientes_bodega[0] if self.pendientes_bodega else self.esc.pasajeros[0]
 
 
 class GuionDetenido(AssertionError):
@@ -62,28 +74,29 @@ def _decidir(texto: str, st: Estado) -> Accion:
         return Accion("elegir", "Resumen y confirmacion (botones)", "Confirmar y pagar")
     if "qué equipaje" in t or "que equipaje" in t:
         return Accion("elegir", f"Equipaje: {esc.equipaje} (botones)", esc.equipaje)
-    if re.search(r"qui[eé]n( m[aá]s)? lleva", t):
-        quedan = [p for p in esc.pasajeros if p.bodega and p.nombre not in st.elegidos_lista]
-        if quedan:
-            st.elegidos_lista.append(quedan[0].nombre)
-            return Accion("elegir", "Quienes llevan bodega (lista de nombres)", corto(quedan[0].nombre), prefijo=True)
-        return Accion("elegir", "Nadie mas lleva bodega (ultima fila de la lista)", "Nadie más, continuar")
-    if "alguien más" in t or "alguien mas" in t:
-        quedan = len(st.elegidos_lista) < sum(1 for p in esc.pasajeros if p.bodega)
-        return Accion("elegir", "Alguien mas lleva bodega? (botones)", "Sí" if quedan else "No, seguimos")
+    q = texto[texto.rfind("¿"):].lower() if "¿" in texto else t  # la pregunta pendiente (el aviso previo puede nombrar a otro pasajero)
+    if re.search(r"lleva (una )?(maleta|equipaje)( de bodega)?\?", q) and "tramo" not in q:
+        p = _pasajero_en(q, esc) or esc.pasajeros[min(st.pregunta_idx, len(esc.pasajeros) - 1)]
+        st.pregunta_idx = esc.pasajeros.index(p) + 1
+        if p.bodega:
+            st.maleta_actual = p
+        return Accion("elegir", f"¿{p.nombre.split()[0]} lleva maleta de bodega? ({'Sí' if p.bodega else 'No'})", "Sí" if p.bodega else "No")
     if "tramo" in t and "mascota" in t and "?" in t:
         tramo = esc.mascota.tramo if esc.mascota else "Ida"
         return Accion("elegir", f"Tramo de la mascota: {tramo} (botones)", tramo)
-    if "tramo" in t and ("bodega" in t or "maleta" in t) and "?" in t:  # la pregunta (puede venir junto al precio de la maleta)
-        dueno = next((q for q in esc.pasajeros if q.bodega and q.nombre.split()[0].lower() in t), st.maleta_actual)
-        return Accion("elegir", f"Tramo de la maleta de {dueno.nombre.split()[0]}: {dueno.bodega_tramo} (botones)", dueno.bodega_tramo)
+    if "tramo" in t and ("bodega" in t or "maleta" in t) and "?" in t:
+        p = _pasajero_en(q, esc, con_bodega=True) or st.maleta_actual
+        return Accion("elegir", f"Tramo de la maleta de {p.nombre.split()[0]}: {p.bodega_tramo} (botones)", p.bodega_tramo)
     # "Ahora las medidas de X" puede llegar solo, antes del mensaje con el formato (largo, ancho, alto, kg).
     if st.pendientes_bodega and ("medidas" in t or (any(k in t for k in ("largo", "alto")) and "kg" in t)):
         if "bodega_excedida" in esc.errores and "bodega" not in st.probado:
             st.probado.add("bodega")
             lo, an, al, kg = esc.errores["bodega_excedida"]
             return Accion("decir", "Maleta fuera de limites (entrada invalida)", f"{lo}x{an}x{al} cm, {kg} kg", invalida="bodega")
-        p = st.maleta_actual = st.pendientes_bodega.pop(0)
+        p = _pasajero_en(t, esc, con_bodega=True, pendientes=st.pendientes_bodega) or st.maleta_actual
+        if p in st.pendientes_bodega:
+            st.pendientes_bodega.remove(p)
+        st.maleta_actual = p
         lo, an, al, kg = p.bodega
         return Accion("decir", f"Medidas y peso de la maleta de {p.nombre.split()[0]}", f"{lo}x{an}x{al} cm, {kg} kg")
     if esc.mascota and "nombre de quién" in t:

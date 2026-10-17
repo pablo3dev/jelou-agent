@@ -22,7 +22,7 @@ Cada ruta y fecha tiene 3 vuelos sembrados (07:00, 12:30 y 18:45) para que la li
 | Escenario | Qué recorre | Pago |
 |-----------|-------------|------|
 | `una_persona` | lista de destino y de pasajeros, botones ida y vuelta, vuelos en lista, equipaje «Cabina y bodega» (medidas directas), mascota Sí/No | aprobado |
-| `varias_personas` | 3 pasajeros: lista de nombres para elegir quién lleva bodega, medidas por persona, sin mascota | aprobado |
+| `varias_personas` | 3 pasajeros, uno por uno: ¿lleva bodega? (Sí/No), tramo (ida, regreso o ida y regreso) y medidas; uno de ida y regreso, otro solo de regreso y otro sin bodega; mascota de regreso | aprobado |
 | `flujo_por_mal` | asiento ocupado, maleta fuera de límites y mascota de más de 8 kg (el agente debe rechazar y pedir de nuevo) | rechazado: asientos liberados |
 
 `uv run pytest` corre los tres en ese orden; uno solo: `uv run pytest -k una_persona`. Cada paso se anuncia en consola (`PASO n`) y deja captura numerada en `artifacts/<escenario>/`. Selección de botones y listas: el driver toca el control de WhatsApp Web y, si no lo encuentra, escribe el título de la opción (es lo mismo que recibe el agente). Los datos son aleatorios en cada corrida pero se mantienen hasta el final de ella (la semilla se sortea al inicio, se imprime y de ella sale cada escenario): el agente nunca recibe un dato distinto a mitad del recorrido. Repetir una corrida: `E2E_SEED=<semilla impresa>`. Antes de lanzar, limpia lo que dejaron corridas anteriores: `uv run python -m e2e.limpiar` (reservas, detalle, transacciones y asientos; se niega si hay reservas pagadas, `--forzar` las borra).

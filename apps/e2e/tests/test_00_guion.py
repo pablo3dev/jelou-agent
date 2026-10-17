@@ -14,15 +14,15 @@ ENL = "Listo, paga aqui: http://localhost:3001/pay/abc123xyz"
 
 def esc_varias() -> Escenario:
     ps = [
-        Pasajero("Gilma Ramírez García", "1", 44, "9A", "27A", (50, 35, 25, 15), "Solo ida"),
-        Pasajero("Javier Gómez Salamanca", "2", 55, "9B", "27B", (43, 39, 20, 8), "Solo regreso"),
-        Pasajero("María Adriana Pérez", "3", 59, "9C", "27C", (41, 34, 25, 20), "Solo regreso"),
+        Pasajero("Gilma Ramírez", "1", 44, "9A", "27A", (50, 35, 25, 15), "Ida y regreso"),
+        Pasajero("Javier Gómez", "2", 55, "9B", "27B", (43, 39, 20, 8), "Solo regreso"),
+        Pasajero("María Pérez", "3", 59, "9C", "27C"),
     ]
     return Escenario("varias_personas", V, ps, "Cabina y bodega", Mascota("Perro", 5, 2, "Regreso"))
 
 
 def esc_una() -> Escenario:
-    p = Pasajero("Ana Gómez Ruiz", "1", 30, "9A", "27A", (50, 35, 25, 15))
+    p = Pasajero("Ana Gómez", "1", 30, "9A", "27A", (50, 35, 25, 15))
     return Escenario("una_persona", V, [p], "Cabina y bodega", Mascota("Perro", 5, 0))
 
 
@@ -33,19 +33,17 @@ def recorrer(esc: Escenario, guion: list[tuple[str, str, str]]) -> None:
         assert (a.tipo, a.valor) == (tipo, valor), f"ante {texto!r}: {(a.tipo, a.valor)} != {(tipo, valor)}"
 
 
-def test_varias_personas_con_tramos_y_mascota_de_regreso():
+def test_varias_personas_pregunta_por_pasajero_bodega_tramo_medidas():
     e = esc_varias()
     recorrer(e, [
         ("🧳 ¿Qué equipaje llevan?", "elegir", "Cabina y bodega"),
-        ("👥 ¿Quién lleva maleta de bodega?", "elegir", "Gilma"),
-        ("👥 ¿Quién más lleva maleta de bodega?", "elegir", "Javier"),
-        ("👥 ¿Quién más lleva maleta de bodega?", "elegir", "María"),
-        ("🧳 Maleta de Gilma: escribe largo, ancho, alto en cm y peso en kg. Ejemplo: 60x40x30 cm, 20 kg.", "decir", "50x35x25 cm, 15 kg"),
-        ("🧳 La maleta de Gilma cuesta COP 124.800 (8 kg cobrables). ¿En qué tramo lleva la maleta Gilma?", "elegir", "Solo ida"),
-        ("Anoté la maleta de Gilma para la ida. Ahora las medidas de Javier.\n🧳 Maleta de Javier: escribe largo, ancho, alto en cm y peso en kg. Ejemplo: 60x40x30 cm, 20 kg.", "decir", "43x39x20 cm, 8 kg"),
-        ("🧳 La maleta de Javier cuesta COP 124.800 (8 kg cobrables). ¿En qué tramo lleva la maleta Javier?", "elegir", "Solo regreso"),
-        ("Anoté la maleta de Javier para el regreso. Ahora las medidas de María.\n🧳 Maleta de María: escribe largo, ancho, alto en cm y peso en kg. Ejemplo: 60x40x30 cm, 20 kg.", "decir", "41x34x25 cm, 20 kg"),
-        ("🧳 La maleta de María cuesta COP 234.000 (20 kg cobrables). ¿En qué tramo lleva la maleta María?", "elegir", "Solo regreso"),
+        ("🧳 ¿Gilma Ramírez lleva maleta de bodega?", "elegir", "Sí"),
+        ("🧳 ¿En qué tramo viaja la maleta de Gilma? Elige una opción.", "elegir", "Ida y regreso"),
+        ("🧳 Maleta de Gilma: largo, ancho, alto en cm y peso en kg. Ejemplo: 60x40x30 cm, 20 kg.", "decir", "50x35x25 cm, 15 kg"),
+        ("🧳 La maleta de Gilma cuesta COP 124.800 (8 kg cobrables).\n🧳 ¿Javier Gómez lleva maleta de bodega?", "elegir", "Sí"),
+        ("🧳 ¿En qué tramo viaja la maleta de Javier?", "elegir", "Solo regreso"),
+        ("🧳 Maleta de Javier: largo, ancho, alto en cm y peso en kg.", "decir", "43x39x20 cm, 8 kg"),
+        ("La maleta de Javier cuesta COP 234.000 (20 kg cobrables). ¿María Pérez lleva maleta de bodega?", "elegir", "No"),
         ("🐾 ¿Viaja una mascota?", "elegir", "Sí"),
         ("🐾 ¿Qué especie es la mascota?", "elegir", "Perro"),
         ("🐾 ¿Cuánto pesa la mascota? Escribe el peso en kg.", "decir", "5 kg"),
@@ -58,11 +56,18 @@ def test_varias_personas_con_tramos_y_mascota_de_regreso():
     ])
 
 
+def test_la_pregunta_de_bodega_usa_al_pasajero_de_la_pregunta_y_no_al_del_aviso():
+    st = Estado(esc_varias())
+    decidir("🧳 ¿Gilma Ramírez lleva maleta de bodega?", st)
+    a = decidir("La maleta de Gilma cuesta COP 124.800. ¿María Pérez lleva maleta de bodega?", st)
+    assert (a.tipo, a.valor) == ("elegir", "No")  # María no lleva bodega
+
+
 def test_una_persona_mascota_de_ida():
     recorrer(esc_una(), [
         ("🧳 ¿Qué equipaje llevan?", "elegir", "Cabina y bodega"),
+        ("🧳 ¿En qué tramo viaja la maleta de Ana?", "elegir", "Solo ida"),
         ("🧳 Maleta de Ana: escribe largo, ancho, alto en cm y peso en kg.", "decir", "50x35x25 cm, 15 kg"),
-        ("🧳 La maleta cuesta COP 124.800 (8 kg cobrables). ¿En qué tramo va tu maleta de bodega?", "elegir", "Solo ida"),
         ("🐾 ¿Viaja una mascota?", "elegir", "Sí"),
         ("🐾 ¿Qué especie es?", "elegir", "Perro"),
         ("🐾 ¿Cuánto pesa en kg?", "decir", "5 kg"),

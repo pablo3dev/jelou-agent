@@ -19,6 +19,7 @@ class Chat:
     def __init__(self, page: Page) -> None:
         self.page = page
         self.cuenta = Contador()
+        self._base = 0  # controles interactivos visibles al enviar/tocar por ultima vez
 
     def abrir(self, espera_login_s: int = 300) -> None:
         self.page.goto(f"https://web.whatsapp.com/send?phone={WA_PHONE}", wait_until="domcontentloaded")
@@ -61,9 +62,21 @@ class Chat:
     def contar(self) -> int:
         return len(self._entrantes())
 
+    def _controles(self) -> int:
+        """Botones y aperturas de lista visibles en el chat: crece cuando el agente envia un mensaje interactivo nuevo."""
+        return self.page.locator("#main [role='button']").count()
+
+    def _esperar_control_nuevo(self, timeout_s: int = 15) -> None:
+        """El texto de aviso y el mensaje interactivo del agente llegan por separado y a veces con varios segundos de
+        diferencia: antes de tocar se espera el control nuevo, para no tocar uno viejo ni escribir a destiempo."""
+        fin = time.time() + timeout_s
+        while self._controles() <= self._base and time.time() < fin:
+            time.sleep(0.5)
+
     def enviar(self, texto: str) -> None:
         self.cuenta.tick()
         self.cerrar_avisos()
+        self._base = self._controles()
         self.page.locator(ENTRADA).click()
         # Shift+Enter entre renglones para no mandar varios mensajes.
         for i, linea in enumerate(texto.split("\n")):
@@ -81,7 +94,7 @@ class Chat:
                 raise TimeoutError("El agente no respondio")
             time.sleep(1)
         estable, ultimo = 0.0, self.contar()
-        while estable < max(PAUSA_S, 2) and time.time() < fin:  # al menos 2 s sin mensajes nuevos: evita leer una respuesta a medias
+        while estable < max(PAUSA_S, 3) and time.time() < fin:  # al menos 3 s sin mensajes nuevos: el agente manda aviso y formulario con varios segundos de diferencia
             time.sleep(1)
             n = self.contar()
             estable = estable + 1 if n == ultimo else 0
@@ -107,7 +120,9 @@ class Chat:
         """
         self.cuenta.tick()
         self.cerrar_avisos()
+        self._esperar_control_nuevo()
         via = self._tocar(opcion, prefijo)
+        self._base = self._controles()
         print(f"[seleccion: {opcion!r} via {via}]")
         pausa()
         try:
