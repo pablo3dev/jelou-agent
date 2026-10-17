@@ -1,6 +1,6 @@
-// Genera brain/tools/<slug>.json: una Tool de Jelou por function (HTTP a la function con JELOU_FN_INVOKE_KEY).
+// Genera brain/tools/<slug>.json: una Tool de Jelou por function (HTTP a la function con JELOU_FN_TOKEN).
 // Uso (cwd = apps/agent): node workflow/generar-tools.mjs. Los toolId/workflowId salen de los archivos creados con `jelou tool create`.
-// Sin credenciales: el token es el secreto de organizacion {{$secret.JELOU_FN_INVOKE_KEY}}.
+// Sin credenciales: el token es el secreto de organizacion {{$secret.JELOU_FN_TOKEN}}.
 import { readFileSync, writeFileSync } from "node:fs";
 
 const FN_URL = process.env.FUNCTIONS_URL ?? "https://aerolinea-reservas-b5dfca.fn.jelou.ai";
@@ -32,7 +32,7 @@ $output.set("respuesta", JSON.stringify({ ok: st >= 200 && st < 300, status: st,
     configuration: {
       title: `POST ${slug}`, method: "POST", url: `${FN_URL}/${slug}`, output: "resp",
       headers: [
-        { id: "h1", key: "Authorization", value: "Bearer {{$secret.JELOU_FN_INVOKE_KEY}}", enabled: true },
+        { id: "h1", key: "Authorization", value: "Bearer {{$secret.JELOU_FN_TOKEN}}", enabled: true },
         { id: "h2", key: "Content-Type", value: "application/json", enabled: true },
       ],
       body: { type: "application/json", content: "{{$context.cuerpo}}", enabled: true },

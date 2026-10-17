@@ -102,7 +102,7 @@
           {
             "id": "h1",
             "key": "Authorization",
-            "value": "Bearer {{$secret.JELOU_FN_INVOKE_KEY}}",
+            "value": "Bearer {{$secret.JELOU_FN_TOKEN}}",
             "enabled": true
           },
           {

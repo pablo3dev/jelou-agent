@@ -1,6 +1,6 @@
 // Genera el workflow real de Brain Studio (apps/agent/brain/workflows/*.json) desde agent.prompt.md.
 // Uso (cwd = apps/agent): node workflow/generar-brain.mjs [ruta-del-workflow-existente]
-// Sin credenciales: el token de las functions es el secreto de organizacion JELOU_FN_INVOKE_KEY ({{$secret.*}}).
+// Sin credenciales: el token de las functions es el secreto de organizacion JELOU_FN_TOKEN ({{$secret.*}}).
 import { readFileSync, writeFileSync } from "node:fs";
 
 const destino = process.argv[2] ?? "brain/workflows/mi-primer-workflow.whatsapp.json";
