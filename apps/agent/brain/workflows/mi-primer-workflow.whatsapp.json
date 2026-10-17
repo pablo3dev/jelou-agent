@@ -189,6 +189,12 @@
                 }
               ],
               "action": "none"
+            },
+            {
+              "id": "tool-send-interactive-message",
+              "name": "send_interactive_message",
+              "external": false,
+              "description": "Envia botones (hasta 3 opciones) o una lista (4 a 10) para que el cliente elija; titulos de maximo 20 caracteres."
             }
           ]
         },
