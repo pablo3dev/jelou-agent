@@ -22,6 +22,7 @@ PAY_URL = env("PAY_URL", "http://127.0.0.1:3001").rstrip("/")
 WA_PHONE = "".join(c for c in env("WA_AGENT_PHONE") if c.isdigit())
 SEED = env("E2E_SEED")
 VIDEO = env("E2E_VIDEO", "false").lower() == "true"  # un video por pestana en artifacts/<escenario>/video/
+VIDEO_ALTO = int(env("E2E_VIDEO_ALTO", "1080"))  # 1080 (1920x1080) o 720 (1280x720)
 PAUSA_S = float(env("E2E_PAUSA_S", "3"))
 MAX_MENSAJES = int(env("E2E_MAX_MENSAJES", "45"))
 COOLDOWN_MIN = int(env("E2E_COOLDOWN_MIN", "10"))

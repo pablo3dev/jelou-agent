@@ -31,7 +31,7 @@ Asientos: el agente comparte el enlace del selector del CRM (`#/asientos/<vuelo>
 
 Recorrido por el CRM al cerrar cada escenario: resumen (modo claro/oscuro, idioma y scroll), vuelos (scroll y filtro por la ruta), mapa (vuelo de la reserva y scroll), ventas (2 s, scroll y clic en el vuelo para abrir su mapa).
 
-Video: `E2E_VIDEO=true` graba un video por pestaña en `artifacts/<escenario>/video/NN_<pestaña>.webm`. Cada pestaña (WhatsApp, widget de asientos, pasarela y cada vista del CRM) se abre al usarla y se cierra al terminar, así cada video es corto. Requiere el `ffmpeg` de Playwright (una sola vez, ~1,3 MB; sin él Chrome se cierra al abrir con video):
+Video: `E2E_VIDEO=true` graba (viewport fijo de 1920x1080; `E2E_VIDEO_ALTO=720` para 1280x720) un video por pestaña en `artifacts/<escenario>/video/NN_<pestaña>.webm`. Cada pestaña (WhatsApp, widget de asientos, pasarela y cada vista del CRM) se abre al usarla y se cierra al terminar, así cada video es corto. Requiere el `ffmpeg` de Playwright (una sola vez, ~1,3 MB; sin él Chrome se cierra al abrir con video):
 
 ```sh
 uv run playwright install ffmpeg

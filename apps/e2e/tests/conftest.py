@@ -34,11 +34,14 @@ def ctx():
     config.PERFIL.mkdir(exist_ok=True)
     config.ARTEFACTOS.mkdir(exist_ok=True)
     with sync_playwright() as p:
-        video = {"record_video_dir": str(config.ARTEFACTOS / "_grabacion"), "record_video_size": {"width": 1280, "height": 720}} if config.VIDEO else {}
-        c = p.chromium.launch_persistent_context(
-            str(config.PERFIL), channel="chrome", headless=False, no_viewport=True,
-            args=["--start-maximized"], **video,
-        )
+        if config.VIDEO:
+            # Viewport fijo = tamano del video: con la ventana maximizada Playwright reescalaba los cuadros y salia borroso.
+            ancho, alto = (1920, 1080) if config.VIDEO_ALTO >= 1080 else (1280, 720)
+            extra = {"record_video_dir": str(config.ARTEFACTOS / "_grabacion"), "record_video_size": {"width": ancho, "height": alto},
+                     "viewport": {"width": ancho, "height": alto}}
+        else:
+            extra = {"no_viewport": True, "args": ["--start-maximized"]}
+        c = p.chromium.launch_persistent_context(str(config.PERFIL), channel="chrome", headless=False, **extra)
         c.set_default_timeout(15000)
         yield c
         c.close()
