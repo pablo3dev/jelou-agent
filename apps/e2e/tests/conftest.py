@@ -22,9 +22,12 @@ def datum():
 @pytest.fixture(scope="session")
 def fk():
     f = Faker("es_CO")
-    if config.SEED:
-        Faker.seed(int(config.SEED))
-        random.seed(int(config.SEED))
+    # Datos aleatorios por corrida, pero persistentes durante toda la corrida: la semilla se sortea una vez y de ella
+    # sale cada escenario. Se imprime para poder repetir la corrida con E2E_SEED.
+    config.SEED_USADA = config.SEED or str(random.randrange(100000, 999999))
+    print(f"Semilla de esta corrida: {config.SEED_USADA} (E2E_SEED={config.SEED_USADA} la repite)")
+    Faker.seed(int(config.SEED_USADA))
+    random.seed(int(config.SEED_USADA))
     return f
 
 

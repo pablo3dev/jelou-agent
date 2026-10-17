@@ -20,11 +20,10 @@ from e2e.flujo import ejecutar
 @pytest.mark.parametrize("fabrica", [datos.una_persona, datos.varias_personas, datos.flujo_por_mal],
                          ids=["una_persona", "varias_personas", "flujo_por_mal"])
 def test_reserva_pago_crm(fabrica, datum, fk, viaje, ctx, request):
-    # Datos fijos por escenario (no dependen de cuales se corran ni del orden): todo el recorrido usa el mismo Escenario.
-    if config.SEED:
-        semilla = f"{config.SEED}-{request.node.callspec.id}"
-        Faker.seed(semilla)
-        random.seed(semilla)
+    # Datos aleatorios por corrida pero fijos por escenario dentro de ella: todo el recorrido usa el mismo Escenario.
+    semilla = f"{config.SEED_USADA}-{request.node.callspec.id}"
+    Faker.seed(semilla)
+    random.seed(semilla)
     esc = fabrica(fk, datum, viaje)
     print("\nEscenario:", esc)
     ejecutar(ctx, datum, esc)

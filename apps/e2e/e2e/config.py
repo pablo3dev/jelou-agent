@@ -20,7 +20,8 @@ DATUM_API_KEY = env("DATUM_API_KEY")
 CRM_URL = env("CRM_URL", "http://127.0.0.1:3000").rstrip("/")
 PAY_URL = env("PAY_URL", "http://127.0.0.1:3001").rstrip("/")
 WA_PHONE = "".join(c for c in env("WA_AGENT_PHONE") if c.isdigit())
-SEED = env("E2E_SEED", "2026")  # datos fijos entre corridas: el agente no ve informacion distinta cada vez
+SEED = env("E2E_SEED")  # vacio: cada corrida sortea su semilla (se imprime) y la mantiene hasta el final
+SEED_USADA = ""  # la fija tests/conftest.py al inicio de la sesion
 VIDEO = env("E2E_VIDEO", "false").lower() == "true"  # un video por pestana en artifacts/<escenario>/video/
 VIDEO_ALTO = int(env("E2E_VIDEO_ALTO", "1080"))  # 1080 (1920x1080) o 720 (1280x720)
 PAUSA_S = float(env("E2E_PAUSA_S", "1"))
