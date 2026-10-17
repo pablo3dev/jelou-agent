@@ -9,8 +9,8 @@ workflows:
     channel: WHATSAPP
     default: true
     description: "Mi primer workflow"
-    hash: "sha256:a30f01446e8ea48adb74bdc55466e02d0f1a5eb95c2c500aad909af02dfcf18d"
-    lastPulledAt: "2026-10-17T07:53:50.584Z"
+    hash: "sha256:1b3e4b3fe0a4daf2711447ac2b755cc01920e3b45d15d8386af312ec7984c587"
+    lastPulledAt: "2026-10-17T08:06:52.252Z"
     name: "Mi primer workflow"
     skillId: 52813
     workflowId: 72739

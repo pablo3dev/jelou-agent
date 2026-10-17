@@ -158,5 +158,4 @@ class Chat:
         except Exception as e:
             print("[no se pudo tocar el control:", type(e).__name__, "]")
             pg.keyboard.press("Escape")
-        self.enviar(opcion)
-        return "texto"
+        raise AssertionError(f"No se pudo tocar la opcion {opcion!r}: el control no esta en pantalla (el agente no envio botones/lista con ella). No se escribe por el, para que el video muestre clics reales.")

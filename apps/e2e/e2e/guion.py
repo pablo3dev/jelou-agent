@@ -75,6 +75,8 @@ def _decidir(texto: str, st: Estado) -> Accion:
         return Accion("elegir", "Resumen y confirmacion (botones)", "Confirmar y pagar")
     if "qué equipaje" in t or "que equipaje" in t:
         return Accion("elegir", f"Equipaje: {esc.equipaje} (botones)", esc.equipaje)
+    if re.search(r"qui[eé]n(es)? (m[aá]s )?lleva", t) or "elige quién lleva" in t:
+        raise GuionDetenido(f"El agente uso el flujo viejo (lista de quien lleva maleta) en vez de preguntar por pasajero: {texto}")
     q = texto[texto.rfind("¿"):].lower() if "¿" in texto else t  # la pregunta pendiente (el aviso previo puede nombrar a otro pasajero)
     if re.search(r"lleva (una |la )?(maleta|equipaje)", q) and "?" in q and "tramo" not in q:
         n = re.search(r"pasajero (\d)", q)

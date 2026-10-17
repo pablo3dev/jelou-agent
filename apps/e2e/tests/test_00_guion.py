@@ -149,3 +149,8 @@ def test_datos_de_los_escenarios_son_fijos_entre_corridas():
     a, b = generar(), generar()
     assert a == b
     assert all(len(p.nombre.split()) == 2 for e in a for p in e.pasajeros)  # nombre y apellido, como los muestra la lista
+
+
+def test_lista_vieja_de_quien_lleva_maleta_corta_sin_escribir():
+    with pytest.raises(GuionDetenido):
+        decidir("👥 ¿Quién lleva maleta de bodega?", Estado(esc_varias()))
