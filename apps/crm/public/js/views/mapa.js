@@ -123,7 +123,7 @@ export function montar(root, ctx) {
     const hay = Boolean(a && a.vuelo_id === id);
     if (state.vuelos?.length) {
       const L = locale();
-      selVuelo.replaceChildren(...state.vuelos.map((v) => h('option', { value: v.vuelo_id, text: `${v.vuelo_id} · ${v.ruta} · ${formatFecha(v.fecha, L, true)}` })));
+      selVuelo.replaceChildren(...state.vuelos.map((v) => h('option', { value: v.vuelo_id, text: `${v.vuelo_id} · ${v.ruta} · ${formatFecha(v.fecha, L, true)}${v.hora_salida ? ` · ${v.hora_salida}` : ''}` })));
       selVuelo.value = id ?? '';
     }
     if (pintarEstadoSinDatos(estado, state, hay, ctx.refrescar, 'mapa.vacio')) {
@@ -145,7 +145,7 @@ export function montar(root, ctx) {
       b.setAttribute('aria-pressed', String(k === seleccionado));
     }
     const resumen = a.resumen;
-    info.textContent = `${a.ruta} · ${formatFecha(a.fecha, L)} · ${t('mapa.ocupacion')}: ${formatPct(resumen.ocupacion_pct, L)}`;
+    info.textContent = `${a.ruta} · ${formatFecha(a.fecha, L)}${a.hora_salida ? ` · ${a.hora_salida}` : ''} · ${t('mapa.ocupacion')}: ${formatPct(resumen.ocupacion_pct, L)}`;
 
     const porEstado = contarPorEstado(a.asientos);
     contEstados.replaceChildren(...ESTADOS.map((e) => h('article', { class: `tarjeta kpi kpi--${e.toLowerCase()}` },

@@ -1,7 +1,9 @@
 // domain (puro): datos base de la aerolinea DEMO. Sin I/O, sin red, sin reloj.
 // Fuente: draft.md RN-01, RN-02, RN-04, RN-05, RN-08, RN-15 y db-design.dbml.
 
-export const HORA_SALIDA = "07:00";
+export const HORA_SALIDA = "07:00"; // horario base: conserva el id fisico original (ruta+fecha)
+// Varios horarios por ruta y fecha para que la lista de vuelos del chat se vea completa en la demo.
+export const HORARIOS = ["07:00", "12:30", "18:45"];
 export const VENTANA_INICIO = "2026-12-01";
 export const VENTANA_FIN = "2027-01-31";
 
@@ -14,7 +16,8 @@ export const idFisico = {
   rutas: (ruta) => plano(ruta), // "BOG-MDE" -> "bogmde"
   temporada: (mes) => `mes${String(mes).padStart(2, "0")}`,
   parametros: (clave) => plano(clave), // "tarifa_kg_bodega_cop" -> "tarifakgbodegacop"
-  vuelos: (ruta, fecha) => `${plano(ruta)}${plano(fecha)}`, // "bogmde20261201"
+  // "bogmde20261201" (07:00, id original) y "bogmde202612011230" (los demas horarios: se agrega hhmm)
+  vuelos: (ruta, fecha, hora = HORA_SALIDA) => `${plano(ruta)}${plano(fecha)}${hora === HORA_SALIDA ? "" : plano(hora)}`,
 };
 
 // Cada fila es { id, campos }: el id fisico va en el POST, nunca dentro de campos.
@@ -78,10 +81,12 @@ export function fechasVentana() {
 export function generarVuelos(rutas = generarRutas()) {
   return rutas.flatMap(({ campos: { origen, destino } }) => {
     const ruta_id = `${origen}-${destino}`;
-    return fechasVentana().map((fecha) => ({
-      id: idFisico.vuelos(ruta_id, fecha),
-      campos: { ruta_id, fecha, hora_salida: HORA_SALIDA, mapa_asientos: mapaLibre(), version: 1 },
-    }));
+    return fechasVentana().flatMap((fecha) =>
+      HORARIOS.map((hora_salida) => ({
+        id: idFisico.vuelos(ruta_id, fecha, hora_salida),
+        campos: { ruta_id, fecha, hora_salida, mapa_asientos: mapaLibre(), version: 1 },
+      }))
+    );
   });
 }
 

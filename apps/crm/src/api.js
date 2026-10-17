@@ -53,6 +53,7 @@ export function createApi({ datum, now = () => new Date() }) {
         vuelo_id: vuelo.id,
         ruta: vuelo.ruta_id,
         fecha: String(vuelo.fecha ?? '').slice(0, 10),
+        hora_salida: vuelo.hora_salida ?? null,
         resumen: { total_asientos: TOTAL_ASIENTOS, ...c, ocupacion_pct: porcentaje(c.vendidos, TOTAL_ASIENTOS) },
         asientos: detalleAsientos(vuelo, ahora),
       });

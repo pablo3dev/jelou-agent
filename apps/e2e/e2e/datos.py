@@ -14,6 +14,7 @@ from .datum import Datum
 RUTAS = ["BOG-MDE", "MDE-BOG", "BOG-CLO", "CLO-BOG", "BOG-CTG", "CTG-BOG"]
 CIUDAD = {"BOG": "Bogotá", "MDE": "Medellín", "CLO": "Cali", "CTG": "Cartagena"}
 INICIO, FIN = date(2026, 12, 1), date(2027, 1, 31)
+HORA_IDA, HORA_REGRESO = "12:30", "18:45"  # la lista del chat muestra varios horarios; la prueba siempre elige estos dos
 FILAS_EXIT = {13, 14}
 MIN_LIBRES = 14  # asientos libres por tramo para que quepan los tres escenarios
 
@@ -30,14 +31,20 @@ class Viaje:
     fecha_ida: str
     ruta_regreso: str
     fecha_regreso: str
+    hora_ida: str = HORA_IDA
+    hora_regreso: str = HORA_REGRESO
+
+    @staticmethod
+    def _id(ruta: str, fecha: str, hora: str) -> str:
+        return ruta.replace("-", "").lower() + fecha.replace("-", "") + ("" if hora == "07:00" else hora.replace(":", ""))
 
     @property
     def vuelo_ida(self) -> str:
-        return self.ruta_ida.replace("-", "").lower() + self.fecha_ida.replace("-", "")
+        return self._id(self.ruta_ida, self.fecha_ida, self.hora_ida)
 
     @property
     def vuelo_regreso(self) -> str:
-        return self.ruta_regreso.replace("-", "").lower() + self.fecha_regreso.replace("-", "")
+        return self._id(self.ruta_regreso, self.fecha_regreso, self.hora_regreso)
 
 
 @dataclass
@@ -100,8 +107,8 @@ def elegir_viaje(fk: Faker, datum: Datum) -> Viaje:
         a, b = ruta.split("-")
         f_ida = fk.date_between(INICIO, FIN - timedelta(days=8))
         f_reg = f_ida + timedelta(days=random.randint(2, 7))
-        v_ida = datum.vuelo(ruta, f_ida.isoformat())
-        v_reg = datum.vuelo(f"{b}-{a}", f_reg.isoformat())
+        v_ida = datum.vuelo(ruta, f_ida.isoformat(), HORA_IDA)
+        v_reg = datum.vuelo(f"{b}-{a}", f_reg.isoformat(), HORA_REGRESO)
         if not v_ida or not v_reg:
             continue
         n_ida = sum(1 for x in v_ida["mapa_asientos"].values() if x.get("estado") == "LIBRE")
@@ -113,8 +120,8 @@ def elegir_viaje(fk: Faker, datum: Datum) -> Viaje:
 
 def _pasajeros(fk: Faker, datum: Datum, v: Viaje, n: int) -> list[Pasajero]:
     # Asientos frescos de Datum: respetan lo que dejaron los escenarios anteriores.
-    s_ida = libres(datum.vuelo(v.ruta_ida, v.fecha_ida), n)
-    s_reg = libres(datum.vuelo(v.ruta_regreso, v.fecha_regreso), n)
+    s_ida = libres(datum.vuelo(v.ruta_ida, v.fecha_ida, v.hora_ida), n)
+    s_reg = libres(datum.vuelo(v.ruta_regreso, v.fecha_regreso, v.hora_regreso), n)
     return [
         Pasajero(fk.name(), fk.numerify("##########"), random.randint(18, 60), s_ida[i], s_reg[i])
         for i in range(n)
@@ -148,7 +155,7 @@ def flujo_por_mal(fk: Faker, datum: Datum, v: Viaje) -> Escenario:
     """2 pasajeros con entradas invalidas (asiento ocupado, maleta fuera de limites, mascota pesada) y pago RECHAZADO."""
     e = Escenario("flujo_por_mal", v, _pasajeros(fk, datum, v, 2), "Solo bodega", pago="rechazar")
     e.pasajeros[0].bodega = _maleta()
-    ida = datum.vuelo(v.ruta_ida, v.fecha_ida)
+    ida = datum.vuelo(v.ruta_ida, v.fecha_ida, v.hora_ida)
     e.errores = {
         "asiento_ocupado": ocupado(ida) or "99Z",  # sin ocupados aun: un asiento que no existe en el mapa
         "bodega_excedida": (120, 80, 80, 45),

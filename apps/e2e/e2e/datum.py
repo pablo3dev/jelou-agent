@@ -23,8 +23,10 @@ class Datum:
         r.raise_for_status()
         return r.json()["items"]
 
-    def vuelo(self, ruta: str, fecha: str) -> dict | None:
-        return self.get("vuelos", ruta.replace("-", "").lower() + fecha.replace("-", ""))
+    def vuelo(self, ruta: str, fecha: str, hora: str = "07:00") -> dict | None:
+        """El vuelo de las 07:00 conserva el id original (ruta+fecha); los demas horarios agregan hhmm."""
+        sufijo = "" if hora == "07:00" else hora.replace(":", "")
+        return self.get("vuelos", ruta.replace("-", "").lower() + fecha.replace("-", "") + sufijo)
 
     def reserva_por_pnr(self, pnr: str) -> dict | None:
         items = self.lista("reservas", f"pnr='{pnr}'")

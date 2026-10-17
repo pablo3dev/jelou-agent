@@ -40,10 +40,6 @@ def mostrar(page) -> None:
     pausa()
 
 
-def _hora(datum, ruta: str, fecha: str) -> str:
-    return datum.vuelo(ruta, fecha)["hora_salida"][:5]
-
-
 def _falla_de_sistema(respuesta: str) -> None:
     """Si el agente avisa que sus herramientas fallan, corta: reintentar solo gasta mensajes y creditos."""
     if re.search(r"error de autorizaci|problema (al|de) busca|sistema de (b[uú]squeda|vuelos) (sigue|no)|problema en nuestro sistema|no pude consultar los vuelos|sigue sin (responder|funcionar)", respuesta, re.I):
@@ -89,9 +85,9 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
     paso("Fecha de regreso")
     di(v.fecha_regreso)
     paso("Vuelo de ida (lista)")
-    elige(_hora(datum, v.ruta_ida, v.fecha_ida), prefijo=True)
+    elige(v.hora_ida, prefijo=True)
     paso("Vuelo de regreso (lista)")
-    elige(_hora(datum, v.ruta_regreso, v.fecha_regreso), prefijo=True)
+    elige(v.hora_regreso, prefijo=True)
 
     for i, p in enumerate(esc.pasajeros, 1):
         paso(f"Datos del pasajero {i}")
@@ -173,7 +169,7 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
     pnr = reserva["pnr"]
     assert re.fullmatch(r"[A-HJ-NP-Z2-9]{6}", pnr)
     assert len(datum.lista("reservas", "", 500)) == reservas_antes + 1
-    ida = datum.vuelo(v.ruta_ida, v.fecha_ida)["mapa_asientos"]
+    ida = datum.vuelo(v.ruta_ida, v.fecha_ida, v.hora_ida)["mapa_asientos"]
     assert all(ida[p.asiento_ida]["estado"] == "RETENIDO" for p in esc.pasajeros)
     if esc.mascota:
         assert datum.lista("mascotas", f"reserva_id='{reserva['id']}'"), "La mascota no quedo registrada"
@@ -196,7 +192,7 @@ def _conversacion(datum, esc: Escenario, wa, pest: Pestanas) -> Paso:
     exp_res, exp_tx, exp_as = ("EMITIDA", "APROBADA", "VENDIDO") if ok else ("PAGO_RECHAZADO", "RECHAZADA", "LIBRE")
     assert datum.get("transacciones", tx_id)["estado"] == exp_tx
     assert datum.get("reservas", reserva["id"])["estado"] == exp_res
-    ida = datum.vuelo(v.ruta_ida, v.fecha_ida)["mapa_asientos"]
+    ida = datum.vuelo(v.ruta_ida, v.fecha_ida, v.hora_ida)["mapa_asientos"]
     assert all(ida[p.asiento_ida]["estado"] == exp_as for p in esc.pasajeros)
     if ok:
         assert pnr in final, f"El PNR {pnr} no llego al chat"

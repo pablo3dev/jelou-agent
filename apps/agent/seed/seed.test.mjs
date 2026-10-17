@@ -54,8 +54,8 @@ const clienteDe = (fetchImpl, esperas = []) => {
 };
 const posts = (d) => d.llamadas.filter((l) => l.method === "POST");
 
-test("conteos 6/12/12/372", () => {
-  assert.deepEqual(contar(), { rutas: 6, temporada: 12, parametros: 12, vuelos: 372 });
+test("conteos 6/12/12/1116", () => {
+  assert.deepEqual(contar(), { rutas: 6, temporada: 12, parametros: 12, vuelos: 1116 });
 });
 
 test("ids fisicos deterministas y solo [a-z0-9]", () => {
@@ -70,16 +70,18 @@ test("ids fisicos deterministas y solo [a-z0-9]", () => {
   }
 });
 
-test("vuelos: ruta_id logica, 07:00, 174 asientos LIBRE, version 1, ventana", () => {
+test("vuelos: ruta_id logica, 3 horarios por fecha (id original para 07:00, hhmm para los demas), 174 asientos LIBRE, version 1, ventana", () => {
   const vuelos = generarVuelos();
-  assert.equal(vuelos.length, 372);
+  assert.equal(vuelos.length, 1116);
   assert.equal(vuelos[0].id, "bogmde20261201");
   assert.equal(vuelos[0].campos.ruta_id, "BOG-MDE");
+  assert.equal(vuelos[1].id, "bogmde202612011230");
+  assert.equal(vuelos[2].id, "bogmde202612011845");
   assert.equal(vuelos[0].campos.fecha, "2026-12-01");
   assert.equal(vuelos.at(-1).campos.fecha, "2027-01-31");
   assert.equal(clavesMapa().length, 174);
   for (const { campos: v } of vuelos) {
-    assert.equal(v.hora_salida, "07:00");
+    assert.ok(["07:00", "12:30", "18:45"].includes(v.hora_salida));
     assert.equal(v.version, 1);
     assert.deepEqual(Object.keys(v.mapa_asientos), clavesMapa());
     assert.ok(Object.values(v.mapa_asientos).every((a) => a.estado === "LIBRE" && a.pnr === null && a.hold_token === null && a.hold_expira === null));
@@ -95,20 +97,20 @@ test("parametros: las 12 claves del dbml y temporada 1.30 en 1,6,7,12", () => {
   assert.deepEqual(temporada.filas.filter((t) => t.campos.multiplicador === 1.3).map((t) => t.campos.mes), [1, 6, 7, 12]);
 });
 
-test("carga completa crea 402 filas por coleccion/URL y la segunda ejecucion crea 0", async () => {
+test("carga completa crea 1146 filas por coleccion/URL y la segunda ejecucion crea 0", async () => {
   const d = datumSimulado();
   const cliente = clienteDe(d.fetchImpl);
   const r1 = await cargar(cliente);
-  assert.deepEqual(Object.fromEntries(Object.entries(r1).map(([k, v]) => [k, v.creadas])), { rutas: 6, temporada: 12, parametros: 12, vuelos: 372 });
-  assert.equal(d.total(), 402);
+  assert.deepEqual(Object.fromEntries(Object.entries(r1).map(([k, v]) => [k, v.creadas])), { rutas: 6, temporada: 12, parametros: 12, vuelos: 1116 });
+  assert.equal(d.total(), 1146);
   assert.equal(posts(d)[0].url, `${URL_BASE}/collections/rutas/records`);
   assert.deepEqual(JSON.parse(posts(d)[0].body), { id: "bogmde", origen: "BOG", destino: "MDE", tarifa_base_cop: 350000 });
   const n = posts(d).length;
   const r2 = await cargar(cliente);
   assert.ok(Object.values(r2).every((v) => v.creadas === 0));
-  assert.equal(r2.vuelos.omitidas, 372);
+  assert.equal(r2.vuelos.omitidas, 1116);
   assert.equal(posts(d).length, n);
-  assert.equal(d.total(), 402);
+  assert.equal(d.total(), 1146);
 });
 
 test("reanudable: tras una interrupcion a mitad otra ejecucion completa lo que falta", async () => {
@@ -120,10 +122,10 @@ test("reanudable: tras una interrupcion a mitad otra ejecucion completa lo que f
   });
   await assert.rejects(() => cargar(cliente), /error de red/);
   const parcial = d.total();
-  assert.ok(parcial > 0 && parcial < 402);
+  assert.ok(parcial > 0 && parcial < 1146);
   const r = await cargar(clienteDe(d.fetchImpl));
-  assert.equal(d.total(), 402);
-  assert.equal(Object.values(r).reduce((n, v) => n + v.creadas, 0), 402 - parcial);
+  assert.equal(d.total(), 1146);
+  assert.equal(Object.values(r).reduce((n, v) => n + v.creadas, 0), 1146 - parcial);
 });
 
 test("carga parcial: solo crea lo que falta", async () => {
@@ -133,7 +135,7 @@ test("carga parcial: solo crea lo que falta", async () => {
   const r = await cargar(cliente);
   assert.equal(r.rutas.creadas, 0);
   assert.equal(r.rutas.omitidas, 6);
-  assert.equal(r.vuelos.creadas, 372);
+  assert.equal(r.vuelos.creadas, 1116);
 });
 
 test("duplicado 400 validation_not_unique cuenta como omitida (carrera) y no lanza", async () => {
@@ -222,7 +224,7 @@ test("CLI: dry-run sin red; sin entorno falla sin imprimir valores", async () =>
   globalThis.fetch = () => { throw new Error("red prohibida"); };
   try {
     assert.equal(await main(["--dry-run"], {}, (m) => salida.push(m)), 0);
-    assert.match(salida[0], /rutas=6 temporada=12 parametros=12 vuelos=372/);
+    assert.match(salida[0], /rutas=6 temporada=12 parametros=12 vuelos=1116/);
     assert.equal(await main([], { DATUM_URL: URL_BASE }, (m) => salida.push(m)), 2);
     assert.match(salida.at(-1), /DATUM_API_KEY/);
     assert.ok(!salida.join("\n").includes(URL_BASE));
@@ -240,7 +242,7 @@ test("CLI: carga, log solo con conteos y sin la clave; error de red no la filtra
     // Sin sleep inyectable en main: precarga todo para que la carga solo liste (rapido y sin escrituras).
     for (const c of generarColecciones()) d.tablas[c.nombre] = new Map(c.filas.map((f) => [f.id, f]));
     assert.equal(await main([], { DATUM_URL: URL_BASE, DATUM_API_KEY: CLAVE }, (m) => salida.push(m)), 0);
-    assert.ok(salida.includes("vuelos: 0 creadas, 372 omitidas"));
+    assert.ok(salida.includes("vuelos: 0 creadas, 1116 omitidas"));
     globalThis.fetch = async () => resp(401);
     assert.equal(await main([], { DATUM_URL: URL_BASE, DATUM_API_KEY: CLAVE }, (m) => salida.push(m)), 1);
     assert.ok(!salida.join("\n").includes(CLAVE));
@@ -249,7 +251,7 @@ test("CLI: carga, log solo con conteos y sin la clave; error de red no la filtra
   }
 });
 
-test("CLI --verificar: exit 0 si coincide 6/12/12/372, 1 si no", async () => {
+test("CLI --verificar: exit 0 si coincide 6/12/12/1116, 1 si no", async () => {
   const d = datumSimulado();
   const salida = [];
   const fetchOriginal = globalThis.fetch;
@@ -260,7 +262,7 @@ test("CLI --verificar: exit 0 si coincide 6/12/12/372, 1 si no", async () => {
     for (const c of generarColecciones()) d.tablas[c.nombre] = new Map(c.filas.map((f) => [f.id, f]));
     d.llamadas.length = 0;
     assert.equal(await main(["--verificar"], env, (m) => salida.push(m)), 0);
-    assert.match(salida.at(-1), /rutas=6 temporada=12 parametros=12 vuelos=372/);
+    assert.match(salida.at(-1), /rutas=6 temporada=12 parametros=12 vuelos=1116/);
     assert.ok(d.llamadas.every((l) => l.method === "GET" && new URL(l.url).searchParams.get("perPage") === "1"));
     assert.ok(!salida.join("\n").includes(CLAVE));
   } finally {

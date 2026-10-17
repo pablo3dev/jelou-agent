@@ -17,7 +17,7 @@ La primera vez se abre Chrome con el perfil `.profile/` (propio, gitignoreado): 
 
 ## Escenarios
 
-Los tres comparten el mismo vuelo de ida y de regreso (se elige una vez por sesión), con asientos distintos en cada uno; al cerrar cada escenario el CRM muestra el mapa de ese vuelo con los asientos ocupados y libres acumulados.
+Cada ruta y fecha tiene 3 vuelos sembrados (07:00, 12:30 y 18:45) para que la lista del chat se vea completa; la prueba siempre elige el de las 12:30 en la ida y el de las 18:45 en el regreso (`HORA_IDA`/`HORA_REGRESO` en `e2e/datos.py`). Los tres comparten el mismo vuelo de ida y de regreso (se elige una vez por sesión), con asientos distintos en cada uno; al cerrar cada escenario el CRM muestra el mapa de ese vuelo con los asientos ocupados y libres acumulados.
 
 | Escenario | Qué recorre | Pago |
 |-----------|-------------|------|

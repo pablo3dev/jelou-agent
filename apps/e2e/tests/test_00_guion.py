@@ -97,3 +97,12 @@ def test_flujo_por_mal_prueba_entradas_invalidas_una_vez():
     assert (a.invalida, a.valor) == ("", "5 kg")
     a = decidir("💺 Elige tus asientos de ida: http://localhost:3000/#/asientos/x/1", st)
     assert (a.tipo, a.invalida) == ("widget_ida", "asiento")
+
+
+def test_viaje_siempre_elige_los_mismos_horarios():
+    v = Viaje("BOG-MDE", "2026-12-16", "MDE-BOG", "2026-12-23")
+    assert (v.hora_ida, v.hora_regreso) == ("12:30", "18:45")
+    assert v.vuelo_ida == "bogmde202612161230"
+    assert v.vuelo_regreso == "mdebog202612231845"
+    # el horario base de las 07:00 conserva el id original
+    assert Viaje("BOG-MDE", "2026-12-16", "MDE-BOG", "2026-12-23", "07:00", "07:00").vuelo_ida == "bogmde20261216"
