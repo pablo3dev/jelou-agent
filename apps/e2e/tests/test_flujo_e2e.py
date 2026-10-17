@@ -16,8 +16,7 @@ from e2e.flujo import ejecutar
 @pytest.mark.wa
 @pytest.mark.parametrize("fabrica", [datos.una_persona, datos.varias_personas, datos.flujo_por_mal],
                          ids=["una_persona", "varias_personas", "flujo_por_mal"])
-def test_reserva_pago_crm(fabrica, datum, fk, viaje, paginas):
-    wa, crm, pay = paginas
+def test_reserva_pago_crm(fabrica, datum, fk, viaje, ctx):
     esc = fabrica(fk, datum, viaje)
     print("\nEscenario:", esc)
-    ejecutar(datum, esc, wa, crm, pay)
+    ejecutar(ctx, datum, esc)

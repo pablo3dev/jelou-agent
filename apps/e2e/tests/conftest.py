@@ -28,9 +28,10 @@ def ctx():
     config.PERFIL.mkdir(exist_ok=True)
     config.ARTEFACTOS.mkdir(exist_ok=True)
     with sync_playwright() as p:
+        video = {"record_video_dir": str(config.ARTEFACTOS / "_grabacion"), "record_video_size": {"width": 1280, "height": 720}} if config.VIDEO else {}
         c = p.chromium.launch_persistent_context(
             str(config.PERFIL), channel="chrome", headless=False, no_viewport=True,
-            args=["--start-maximized"],
+            args=["--start-maximized"], **video,
         )
         c.set_default_timeout(15000)
         yield c
@@ -63,18 +64,3 @@ def viaje(datum, fk):
     v = elegir_viaje(fk, datum)
     print("\nViaje compartido por los escenarios:", v)
     return v
-
-
-@pytest.fixture(scope="session")
-def paginas(ctx):
-    """Pestanas abiertas desde el inicio: WhatsApp, pasarela y las 4 vistas del CRM."""
-    from e2e.flujo import VISTAS_CRM
-
-    wa = ctx.pages[0] if ctx.pages else ctx.new_page()
-    crm = {}
-    for vista in VISTAS_CRM:
-        crm[vista] = ctx.new_page()
-        crm[vista].goto(f"{config.CRM_URL}/#/{vista}")
-    pay = ctx.new_page()
-    pay.goto(f"{config.PAY_URL}/health")
-    return wa, crm, pay

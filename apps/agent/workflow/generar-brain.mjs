@@ -22,7 +22,7 @@ const agente = {
     version: "v2",
     instructions,
     variable: "agentResponse",
-    model: process.env.AGENT_MODEL ?? "openai/gpt-5.5",
+    model: process.env.AGENT_MODEL ?? "anthropic/claude-haiku-5.5",
     startCommand: "{{$message.text}}",
     allowExternalResume: true,
     settings: { expiration: { enabled: true, duration: 24, time: "hours", timeInSeconds: 86400 }, splitMessages: true, messageHistory: { enabled: true, count: 15 } },

@@ -31,6 +31,8 @@ Asientos: el agente comparte el enlace del selector del CRM (`#/asientos/<vuelo>
 
 Recorrido por el CRM al cerrar cada escenario: resumen (modo claro/oscuro, idioma y scroll), vuelos (scroll y filtro por la ruta), mapa (vuelo de la reserva y scroll), ventas (2 s, scroll y clic en el vuelo para abrir su mapa).
 
+Video: `E2E_VIDEO=true` graba un video por pestaña en `artifacts/<escenario>/video/NN_<pestaña>.webm`. Cada pestaña (WhatsApp, widget de asientos, pasarela y cada vista del CRM) se abre al usarla y se cierra al terminar, así cada video es corto.
+
 Requiere que el agente publicado use la herramienta nativa «Buttons and list» (ver `apps/agent/workflow/agent.prompt.md`).
 
 ## Riesgo con WhatsApp
